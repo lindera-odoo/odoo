@@ -2,223 +2,99 @@
 
 import logging
 import re
-from urllib.parse import urlparse
-from selenium import webdriver
-import requests
-import json
-from datetime import datetime
-import time
-from datetime import timedelta
-import os
 
 from odoo import fields, models, api, osv
 from openerp.exceptions import ValidationError
 from openerp.osv import osv
-from odoo import exceptions, _
+from openerp import _
+
+from email.utils import formataddr
+
 from odoo import _, api, fields, models, modules, SUPERUSER_ID, tools
+from odoo.exceptions import UserError, AccessError
+from odoo.osv import expression
+
+import requests
+import json
+from datetime import datetime
+import time
+from dateutil import tz
+from datetime import timedelta
 
 _logger = logging.getLogger(__name__)
 _image_dataurl = re.compile(r'(data:image/[a-z]+?);base64,([a-z0-9+/]{3,}=*)([\'"])', re.I)
-root_path = os.path.dirname(os.path.abspath(__file__))
 
 
 class OfficeSettings(models.Model):
     """
     This class separates one time office 365 settings from Token generation settings
     """
-
     _name = "office.settings"
 
     field_name = fields.Char('Office365')
     redirect_url = fields.Char('Redirect URL')
     client_id = fields.Char('Client Id')
     secret = fields.Char('Secret')
-    microsoft_email = fields.Char(String='Microsoft Account Email')
-    microsoft_password = fields.Char(String='Microsoft Account Password')
-    login_url = None
-    stay_signed_in = False
 
     @api.one
     def sync_data(self):
-
-        """
-            This function checks the connection the user account
-        """
-
         try:
-
-            self.login_url = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=openid+offline_access+Group.ReadWrite.All+Calendars.ReadWrite+Mail.ReadWrite+Mail.Send+User.ReadWrite+Tasks.ReadWrite' \
-                             % (self.client_id, self.redirect_url)
-            path_to_chromedriver = os.path.join(root_path, 'chromedriver')
-
-            options = webdriver.ChromeOptions()
-            options.add_argument('--disable-extensions')
-            options.add_argument('--headless')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--no-sandbox')
-
-            driver = webdriver.Chrome(executable_path=path_to_chromedriver, chrome_options=options)
-            driver.get(self.login_url)
-
-            driver.find_element_by_id('i0116').send_keys(self.microsoft_email)
-            driver.find_element_by_id('idSIButton9').click()
-            time.sleep(5)
-            driver.find_element_by_id('i0118').send_keys(self.microsoft_password)
-            driver.find_element_by_id('idSIButton9').click()
-            time.sleep(1)
-
-            try:
-                driver.find_element_by_id('idBtn_Accept').click()
-            except Exception as e:
-                _logger.exception(e)
-
-            try:
-                driver.find_element_by_id('idSIButton9').click()
-            except Exception as e:
-                _logger.exception(e)
-
-            code = urlparse(driver.current_url)[4].split('=')[1]
-            driver.close()
-
-            header = {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-            response = requests.post(
-                'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-                data='grant_type=authorization_code&code=' + code + '&redirect_uri=' + self.redirect_url + '&client_id=' + self.client_id + '&client_secret=' + self.secret
-                , headers=header).content
-            response = json.loads((str(response)[2:])[:-1])
             self.env.user.redirect_url = self.redirect_url
             self.env.user.client_id = self.client_id
             self.env.user.secret = self.secret
-            self.env.user.token = response['access_token']
-            self.env.user.refresh_token = response['refresh_token']
-            self.env.user.expires_in = int(round(time.time() * 1000))
-            self.env.user.code = code
-            self.env.user.redirect_url = self.redirect_url
-            self.env.user.client_id = self.client_id
-            self.env.user.secret = self.secret
+            self.env.user.code = None
+            self.env.user.token = None
+            self.env.user.refresh_token = None
+            self.env.user.expires_in = None
+            self.env.user.office365_email = None
+            self.env.user.office365_id_address = None
 
-            response = json.loads((requests.get(
-                'https://graph.microsoft.com/v1.0/me',
-                headers={
-                    'Host': 'outlook.office.com',
-                    'Authorization': 'Bearer {0}'.format(self.env.user.token),
-                    'Accept': 'application/json',
-                    'X-Target-URL': 'http://outlook.office.com',
-                    'connection': 'keep-Alive'
-                }).content.decode('utf-8')))
-            self.env.user.office365_email = response['userPrincipalName']
-            self.env.user.office365_id_address = 'outlook_' + response['id'].upper() + '@outlook.com'
-            self.env.cr.commit()
-
-            office_credentials = self.env['office.credentials'].search([])
-
-            if not office_credentials:
-                self.env['office.credentials'].create({'redirect_url': self.redirect_url,
-                                                        'code': code,
-                                                        'client_id': self.client_id,
-                                                        'secret': self.secret,
-                                                        'microsoft_email': self.microsoft_email,
-                                                        'microsoft_password': self.microsoft_password
-                                                        })
             self.env.cr.commit()
 
         except Exception as e:
             raise ValidationError(_(str(e)))
-        raise osv.except_osv(_("Success!"), (_("Token Generated!")))
+        raise osv.except_osv(_("Success!"), (_("Successfully Activated!")))
 
 
 class Office365UserSettings(models.Model):
     """
     This class facilitates the users other than admin to enter office 365 credential
-
-    params _name :Is a Custom Model Name
     """
-
     _name = 'office.usersettings'
 
     login_url = fields.Char('Login URL', compute='_compute_url', readonly=True)
     code = fields.Char('code')
     field_name = fields.Char('office')
-    redirect_url = fields.Char('Redirect URL')
-    client_id = fields.Char('Client Id')
-    secret = fields.Char('Secret')
-    microsoft_email = fields.Char(String='Microsoft Account Email')
-    microsoft_password = fields.Char(String='Microsoft Account Password')
 
     @api.one
     def _compute_url(self):
-        """
-         if the user provide the office 365 credentials then this function generates a URL using this credential to generate oken
-
-        """
-        settings = self.env['office.credentials'].search([])
+        settings = self.env['office.settings'].search([])
         settings = settings[0] if settings else settings
         if settings:
-            self.login_url = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=openid+offline_access+Group.ReadWrite.All+Calendars.ReadWrite+Mail.ReadWrite+Mail.Send+User.ReadWrite+Tasks.ReadWrite' \
-                             % (settings.client_id, settings.redirect_url)
+            self.login_url = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=openid+offline_access+Group.ReadWrite.All+Calendars.ReadWrite+Mail.ReadWrite+Mail.Send+User.ReadWrite+Tasks.ReadWrite' % (
+                settings.client_id, settings.redirect_url)
 
     @api.one
     def test_connectiom(self):
-        """
-        this function tests credential and generates token
-
-        """
         try:
-            settings = self.env['office.credentials'].search([])
+            settings = self.env['office.settings'].search([])
             settings = settings[0] if settings else settings
 
             if not settings.client_id or not settings.redirect_url or not settings.secret:
                 raise osv.except_osv(_("Error!"), (_("Please ask admin to add Office365 settings!")))
-
-            path_to_chromedriver = os.path.join(root_path, 'chromedriver')
-
-            options = webdriver.ChromeOptions()
-            options.add_argument('--disable-extensions')
-            options.add_argument('--headless')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--no-sandbox')
-
-            driver = webdriver.Chrome(executable_path=path_to_chromedriver, chrome_options=options)
-            driver.get(self.login_url)
-
-            driver.find_element_by_id('i0116').send_keys(settings.microsoft_email)
-            driver.find_element_by_id('idSIButton9').click()
-            time.sleep(5)
-            driver.find_element_by_id('i0118').send_keys(settings.microsoft_password)
-            driver.find_element_by_id('idSIButton9').click()
-            time.sleep(1)
-
-            try:
-                driver.find_element_by_id('idBtn_Accept').click()
-            except Exception as e:
-                _logger.exception(e)
-
-            try:
-                driver.find_element_by_id('idSIButton9').click()
-            except Exception as e:
-                _logger.exception(e)
-
-            code = urlparse(driver.current_url)[4].split('=')[1]
-            driver.close()
-
             header = {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
             response = requests.post(
                 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-                data='grant_type=authorization_code&code=' + code + '&redirect_uri=' + settings.redirect_url + '&client_id=' + settings.client_id + '&client_secret=' + settings.secret
+                data='grant_type=authorization_code&code=' + self.code + '&redirect_uri=' + settings.redirect_url + '&client_id=' + settings.client_id + '&client_secret=' + settings.secret
                 , headers=header).content
             response = json.loads((str(response)[2:])[:-1])
-            self.env.user.redirect_url = settings.redirect_url
-            self.env.user.client_id = settings.client_id
-            self.env.user.secret = settings.secret
             self.env.user.token = response['access_token']
             self.env.user.refresh_token = response['refresh_token']
             self.env.user.expires_in = int(round(time.time() * 1000))
-            self.env.user.code = code
-
+            self.env.user.code = self.code
+            self.code = ""
             response = json.loads((requests.get(
                 'https://graph.microsoft.com/v1.0/me',
                 headers={
@@ -236,6 +112,7 @@ class Office365UserSettings(models.Model):
             raise ValidationError(_(str(e)))
 
         raise osv.except_osv(_("Success!"), (_("Token Generated!")))
+
 
 
 class CustomUser(models.Model):
@@ -340,7 +217,7 @@ class CustomUser(models.Model):
                 expires_in = expires_in + timedelta(seconds=3600)
                 nowDateTime = datetime.now()
                 if nowDateTime > expires_in:
-                    self.generate_gefresh_token()
+                    self.generate_refresh_token()
 
             response = requests.get(
                 'https://graph.microsoft.com/v1.0/me/events',
@@ -680,7 +557,7 @@ class CustomUser(models.Model):
                 expires_in = expires_in + timedelta(seconds=3600)
                 nowDateTime = datetime.now()
                 if nowDateTime > expires_in:
-                    self.generate_gefresh_token()
+                    self.generate_refresh_token()
 
             response = requests.get(
                 'https://graph.microsoft.com/v1.0/me/mailFolders',
@@ -945,7 +822,7 @@ class CustomUser(models.Model):
             expires_in = expires_in + timedelta(seconds=3600)
             nowDateTime = datetime.now()
             if nowDateTime > expires_in:
-                self.generate_gefresh_token()
+                self.generate_refresh_token()
 
         response = requests.get(
             'https://graph.microsoft.com/v1.0/me/messages/' + message['id'] + '/attachments/',
