@@ -151,6 +151,8 @@
 
                                 <button string="Import Customers Mails" type="object" name="sync_customer_mail"
                                         class="oe_highlight"/>
+                                <button string="Export Contacts From ODOO to Office365" type="object" name="export_contacts"
+                                        class="oe_highlight"/>
                             </group>
                             <group>
                                 <field name="send_mail_flag"/>
