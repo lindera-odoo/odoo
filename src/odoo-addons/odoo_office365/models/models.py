@@ -50,7 +50,7 @@ class OfficeSettings(models.Model):
             self.env.user.office365_id_address = None
 
             self.env.cr.commit()
-            office_credentials = self.env['office.credentials'].search(['client_id','=',self.client_id])
+            office_credentials = self.env['office.credentials'].search([('client_id','=',self.client_id)])
             if not office_credentials:
                 self.env['office.credentials'].create({'redirect_url': self.redirect_url,
                                                        #'code': code,
