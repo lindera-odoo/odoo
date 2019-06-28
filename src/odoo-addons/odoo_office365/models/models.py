@@ -262,6 +262,7 @@ class CustomUser(models.Model):
                 odoo_event = self.env['calendar.event'].create({
                     'office_id': event['id'],
                     'name': event['subject'],
+                    "description": event['bodyPreview'],
                     'location': (event['location']['address']['city'] + ', ' + event['location']['address'][
                         'countryOrRegion']) if 'address' in event['location'] and 'city' in event['location'][
                         'address'].keys() else "",
@@ -332,7 +333,7 @@ class CustomUser(models.Model):
         except Exception as e:
             raise ValidationError(_(str(e)))
 
-        raise osv.except_osv(_("Success!"), (_(" Sync Successfully !")))
+        # raise osv.except_osv(_("Success!"), (_(" Sync Successfully !")))
 
     # @api.one
     def export_calendar(self):
@@ -365,9 +366,8 @@ class CustomUser(models.Model):
                 raise osv.except_osv(("Access Token Expired!"), (" Please Regenerate Access Token !"))
             calendars = json.loads((response.decode('utf-8')))['value']
             calendar_id = calendars[0]['id']
-            meetings = self.env['calendar.event'].search([("create_uid", "=", self.env.user.id),("office_id", "=", False)])
-            # added_meetings = self.env['calendar.event'].search([("office_id", "!=", False),
-            #                                                     ("create_uid", "=", self.env.user.id)])
+            meetings = self.env['calendar.event'].search([("office_id", "=", False)])
+            added_meetings = self.env['calendar.event'].search([("office_id", "!=", False)])
 
             added = []
             for meeting in meetings:
@@ -383,6 +383,7 @@ class CustomUser(models.Model):
 
                 payload = {
                     "subject": meeting.name,
+                    "bodyPreview": meeting.description,
                     "attendees": self.getAttendee(meeting.attendee_ids),
                     'reminderMinutesBeforeStart': self.getTime(meeting.alarm_ids),
                     "start": {
@@ -420,21 +421,18 @@ class CustomUser(models.Model):
                         }
                     }})
                 if meeting.name not in added:
-
                     response = requests.post(
                         'https://graph.microsoft.com/v1.0/me/calendars/' + calendar_id + '/events',
                         headers=header, data=json.dumps(payload)).content
 
                     temp.write({
-                        'office_id': json.loads((response.decode('utf-8')))['id']
+                        'office_id': json.dumps((response.decode('utf-8')))[0]
                     })
                     self.env.cr.commit()
                     if meeting.recurrency:
                         added.append(meeting.name)
 
-            added = []
-            # added_meetings = self.env['calendar.event'].search([("office_id", "!=", False),
-            #                                                     ("create_uid", "=", self.env.user.id)])
+            # added = []
             # for meeting in added_meetings:
             #     id = str(meeting.id).split('-')[0]
             #     metngs = [meeting for meeting in added_meetings if id in str(meeting.id)]
@@ -443,7 +441,8 @@ class CustomUser(models.Model):
             #
             #     payload = {
             #         "subject": meeting.name,
-            #         # "attendees": self.getAttendee(meeting.attendee_ids),
+            #         "bodyPreview": meeting.description,
+            #         "attendees": self.getAttendee(meeting.attendee_ids),
             #         'reminderMinutesBeforeStart': self.getTime(meeting.alarm_ids),
             #         "start": {
             #             "dateTime": meeting.start.strftime('%Y-%m-%d T %H:%M:%S') if meeting.start else meeting.start,
@@ -483,43 +482,9 @@ class CustomUser(models.Model):
             #     # else:
             #     #     payload.update({"recurrence": {}})
             #     if meeting.name not in added:
-            #         get_response = requests.get(
-            #
-            #              'https://graph.microsoft.com/v1.0/me/events/'+  meeting.office_id,
-            #             headers={
-            #                 'Host': 'outlook.office.com',
-            #                 'Authorization': 'Bearer {0}'.format(self.env.user.token),
-            #                 'Accept': 'application/json',
-            #                 'X-Target-URL': 'http://outlook.office.com',
-            #                 'connection': 'keep-Alive'
-            #             }).content
-            #         if get_response:
-            #             get_response = json.loads(get_response.decode('utf-8'))
-            #             shared_items = {k: payload[k] for k in payload if k in get_response and str(payload[k]).upper() == str(get_response[k]).upper()}
-            #             for data in payload.keys():
-            #                 if data == 'location':
-            #                     if payload[data['displayName']] != get_response[data['displayName']]:
-            #                         response = requests.patch(
-            #                             'https://graph.microsoft.com/v1.0/me/calendars/' + calendar_id + '/events/' + meeting.office_id,
-            #                             headers=header, data=json.dumps(payload)).content
-            #                         self.env.cr.commit()
-            #                         if meeting.recurrency:
-            #                             added.append(meeting.name)
-            #                         break
-            #
-            #                 elif payload[data] != None and payload[data] != get_response[data]:
-            #                     response = requests.patch(
-            #                         'https://graph.microsoft.com/v1.0/me/calendars/' + calendar_id + '/events/' + meeting.office_id,
-            #                         headers=header, data=json.dumps(payload)).content
-            #                     self.env.cr.commit()
-            #                     if meeting.recurrency:
-            #                         added.append(meeting.name)
-            #                     break
-            #
-            #                 print('same data exist')
-            #
-            #
-            #
+            #         response = requests.patch(
+            #             'https://graph.microsoft.com/v1.0/me/calendars/' + calendar_id + '/events/' + meeting.office_id,
+            #             headers=header, data=json.dumps(payload)).content
             #
             #         self.env.cr.commit()
             #         if meeting.recurrency:
@@ -1002,7 +967,7 @@ class CustomUser(models.Model):
         except Exception as e:
             self.env.user.is_task_sync_on = False
             self.env.cr.commit()
-            raise ValidationError(_(str('')))
+            raise ValidationError(_(str(e)))
         # raise osv.except_osv(_("Success!"), (_(" Tasks are  Successfully Imported !")))
 
     def export_tasks(self):
@@ -1060,7 +1025,7 @@ class CustomUser(models.Model):
                 activity.office_id = json.loads((response.decode('utf-8')))['id']
             self.env.cr.commit()
 
-            raise osv.except_osv(_("Success!"), (_("Tasks are Successfully exported! !")))
+            # raise osv.except_osv(_("Success!"), (_("Tasks are Successfully exported! !")))
 
     def developer_test(self):
         try:
@@ -1088,7 +1053,7 @@ class CustomUser(models.Model):
             self.env.cr.commit()
             raise ValidationError(_(str(e)))
         self.env.cr.commit()
-        raise osv.except_osv(("Success!"), ("Mails Synced Successfully !"))
+        # raise osv.except_osv(("Success!"), ("Mails Synced Successfully !"))
 
     def sync_customer_inbox_mail(self):
         try:
@@ -1122,59 +1087,55 @@ class CustomUser(models.Model):
                     'connection': 'keep-Alive'
                 }).content
 
-            if 'value' in response.decode('utf-8'):
-                messages = json.loads((response.decode('utf-8')))['value']
-                for message in messages:
-                    if 'from' not in message.keys() or self.env['mail.message'].search(
-                            [('office_id', '=', message['id'])]):
-                        continue
+            messages = json.loads((response.decode('utf-8')))['value']
+            for message in messages:
+                if 'from' not in message.keys() or self.env['mail.message'].search([('office_id', '=', message['id'])]):
+                    continue
 
-                    if 'address' not in message.get('from').get('emailAddress') or message['bodyPreview'] == "":
-                        continue
+                if 'address' not in message.get('from').get('emailAddress') or message['bodyPreview'] == "":
+                    continue
 
-                    attachment_ids = self.getAttachment(message)
+                attachment_ids = self.getAttachment(message)
 
-                    from_partner = self.env['res.partner'].search(
-                        [('email', "=", message['from']['emailAddress']['address'])])
-                    if not from_partner:
-                        continue
-                    from_partner = from_partner[0] if from_partner else from_partner
-                    # if from_partner:
-                    #     from_partner = from_partner[0]
-                    recipient_partners = []
-                    channel_ids = []
-                    for recipient in message['toRecipients']:
-                        if recipient['emailAddress']['address'].lower() == self.env.user.office365_email.lower() or \
-                                recipient['emailAddress'][
-                                    'address'].lower() == self.env.user.office365_id_address.lower():
-                            to_user = self.env['res.users'].search(
-                                [('id', "=", self._uid)])
-                        else:
-                            to = recipient['emailAddress']['address']
-                            to_user = self.env['res.users'].search(
-                                [('office365_id_address', "=", to)])
-                            to_user = to_user[0] if to_user else to_user
+                from_partner = self.env['res.partner'].search(
+                    [('email', "=", message['from']['emailAddress']['address'])])
+                if not from_partner:
+                    continue
+                from_partner = from_partner[0] if from_partner else from_partner
+                # if from_partner:
+                #     from_partner = from_partner[0]
+                recipient_partners = []
+                channel_ids = []
+                for recipient in message['toRecipients']:
+                    if recipient['emailAddress']['address'].lower() == self.env.user.office365_email.lower() or \
+                            recipient['emailAddress'][
+                                'address'].lower() == self.env.user.office365_id_address.lower():
+                        to_user = self.env['res.users'].search(
+                            [('id', "=", self._uid)])
+                    else:
+                        to = recipient['emailAddress']['address']
+                        to_user = self.env['res.users'].search(
+                            [('office365_id_address', "=", to)])
+                        to_user = to_user[0] if to_user else to_user
 
-                        if to_user:
-                            to_partner = to_user.partner_id
-                            recipient_partners.append(to_partner.id)
+                    if to_user:
+                        to_partner = to_user.partner_id
+                        recipient_partners.append(to_partner.id)
 
-                    self.env['mail.message'].create({
-                        'subject': message['subject'],
-                        'date': message['sentDateTime'],
-                        'body': message['bodyPreview'],
-                        'email_from': message['from']['emailAddress']['address'],
-                        # 'channel_ids': [[6, 0, channel_ids]],
-                        'partner_ids': [[6, 0, recipient_partners]],
-                        'attachment_ids': [[6, 0, attachment_ids]],
-                        'office_id': message['id'],
-                        'author_id': from_partner.id,
-                        'model': 'res.partner',
-                        'res_id': from_partner.id
-                    })
-                    self.env.cr.commit()
-            else:
-                print('..........')
+                self.env['mail.message'].create({
+                    'subject': message['subject'],
+                    'date': message['sentDateTime'],
+                    'body': message['bodyPreview'],
+                    'email_from': message['from']['emailAddress']['address'],
+                    # 'channel_ids': [[6, 0, channel_ids]],
+                    'partner_ids': [[6, 0, recipient_partners]],
+                    'attachment_ids': [[6, 0, attachment_ids]],
+                    'office_id': message['id'],
+                    'author_id': from_partner.id,
+                    'model': 'res.partner',
+                    'res_id': from_partner.id
+                })
+                self.env.cr.commit()
         except Exception as e:
             # self.env.user.send_mail_flag = True
             raise ValidationError(_(str(e)))
@@ -1219,8 +1180,8 @@ class CustomUser(models.Model):
                 if 'from' not in message.keys() or self.env['mail.message'].search([('office_id', '=', message['id'])]):
                     continue
 
-                # if message['bodyPreview'] == "":
-                #     continue
+                if message['bodyPreview'] == "":
+                    continue
 
                 attachment_ids = self.getAttachment(message)
                 if message['from']['emailAddress']['address'].lower() == self.env.user.office365_email.lower() or \
@@ -1348,7 +1309,7 @@ class CustomUser(models.Model):
                     self.generate_refresh_token()
 
             odoo_contacts = self.env['res.partner'].search([])
-            url =  'https://graph.microsoft.com/v1.0/me/contacts'
+            url = 'https://graph.microsoft.com/v1.0/me/contacts'
 
             headers = {
 
@@ -1365,8 +1326,8 @@ class CustomUser(models.Model):
                 url, headers=headers
             ).content
             response = json.loads(response.decode('utf-8'))
-            office_contact = [response['value'][i]['emailAddresses'][0]['address'] for i in range(len(response['value']))]
-
+            office_contact = [response['value'][i]['emailAddresses'][0]['address'] for i in
+                              range(len(response['value']))]
 
             for contact in odoo_contacts:
                 data = {
@@ -1381,7 +1342,7 @@ class CustomUser(models.Model):
                     continue
 
                 post_response = requests.post(
-                    url,data=json.dumps(data), headers=headers
+                    url, data=json.dumps(data), headers=headers
                 ).content
 
                 if 'id' not in json.loads(post_response.decode('utf-8')).keys():
@@ -1390,7 +1351,7 @@ class CustomUser(models.Model):
         except Exception as e:
             raise ValidationError(_(str(e)))
 
-        raise osv.except_osv(_("Success!"), (_("Contacts are Successfully exported!!")))
+        # raise osv.except_osv(_("Success!"), (_("Contacts are Successfully exported!!")))
 
         try:
             if self.env.user.expires_in:
@@ -1425,7 +1386,7 @@ class CustomUser(models.Model):
                 if 'id' not in json.loads((response.decode('utf-8'))).keys():
                     raise osv.except_osv(_("Error!"), (_(response["error"])))
 
-                raise osv.except_osv(_("Success!"), (_("Tasks are Successfully exported! !")))
+                # raise osv.except_osv(_("Success!"), (_("Tasks are Successfully exported! !")))
         except Exception as e:
             raise ValidationError(_(str(e)))
 
@@ -1437,107 +1398,6 @@ class CustomMeeting(models.Model):
     _inherit = 'calendar.event'
 
     office_id = fields.Char('Office365 Id')
-
-    # @api.multi
-    # def write(self,values):
-    #     if 'attendee_ids' in values and 'partner_ids' in values:
-    #         message = super(CustomMeeting, self).write(values)
-    #         return message
-    #
-    #
-    #     elif self.CONCURRENCY_CHECK_FIELD:
-    #         object = CustomUser
-    #         if self.env.user.expires_in:
-    #             expires_in = datetime.fromtimestamp(int(self.env.user.expires_in) / 1e3)
-    #             expires_in = expires_in + timedelta(seconds=3600)
-    #             nowDateTime = datetime.now()
-    #             if nowDateTime > expires_in:
-    #                 object.generate_refresh_token(self)
-    #
-    #
-    #
-    #         message = super(CustomMeeting, self).write(values)
-    #         header = {
-    #             'Authorization': 'Bearer {0}'.format(self.env.user.token),
-    #             'Content-Type': 'application/json'
-    #         }
-    #         response = requests.get(
-    #             'https://graph.microsoft.com/v1.0/me/calendars',
-    #             headers={
-    #                 'Host': 'outlook.office.com',
-    #                 'Authorization': 'Bearer {0}'.format(self.env.user.token),
-    #                 'Accept': 'application/json',
-    #                 'X-Target-URL': 'http://outlook.office.com',
-    #                 'connection': 'keep-Alive'
-    #             }).content
-    #         if 'value' not in json.loads((response.decode('utf-8'))).keys():
-    #             raise osv.except_osv(("Access Token Expired!"), (" Please Regenerate Access Token !"))
-    #         calendars = json.loads((response.decode('utf-8')))['value']
-    #         calendar_id = calendars[0]['id']
-    #         # added_meetings = self.env['calendar.event'].search([("office_id", "=", False),
-    #         #                                                     ("create_uid", "=", self.env.user.id)])
-    #         # for meeting in added_meetings:
-    #         #     id = str(meeting.id).split('-')[0]
-    #         #     metngs = [meeting for meeting in added_meetings if id in str(meeting.id)]
-    #         #     index = len(metngs)
-    #         #     meeting = metngs[index - 1]
-    #
-    #         payload = {
-    #             "subject": self.name,
-    #             "attendees": object.getAttendee(self, self.attendee_ids),
-    #             'reminderMinutesBeforeStart': object.getTime(self, self.alarm_ids),
-    #             "start": {
-    #                 "dateTime": self.start.strftime('%Y-%m-%d T %H:%M:%S') if self.start else self.start,
-    #                 "timeZone": "UTC"
-    #             },
-    #
-    #             "end": {
-    #                 "dateTime": self.stop.strftime('%Y-%m-%d T %H:%M:%S') if self.stop else self.stop,
-    #                 "timeZone": "UTC"
-    #             },
-    #             "showAs": self.show_as,
-    #             "location": {
-    #                 "displayName": self.location if self.location else "",
-    #             },
-    #
-    #         }
-    #         if self.recurrency:
-    #             payload.update({"recurrence": {
-    #                 "pattern": {
-    #                     "daysOfWeek": object.getdays(self),
-    #                     "type": (
-    #                                 'Absolute' if self.rrule_type != "weekly" and self.rrule_type != "daily" else "") + meeting.rrule_type,
-    #                     "interval": self.interval,
-    #                     "month": int(self.start.month),  # (meeting.start[5] + meeting.start[6]),
-    #                     "dayOfMonth": int(self.start.day),  # (meeting.start[8] + meeting.start[9]),
-    #                     "firstDayOfWeek": "sunday",
-    #                     # "index": "first"
-    #                 },
-    #                 "range": {
-    #                     "type": "endDate",
-    #                     "startDate": self.start.strftime('%Y-%m-%d'),  # meeting.start[:10],
-    #                     "endDate": self.final_date,
-    #                     "recurrenceTimeZone": "UTC",
-    #                     "numberOfOccurrences": self.count,
-    #                 }
-    #             }})
-    #
-    #         response = requests.post(
-    #             'https://graph.microsoft.com/v1.0/me/calendars/' + calendar_id + '/events',
-    #             headers=header, data=json.dumps(payload)).content
-    #         self.env.cr.commit()
-    #
-    #         return message
-
-
-
-
-
-
-
-
-
-
 
 
 class CustomMessage(models.Model):
@@ -1867,7 +1727,6 @@ class CustomActivity(models.Model):
 
 
 class Office365Credentials(models.Model):
-
     _name = 'office.credentials'
 
     login_url = fields.Char('Login URL', compute='_compute_url', readonly=True)

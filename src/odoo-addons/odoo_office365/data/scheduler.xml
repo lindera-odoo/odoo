@@ -7,6 +7,7 @@
             <field name="active">0</field>
             <field name="code">model.auto_import_calendar()</field>
             <field name='interval_number'>4</field>
+            <field name="user_id" ref="base.user_root"/>
             <field name='interval_type'>minutes</field>
             <field name="numbercall">-1</field>
         </record>
@@ -17,6 +18,7 @@
             <field name="active">0</field>
             <field name="code">model.auto_export_calendar()</field>
             <field name='interval_number'>4</field>
+            <field name="user_id" ref="base.user_root"/>
             <field name='interval_type'>minutes</field>
             <field name="numbercall">-1</field>
         </record>
@@ -27,6 +29,7 @@
             <field name="active">0</field>
             <field name="code">model.auto_import_tasks()</field>
             <field name='interval_number'>4</field>
+            <field name="user_id" ref="base.user_root"/>
             <field name='interval_type'>minutes</field>
             <field name="numbercall">-1</field>
         </record>
@@ -37,6 +40,7 @@
             <field name="active">0</field>
             <field name="code">model.auto_export_tasks()</field>
             <field name='interval_number'>4</field>
+            <field name="user_id" ref="base.user_root"/>
             <field name='interval_type'>minutes</field>
             <field name="numbercall">-1</field>
         </record>
@@ -56,6 +60,7 @@
             <field name="active">0</field>
             <field name="code">model.sync_customer_mail_scheduler()</field>
             <field name='interval_number'>4</field>
+            <field name="user_id" ref="base.user_root"/>
             <field name='interval_type'>minutes</field>
             <field name="numbercall">-1</field>
         </record>
