@@ -123,13 +123,13 @@
                 <notebook position="inside">
                     <page string="Office365">
                         <group>
-                            <field name="login_url" widget="url"/>
+<!--                            <field name="login_url" widget="url"/>-->
                             <field name="code"/>
 
                             <field name="office365_email"/>
                             <field name="office365_id_address"/>
 
-                            <button string="Generate Token" type="object" name="test_connectiom" class="oe_highlight"/>
+<!--                            <button string="Generate Token" type="object" name="test_connectiom" class="oe_highlight"/>-->
                         </group>
                     </page>
                     <page string="Office365 Calendar">
@@ -150,6 +150,8 @@
                                         <!--class="oe_highlight"/>-->
 
                                 <button string="Import Customers Mails" type="object" name="sync_customer_mail"
+                                        class="oe_highlight"/>
+                                <button string="Export Contacts From ODOO to Office365" type="object" name="export_contacts"
                                         class="oe_highlight"/>
                             </group>
                             <group>
