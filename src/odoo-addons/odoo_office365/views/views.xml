@@ -154,9 +154,9 @@
                 </notebook>
             </field>
         </record>
-		<menuitem id="office365_menu" 	web_icon="odoo_office365,static/description/icon.jpg" name="Office365" parent="base.menu_users" action="office_action"/>
-		<menuitem id="main_office_menu" web_icon="odoo_office365,static/description/icon.jpg" name="Office365 Settings" groups = "base.group_user"/>
-		<menuitem id="office_menu" web_icon="odoo_office365,static/description/icon.jpg" name="Office365 Settings" parent="main_office_menu" action="office_user_action"/>
+		<menuitem id="office365_menu" 	web_icon="odoo_office365,static/description/icon.png" name="Office365" parent="base.menu_users" action="office_action"/>
+		<menuitem id="main_office_menu" web_icon="odoo_office365,static/description/icon.png" name="Office365 Settings" groups = "base.group_user"/>
+		<menuitem id="office_menu" web_icon="odoo_office365,static/description/icon.png" name="Office365 Settings" parent="main_office_menu" action="office_user_action"/>
     </data>
 </odoo>
 
