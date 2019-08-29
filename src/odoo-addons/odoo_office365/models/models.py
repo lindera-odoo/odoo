@@ -1072,6 +1072,11 @@ class CustomMessage(models.Model):
         ################## New Code ##################
         o365_id = None
         conv_id = None
+        check_log_note = self.env['mail.message.subtype'].browse(int(values['subtype_id'])).name
+        if check_log_note == 'Note':
+            message = super(CustomMessage, self).create(values)
+            # message._invalidate_documents()
+            return message
         if 'model' in values and values['model'] == 'mail.channel':
             message = super(CustomMessage, self).create(values)
             # message._invalidate_documents()
