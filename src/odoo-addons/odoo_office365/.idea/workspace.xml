@@ -106,7 +106,7 @@
       <workItem from="1568271312234" duration="31000" />
       <workItem from="1568288835628" duration="2348000" />
       <workItem from="1569218866867" duration="21458000" />
-      <workItem from="1569303669543" duration="21461000" />
+      <workItem from="1569303669543" duration="22790000" />
     </task>
     <servers />
   </component>
@@ -264,6 +264,16 @@
           <line>1150</line>
           <option name="timeStamp" value="331" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/models/models.py</url>
+          <line>1097</line>
+          <option name="timeStamp" value="334" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/models/models.py</url>
+          <line>1100</line>
+          <option name="timeStamp" value="336" />
+        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -275,6 +285,6 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/odoo_office365$Community.coverage" NAME="Community Coverage Results" MODIFIED="1569333736316" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../../odoo" />
+    <SUITE FILE_PATH="coverage/odoo_office365$Community.coverage" NAME="Community Coverage Results" MODIFIED="1569336500701" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../../odoo" />
   </component>
 </project>

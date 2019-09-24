@@ -1098,7 +1098,7 @@ class CustomUser(models.Model):
                                         if len(each_contact['homePhones']) > 0:
                                             phone = each_contact['homePhones'][0]
                                         elif len(each_contact['businessPhones']) > 0:
-                                            phone = ['businessPhones'][0]
+                                            phone = each_contact['businessPhones'][0]
 
                                         self.env['res.partner'].create({
                                             'name': each_contact['displayName'],
@@ -1119,7 +1119,7 @@ class CustomUser(models.Model):
                                     if len(each_contact['homePhones'])>0:
                                         phone = each_contact['homePhones'][0]
                                     elif len(each_contact['businessPhones'])>0:
-                                        phone =['businessPhones'][0]
+                                        phone =each_contact['businessPhones'][0]
 
                                     if phone or each_contact['mobilePhone']:
 
