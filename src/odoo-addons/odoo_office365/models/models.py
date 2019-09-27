@@ -773,7 +773,7 @@ class CustomUser(models.Model):
                     else:
                         messages = json.loads((response.decode('utf-8')))['value']
                         for message in messages:
-                            if 'from' not in message.keys() or self.env['mail.message'].search(
+                            if 'from' not in message.keys() or self.env['mail.mail'].search(
                                     [('office_id', '=', message['id'])]):
                                 continue
 
@@ -872,7 +872,7 @@ class CustomUser(models.Model):
                             messages = json.loads((response.decode('utf-8')))['value']
                             for message in messages:
 
-                                if 'from' not in message.keys() or self.env['mail.message'].search(
+                                if 'from' not in message.keys() or self.env['mail.mail'].search(
                                         [('office_id', '=', message['conversationId'])]):
                                     continue
 
@@ -1166,6 +1166,15 @@ class CustomMeeting(models.Model):
     office_id = fields.Char('Office365 Id')
 
 #New mail code
+
+class CustomMessageInbox(models.Model):
+    """
+    Email will store in mail.message class so that's why we need office_id
+    """
+    _inherit = 'mail.message'
+
+    office_id = fields.Char('Office Id')
+
 
 class CustomMessage(models.Model):
 
