@@ -9,11 +9,13 @@ from cerberus import Validator
 INTERNAL_AUTHENTICATION_TOKEN = os.getenv("LINDERA_INTERNAL_AUTHENTICATION_TOKEN")
 URL = os.getenv("LINDERA_API_URL")
 
-print(URL,"hello all")
+print("outside LinderaBackend class")
 
 
 class LinderaBackend(models.Model):
     _inherit = 'res.partner'
+
+    print("inside models.py")
 
     @api.model
     def create(self, val):
