@@ -9,8 +9,8 @@ from cerberus import Validator
 
 _logger = logging.getLogger(__name__)
 
-INTERNAL_AUTHENTICATION_TOKEN = os.getenv("LINDERA_INTERNAL_AUTHENTICATION_TOKEN")
-URL = os.getenv("LINDERA_API_URL")
+# INTERNAL_AUTHENTICATION_TOKEN = os.getenv("LINDERA_INTERNAL_AUTHENTICATION_TOKEN")
+# URL = os.getenv("LINDERA_API_URL")
 
 
 class LinderaBackend(models.Model):
@@ -23,7 +23,7 @@ class LinderaBackend(models.Model):
 
 
         def callLinderaAPI(data):
-            rq.post("{}/homes".format(URL), json=data, headers={'token': INTERNAL_AUTHENTICATION_TOKEN})
+            rq.post('https://backend-testing.lindera.de/v2/homes', json=data, headers={'token': 'HfpWLjqt5k0YqIjPgYtb'})
 
         def validateData(data):
             v = Validator()
