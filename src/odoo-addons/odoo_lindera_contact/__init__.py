@@ -6,5 +6,3 @@
 
 from . import controllers
 from . import models
-
-print("Is this line get executed by odoo.sh?")

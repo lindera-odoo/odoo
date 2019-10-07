@@ -1,3 +1,4 @@
+import logging
 from odoo import models, fields, api
 from openerp.osv import osv
 import pprint
@@ -6,19 +7,18 @@ import requests as rq
 import os
 from cerberus import Validator
 
+_logger = logging.getLogger(__name__)
+
 INTERNAL_AUTHENTICATION_TOKEN = os.getenv("LINDERA_INTERNAL_AUTHENTICATION_TOKEN")
 URL = os.getenv("LINDERA_API_URL")
-
-print("outside LinderaBackend class")
 
 
 class LinderaBackend(models.Model):
     _inherit = 'res.partner'
 
-    print("inside models.py")
-
     @api.model
     def create(self, val):
+        _logger.debug('Lets see, if this works')
         res = super(LinderaBackend, self).create(val)
 
 
