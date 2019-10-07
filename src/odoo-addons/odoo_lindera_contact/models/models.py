@@ -18,12 +18,12 @@ class LinderaBackend(models.Model):
 
     @api.model
     def create(self, val):
-        _logger.debug('Lets see, if this works')
+        _logger.info('Lets see, if this works')
         res = super(LinderaBackend, self).create(val)
 
 
         def callLinderaAPI(data):
-            rq.post('https://backend-testing.lindera.de/v2/homes', json=data, headers={'token': 'Beare HfpWLjqt5k0YqIjPgYtb'})
+            rq.post('https://backend-testing.lindera.de/v2/homes', json=data, headers={'authorization': 'Bearer HfpWLjqt5k0YqIjPgYtb'})
 
         def validateData(data):
             v = Validator()
