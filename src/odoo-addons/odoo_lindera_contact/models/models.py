@@ -6,8 +6,10 @@ import requests as rq
 import os
 from cerberus import Validator
 
-INTERNAL_AUTHENTICATION_TOKEN = os.getenv("INTERNAL_AUTHENTICATION_TOKEN")
-URL = os.getenv("URL")
+INTERNAL_AUTHENTICATION_TOKEN = os.getenv("LINDERA_INTERNAL_AUTHENTICATION_TOKEN")
+URL = os.getenv("LINDERA_API_URL")
+
+print(URL,"hello all")
 
 
 class LinderaBackend(models.Model):
