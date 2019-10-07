@@ -36,7 +36,7 @@ class OfficeSettings(models.Model):
     client_id = fields.Char('Client Id')
     secret = fields.Char('Secret')
     # login_url = fields.Char('Login URL', compute='_compute_url', readonly=True)
-
+    _logger.debug('Lets see, if this works-- from office365')
     @api.one
     def sync_data(self):
         try:
