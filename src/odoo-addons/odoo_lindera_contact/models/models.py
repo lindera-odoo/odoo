@@ -7,8 +7,8 @@ import os
 from cerberus import Validator
 from raven import Client
 
-URL = 'https://backend-testing.lindera.de/v2'
-INTERNAL_AUTHENTICATION_TOKEN = 'Bearer HfpWLjqt5k0YqIjPgYtb'
+URL = 'https://backend-testing.lindera.de/v2'
+INTERNAL_AUTHENTICATION_TOKEN = 'Bearer HfpWLjqt5k0YqIjPgYtb'
 client = Client('https://2f93ec8aba4c419a836337bd8ff4b427:53d79797dd0642218c08b664581e4e6d@sentry.lindera.de/6')
 
 
