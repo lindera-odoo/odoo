@@ -4,200 +4,98 @@ import pprint
 import inspect
 import requests as rq
 import os
-from cerberus import Validator
 from raven import Client
+from . import backend_client
 
-URL = 'https://backend-testing.lindera.de/v2'
-INTERNAL_AUTHENTICATION_TOKEN = 'Bearer HfpWLjqt5k0YqIjPgYtb'
-client = Client('https://2f93ec8aba4c419a836337bd8ff4b427:53d79797dd0642218c08b664581e4e6d@sentry.lindera.de/6')
+client = Client(
+    os.getenv('RAVEN_CLIENT'))
 
 
 class LinderaBackend(models.Model):
     _inherit = 'res.partner'
+
     @api.model
     def create(self, val):
         res = super(LinderaBackend, self).create(val)
 
         isCompany = res.is_company
         companyType = res.company_type
-        tag = res.category_id
+        tags = list(map(lambda tag: tag.name, res.category_id))
         parentId = res.parent_id.id
         addressType = res.type
 
-        # LINDERA API (homes resource)
-        def postHome(data):
-            try:
-                return rq.post("{}/homes".format(URL), json=data, headers={'token': INTERNAL_AUTHENTICATION_TOKEN})
-            except:
-                client.captureMessage('Lindera backend failed to create the resource (home)')
-        
-        def getHome(id):
-            try:
-                return rq.get(URL+"/homes?filter={}={}".format('odooID', id), headers={'token': INTERNAL_AUTHENTICATION_TOKEN})
-            except:
-                client.captureMessage('Lindera backend failed to fetch the resource (home)')
+        def preparePayload(typeOfHome, data):
+            if typeOfHome == 'Einrichtung':
+                role = 'home'
+            if typeOfHome == 'Träger':
+                role = 'company'
+            if typeOfHome == 'Gruppe':
+                role = 'group'
 
-        def updateHome(id, data):
-            try:
-                return rq.put("{}/homes/{}".format(URL, id), json=data, headers={'token': INTERNAL_AUTHENTICATION_TOKEN})
-            except:
-                client.captureMessage('Lindera backend failed to update the resource (home)')
-
-
-        
-        # validator
-        def validateData(data):
-            v = Validator()
-            schema = {
-                'name': {'type': 'string', 'empty': False }, # map
-                'role': {'type': 'string', 'allowed': ['home', 'company', 'organization']},
-                'street': {'type': 'string', 'empty': False},
-                'zip': {'type': 'string', 'empty': False},
-                'city':  {'type': 'string', 'empty': False},
-                'odooID': {'type': 'number'},
-                'children': {'type': 'list'}
+            payload = {
+                'name': data.name,
+                'city': data.city,
+                'street': data.street,
+                'zip': data.zip,
+                'role': role,
+                'odooID': data.id
             }
-            result = v.validate(data, schema)
-            return result
-
-        
-        def preparePayload(tag):
-            data = {}
-            if tag == 'Einrichtung':
-                data = {
-                    'name': res.name,
-                    'city': res.city,
-                    'street': res.street,
-                    'zip': res.zip,
-                    'role': 'home',
-                    'odooID': res.id
-                }
-            if tag == 'Träger':
-                data = {
-                    'name': res.name,
-                    'city': res.city,
-                    'street': res.street,
-                    'zip': res.zip,
-                    'role': 'company',
-                    'odooID': res.id
-                }
-            return data
-
-        def createHome(payload):
-            result = validateData(payload)
-            if result:
-                postHome(payload)
-            else:
-                raise osv.except_osv(('Error!'), ('Invalid input data, address is missing'))
-        
-        def process(tag, data):
-            if addressType and addressType == 'contact':
-                raise osv.except_osv(('Error!'), ('Address is missing'))
-            
-            response = getHome(parentId).json()
-
-            # If the resource (home/company/contact) is not in lindera backend, then create it
-            if response and response['total'] == 0:
-                result = self.env['res.partner'].search([('id','=',parentId)])
-                if result:
-                    if tag == 'Einrichtung':
-                        payload = {
-                            'name': result.name,
-                            'city': result.city,
-                            'street': result.street,
-                            'zip': result.zip,
-                            'role': 'company',
-                            'odooID': result.id
-                        }
-                    
-                    if tag == 'Träger':
-                        payload = {
-                            'name': result.name,
-                            'city': result.city,
-                            'street': result.street,
-                            'zip': result.zip,
-                            'role': 'organization',
-                            'odooID': result.id
-                        }
-                if validateData(payload):
-                    documentId = postHome(payload).json()['data']['_id']
-                else:
-                    raise osv.except_osv(('Error!'), ('Parent company does not have proper address'))
-
-                # Create the child resource (home/company/contact) and get the ID
-                if validateData(data):
-                    result = postHome(data).json()
-                
-                _id = result['data']['_id']
-                updatedField = {
-                    'children': [
-                        _id
-                    ]
-                }
-                # update the parent resource (children field) with new data
-                updateHome(documentId, updatedField) 
-
-            # If the resource (home/company/contact) exists in lindera backend, then update the children field with the newly created resource ID 
-            if response and response['total'] == 1 :
-                resourceid = response['data'][0]['_id']
-                currentValues = []
-                for child in response['data'][0]['children']:
-                    currentValues.append(child['_id'])
-                        
-                if validateData(data):
-                    result = postHome(data).json()
-
-                newResourceId = result['data']['_id']
-                currentValues.append(newResourceId)
-                        
-                updatedField = {
-                    'children': currentValues
-                }
-                # update children with ID
-                updateHome(resourceid, updatedField)
-            
-
+            return payload
 
         if isCompany and companyType == 'company':
-            if len(tag) == 0:
-                raise osv.except_osv(('Error!'), ('Missing tag'))
+            typeOfHome = list(
+                filter(lambda tag: tag in ['Einrichtung', 'Gruppe', 'Träger'], tags))
 
-            tags = []
-            for item in tag:
-                tags.append(item.name)
-            
+            if(len(typeOfHome) > 1 or len(tags) == 0):
+                raise osv.except_osv(('Error!'), ('Tag selection invalid'))
+            elif(len(typeOfHome) == 1):
+                typeOfHome = typeOfHome[0]
+            else:
+                return res
 
-            # TODO: This part of the code should be optimized --
-            first = ['Träger', 'Einrichtung', 'Gruppe']
-            second = ['Träger', 'Einrichtung']
-            third = ['Träger', 'Gruppe']
-            forth = ['Einrichtung', 'Gruppe']
+            payload = preparePayload(typeOfHome, res)
 
-            if all(item in tags for item in first) or all(item in tags for item in second) or all(item in tags for item in third) or all(item in tags for item in forth):
-                raise osv.except_osv(('Error!'), ('These tags are not allowed to be used together'))
-            
+            if not parentId:
+                backend_client.postHome(payload)
+                return res
 
-            if 'Einrichtung' in tags:
-                payload = preparePayload('Einrichtung')
-                
-                if parentId:
-                    process('Einrichtung', payload)
+            else:
+                if addressType and addressType == 'contact':
+                    raise osv.except_osv(('Error!'), ('Address is missing'))
 
-                else:
-                    createHome(payload)
-            
-            if 'Träger' in tags:
-                payload = preparePayload('Träger')
+                parent = backend_client.getHome(parentId).json()
+                home = backend_client.postHome(payload).json()
+                # If the resource (home/company/contact) is not in lindera backend, then create it
+                if parent and parent['total'] == 0:
+                    parentData = self.env['res.partner'].search(
+                        [('id', '=', parentId)])
+                    if parentData:
+                        if(typeOfHome == 'Einrichtung'):
+                            payload = preparePayload('Träger', parentData)
+                        elif(typeOfHome == 'Träger'):
+                            payload = preparePayload('Gruppe', parentData)
 
-                if parentId:
-                    process('Träger', payload)
-                     
-                else:
-                    createHome(payload)
-            
+                        parentId = backend_client.postHome(payload).json()[
+                            'data']['_id']
+
+                        children = [home['data']['_id']]
+
+                # If the resource (home/company/contact) exists in lindera backend, then update the children field with the newly created resource ID
+                elif parent and parent['total'] >= 1:
+                    children = parent['data'][0]['children']
+                    children = list(map(lambda child: child['_id'], children))
+
+                    newHomeId = home['data']['_id']
+                    children.append(newHomeId)
+
+                    parentId = parent['data'][0]['_id']
+
+                updatedField = {
+                    'children': children
+                }
+                backend_client.updateHome(parentId, updatedField)
+
         return res
-  
-
 
 
 class linderaApi(models.Model):
