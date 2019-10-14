@@ -7,10 +7,6 @@ import os
 from raven import Client
 from . import backend_client
 
-client = Client(
-    os.getenv('RAVEN_CLIENT'))
-
-
 class LinderaBackend(models.Model):
     _inherit = 'res.partner'
 
