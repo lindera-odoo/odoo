@@ -38,7 +38,6 @@ def updateHome(id, data):
             client.captureMessage(message)
             raise osv.except_osv(('Error!'), (message))
 
-
 def validateHomeData(data):
     v = Validator()
     schema = {
@@ -48,7 +47,8 @@ def validateHomeData(data):
         'zip': {'type': 'string', 'empty': False},
         'city':  {'type': 'string', 'empty': False},
         'odooID': {'type': 'number'},
-        'children': {'type': 'list'}
+        'children': {'type': 'list'},
+        'subscriptionEndDate': {'type': 'string'}
     }
     result = v.validate(data, schema)
     if(not result):

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "odoo-lindera-contacts",
+    'name': "Lindera-Modules",
 
     'summary': """
-        Create Homes on the backend on contact creation""",
+        Contacts/CRM""",
 
     'description': """
         Long description of module's purpose
@@ -19,7 +19,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'crm', 'contacts'],
+    'depends': ['base', 'crm'],
 
     # always loaded
     'data': [
