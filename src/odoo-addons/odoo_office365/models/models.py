@@ -57,8 +57,6 @@ class OfficeSettings(models.Model):
 
                 self.env.cr.commit()
 
-
-
         except Exception as e:
             raise ValidationError(_(str(e)))
         raise osv.except_osv(_("Success!"), (_("Successfully Activated!")))
@@ -76,7 +74,6 @@ class Office365UserSettings(models.Model):
     field_name = fields.Char('office')
     token = fields.Char('Office_Token')
 
-
     @api.one
     def _compute_url(self):
 
@@ -86,7 +83,6 @@ class Office365UserSettings(models.Model):
         if settings:
             self.login_url = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=openid+offline_access+Calendars.ReadWrite+Mail.ReadWrite+Mail.Send+User.ReadWrite+Tasks.ReadWrite+Contacts.ReadWrite' % (
                 settings.client_id, settings.redirect_url)
-
 
     @api.one
     def test_connectiom(self):
@@ -169,8 +165,6 @@ class CustomUser(models.Model):
     office365_id_address = fields.Char('Office365 Id Address', readonly=True)
     send_mail_flag = fields.Boolean(string='Send messages using office365 Mail', default=True)
     is_task_sync_on = fields.Boolean('is sync in progress', default=False)
-
-
 
     @api.one
     def _compute_url(self):
@@ -721,17 +715,14 @@ class CustomUser(models.Model):
 
     def sync_customer_mail(self):
         try:
-            # self.env.user.send_mail_flag = False
             self.env.cr.commit()
             self.sync_customer_inbox_mail()
             self.sync_customer_sent_mail()
-            # self.env.user.send_mail_flag = True
+
         except Exception as e:
-            # self.env.user.send_mail_flag = True
             self.env.cr.commit()
             raise ValidationError(_(str(e)))
         self.env.cr.commit()
-        # raise osv.except_osv(("Success!"), ("Mails Synced Successfully !"))
 
     def sync_customer_inbox_mail(self):
         if self.env.user.token:
@@ -774,7 +765,8 @@ class CustomUser(models.Model):
                         messages = json.loads((response.decode('utf-8')))['value']
                         for message in messages:
                             if 'from' not in message.keys() or self.env['mail.mail'].search(
-                                    [('office_id', '=', message['id'])]):
+                                    [('office_id', '=', message['conversationId'])]) or self.env['mail.message'].search(
+                                [('office_id', '=', message['conversationId'])]):
                                 continue
 
                             if 'address' not in message.get('from').get('emailAddress') or message['bodyPreview'] == "":
@@ -792,7 +784,8 @@ class CustomUser(models.Model):
                             recipient_partners = []
                             channel_ids = []
                             for recipient in message['toRecipients']:
-                                if recipient['emailAddress']['address'].lower() == self.env.user.office365_email.lower() or \
+                                if recipient['emailAddress'][
+                                    'address'].lower() == self.env.user.office365_email.lower() or \
                                         recipient['emailAddress'][
                                             'address'].lower() == self.env.user.office365_id_address.lower():
                                     to_user = self.env['res.users'].search(
@@ -806,16 +799,15 @@ class CustomUser(models.Model):
                                 if to_user:
                                     to_partner = to_user.partner_id
                                     recipient_partners.append(to_partner.id)
-
+                            date = datetime.strptime(message['sentDateTime'], "%Y-%m-%dT%H:%M:%SZ")
                             self.env['mail.message'].create({
                                 'subject': message['subject'],
-                                'date': message['sentDateTime'],
+                                'date': date,
                                 'body': message['bodyPreview'],
                                 'email_from': message['from']['emailAddress']['address'],
-                                # 'channel_ids': [[6, 0, channel_ids]],
                                 'partner_ids': [[6, 0, recipient_partners]],
                                 'attachment_ids': [[6, 0, attachment_ids]],
-                                'office_id': message['id'],
+                                'office_id': message['conversationId'],
                                 'author_id': from_partner.id,
                                 'model': 'res.partner',
                                 'res_id': from_partner.id
@@ -824,8 +816,6 @@ class CustomUser(models.Model):
             except Exception as e:
                 # self.env.user.send_mail_flag = True
                 raise ValidationError(_(str(e)))
-
-            # raise osv.except_osv(("Success!"), (" Sync Successful !"))
 
     def sync_customer_sent_mail(self):
         """
@@ -873,7 +863,9 @@ class CustomUser(models.Model):
                             for message in messages:
 
                                 if 'from' not in message.keys() or self.env['mail.mail'].search(
-                                        [('office_id', '=', message['conversationId'])]):
+                                        [('office_id', '=', message['conversationId'])]) or self.env[
+                                    'mail.message'].search(
+                                    [('office_id', '=', message['conversationId'])]):
                                     continue
 
                                 if message['bodyPreview'] == "":
@@ -904,14 +896,12 @@ class CustomUser(models.Model):
 
                                     if not to_partner:
                                         continue
-
-
+                                    date = datetime.strptime(message['sentDateTime'], "%Y-%m-%dT%H:%M:%SZ")
                                     self.env['mail.message'].create({
                                         'subject': message['subject'],
-                                        'date': message['sentDateTime'],
+                                        'date': date,
                                         'body': message['bodyPreview'],
                                         'email_from': email_from,
-                                        # 'channel_ids': [[6, 0, channel_ids]],
                                         'partner_ids': [[6, 0, [to_partner.id]]],
                                         'attachment_ids': [[6, 0, attachment_ids]],
                                         'office_id': message['conversationId'],
@@ -920,13 +910,9 @@ class CustomUser(models.Model):
                                         'res_id': to_partner.id
                                     })
                                     self.env.cr.commit()
-                                # self.env.user.send_mail_flag = True
-
-
 
             except Exception as e:
                 raise ValidationError(_(str(e)))
-
 
     def generate_refresh_token(self):
 
@@ -954,8 +940,9 @@ class CustomUser(models.Model):
                 self.env.user.token = response['access_token']
                 self.env.user.refresh_token = response['refresh_token']
                 self.env.user.expires_in = int(round(time.time() * 1000))
-        # else:
-        #     raise osv.except_osv(_("Error!"), (_("Token is not exist to resfresh it!")))
+        else:
+            print('Token is missing')
+
 
     def export_contacts(self):
 
@@ -1210,78 +1197,77 @@ class CustomMessage(models.Model):
                     nowDateTime = datetime.now()
                     if nowDateTime > expires_in:
                         self.generate_refresh_token()
+            if 'mail_message_id' in values:
+                email_obj = self.env['mail.message'].search([('id', '=', values['mail_message_id'])])
+                partner_id = values['recipient_ids'][0][1]
+                partner_obj = self.env['res.partner'].search([('id', '=', partner_id)])
 
-            email_obj = self.env['mail.message'].search([('id', '=', values['mail_message_id'])])
-            partner_id = values['recipient_ids'][0][1]
-            partner_obj = self.env['res.partner'].search([('id', '=', partner_id)])
-
-            new_data = {
-                        "subject": values['subject'] if values['subject'] else email_obj.body,
-                        # "importance": "high",
-                        "body": {
-                            "contentType": "HTML",
-                            "content": email_obj.body
-                        },
-                        "toRecipients": [
-                            {
-                                "emailAddress": {
-                                    "address": partner_obj.email
+                new_data = {
+                            "subject": values['subject'] if values['subject'] else email_obj.body,
+                            # "importance": "high",
+                            "body": {
+                                "contentType": "HTML",
+                                "content": email_obj.body
+                            },
+                            "toRecipients": [
+                                {
+                                    "emailAddress": {
+                                        "address": partner_obj.email
+                                    }
                                 }
-                            }
-                        ]
-                    }
+                            ]
+                        }
 
-            response = requests.post(
-                'https://graph.microsoft.com/v1.0/me/messages', data=json.dumps(new_data),
-                                    headers={
-                                        'Host': 'outlook.office.com',
-                                        'Authorization': 'Bearer {0}'.format(user.token),
-                                        'Accept': 'application/json',
-                                        'Content-Type': 'application/json',
-                                        'X-Target-URL': 'http://outlook.office.com',
-                                        'connection': 'keep-Alive'
-                                    })
-            if 'conversationId' in json.loads((response.content.decode('utf-8'))).keys():
-                conv_id = json.loads((response.content.decode('utf-8')))['conversationId']
+                response = requests.post(
+                    'https://graph.microsoft.com/v1.0/me/messages', data=json.dumps(new_data),
+                                        headers={
+                                            'Host': 'outlook.office.com',
+                                            'Authorization': 'Bearer {0}'.format(user.token),
+                                            'Accept': 'application/json',
+                                            'Content-Type': 'application/json',
+                                            'X-Target-URL': 'http://outlook.office.com',
+                                            'connection': 'keep-Alive'
+                                        })
+                if 'conversationId' in json.loads((response.content.decode('utf-8'))).keys():
+                    conv_id = json.loads((response.content.decode('utf-8')))['conversationId']
 
-            if 'id' in json.loads((response.content.decode('utf-8'))).keys():
+                if 'id' in json.loads((response.content.decode('utf-8'))).keys():
 
-                o365_id = json.loads((response.content.decode('utf-8')))['id']
-                if email_obj.attachment_ids:
-                    for attachment in self.getAttachments(email_obj.attachment_ids):
-                        attachment_response = requests.post(
-                            'https://graph.microsoft.com/beta/me/messages/' + o365_id + '/attachments',
-                            data=json.dumps(attachment),
-                            headers={
-                                'Host': 'outlook.office.com',
-                                'Authorization': 'Bearer {0}'.format(user.token),
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json',
-                                'X-Target-URL': 'http://outlook.office.com',
-                                'connection': 'keep-Alive'
-                            })
-                send_response = requests.post(
-                    'https://graph.microsoft.com/v1.0/me/messages/' + o365_id + '/send',
-                    headers={
-                        'Host': 'outlook.office.com',
-                        'Authorization': 'Bearer {0}'.format(user.token),
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'X-Target-URL': 'http://outlook.office.com',
-                        'connection': 'keep-Alive'
-                    })
+                    o365_id = json.loads((response.content.decode('utf-8')))['id']
+                    if email_obj.attachment_ids:
+                        for attachment in self.getAttachments(email_obj.attachment_ids):
+                            attachment_response = requests.post(
+                                'https://graph.microsoft.com/beta/me/messages/' + o365_id + '/attachments',
+                                data=json.dumps(attachment),
+                                headers={
+                                    'Host': 'outlook.office.com',
+                                    'Authorization': 'Bearer {0}'.format(user.token),
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'X-Target-URL': 'http://outlook.office.com',
+                                    'connection': 'keep-Alive'
+                                })
+                    send_response = requests.post(
+                        'https://graph.microsoft.com/v1.0/me/messages/' + o365_id + '/send',
+                        headers={
+                            'Host': 'outlook.office.com',
+                            'Authorization': 'Bearer {0}'.format(user.token),
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-Target-URL': 'http://outlook.office.com',
+                            'connection': 'keep-Alive'
+                        })
 
-                message = super(CustomMessage, self).create(values)
-                message.email_from = None
-                # message._invalidate_documents()
+                    message = super(CustomMessage, self).create(values)
+                    message.email_from = None
 
-                # if not self.env.context.get('message_create_from_mail_mail'):
-                #     message._notify(force_send=self.env.context.get('mail_notify_force_send', True),
-                #                     user_signature=self.env.context.get('mail_notify_user_signature', True))
-                if conv_id:
-                    message.office_id = conv_id
+                    if conv_id:
+                        message.office_id = conv_id
 
-                return message
+                    return message
+
+            else:
+                return super(CustomMessage, self).create(values)
 
         else:
             return super(CustomMessage, self).create(values)
@@ -1334,467 +1320,6 @@ class CustomMessage(models.Model):
                 self.env.cr.commit()
 
 
-# class CustomMessage(models.Model):
-#     """
-#     Email will be sent to the recipient of the message.
-#     """
-#     _inherit = 'mail.message'
-#
-#     office_id = fields.Char('Office Id')
-#
-#     # from_office = fields.Char(string= 'check')
-#
-#     @api.model
-#     def create(self, values):
-#         """
-#         overriding create message to send email on message creation
-#         :param values:
-#         :return:
-#         """
-#         ################## New Code ##################
-#         ################## New Code ##################
-#         o365_id = None
-#         conv_id = None
-#         if 'subtype_id' in values:
-#             log_note = self.env['mail.message.subtype'].browse(int(values['subtype_id'])).name
-#             if log_note == 'Note':
-#                 message = super(CustomMessage, self).create(values)
-#                 # message._invalidate_documents()
-#                 return message
-#         if 'is_log' in values and values['is_log']:
-#             message = super(CustomMessage, self).create(values)
-#             # message._invalidate_documents()
-#             return message
-#
-#         if 'model' in values and values['model'] == 'mail.channel':
-#             message = super(CustomMessage, self).create(values)
-#             # message._invalidate_documents()
-#             return message
-#
-#         elif 'model' in values and self.env.user.send_mail_flag:
-#
-#             if self.env.user.token and 'res_id' in values.keys():
-#                 if self.env.user.expires_in:
-#                     expires_in = datetime.fromtimestamp(int(self.env.user.expires_in) / 1e3)
-#                     expires_in = expires_in + timedelta(seconds=3600)
-#                     nowDateTime = datetime.now()
-#                     if nowDateTime > expires_in:
-#                         self.generate_refresh_token()
-#             if 'attachment_ids' in values and values['attachment_ids']:
-#                 if len(values['attachment_ids'][0]) == 3:
-#                     try:
-#                         values['email_from'] = None
-#                         message = super(CustomMessage, self).create(values)
-#                     except:
-#                         print('message is created on odoo........')
-#
-#                     return message
-#                 else:
-#                     if "subject" in values:
-#                         # attachments_list = self.getAttachments(values['attachment_ids'])
-#                         subject = values['subject'] if values['subject'] else values['body']
-#                         body = values['body']
-#                         to_partner = None
-#                         # if values['model'] == 'mail.channel':
-#                         #     from_partner = self.env['res.partner'].search([('email', '=', self.env.user.email)])
-#                         #     from_partner = from_partner[0] if from_partner else from_partner
-#                         #     channel_partner = self.env['mail.channel.partner'].search(
-#                         #         [('channel_id', '=', values['res_id']), ('partner_id', '!=', from_partner.id)])
-#                         #     to_partner = channel_partner[0].partner_id if channel_partner else channel_partner
-#                         if values['model'] == 'account.invoice' or values['model'] == 'crm.lead' or values[
-#                             'model'] == 'sale.order' or values['model'] == 'res.partner':
-#                             obj = self.env[values['model']].search([('id', '=', values['res_id'])])
-#                             if values['model'] == 'res.partner':
-#                                 to_partner = obj
-#                             else:
-#                                 to_partner = obj.partner_id
-#
-#                         if to_partner and "office_id" not in values:
-#                             if not self.env.user.token or not body or body == "" or body == (
-#                                     _("Contact created")) or body == _(
-#                                 "Quotation created") or _("has joined the My Company network.") in body:
-#                                 not_send_email = ""
-#                             elif to_partner.email == False:
-#                                 raise osv.except_osv(_("Error!"),
-#                                                      (_(
-#                                                          "Unable to send email, please fill the Contact's email address.")))
-#                             else:
-#                                 to_user = self.env['res.users'].search([('email', '=', to_partner.email)])
-#                                 email = ""
-#                                 if to_user and to_user.office365_email:
-#                                     email = to_user.office365_email
-#                                 else:
-#                                     email = to_partner.email
-#                                 data = {
-#                                     "message": {
-#                                         "subject": subject if subject else body,
-#
-#                                         "body": {
-#                                             "contentType": "Text",
-#                                             "content": body
-#                                         },
-#                                         "toRecipients": [
-#                                             {
-#                                                 "emailAddress": {
-#                                                     'address': email
-#                                                 }
-#                                             }
-#                                         ],
-#                                         "ccRecipients": []
-#                                     },
-#                                     "saveToSentItems": "true"
-#                                 }
-#                                 new_data = {
-#                                     "subject": subject,
-#                                     # "importance": "high",
-#                                     "body": {
-#                                         "contentType": "HTML",
-#                                         "content": body
-#                                     },
-#                                     "toRecipients": [
-#                                         {
-#                                             "emailAddress": {
-#                                                 "address": email
-#                                             }
-#                                         }
-#                                     ]
-#                                 }
-#
-#                                 response = requests.post(
-#                                     'https://graph.microsoft.com/v1.0/me/messages', data=json.dumps(new_data),
-#                                     headers={
-#                                         'Host': 'outlook.office.com',
-#                                         'Authorization': 'Bearer {0}'.format(self.env.user.token),
-#                                         'Accept': 'application/json',
-#                                         'Content-Type': 'application/json',
-#                                         'X-Target-URL': 'http://outlook.office.com',
-#                                         'connection': 'keep-Alive'
-#                                     })
-#                                 if 'conversationId' in json.loads((response.content.decode('utf-8'))).keys():
-#                                     conv_id = json.loads((response.content.decode('utf-8')))['conversationId']
-#
-#                                 if 'id' in json.loads((response.content.decode('utf-8'))).keys():
-#
-#                                     o365_id = json.loads((response.content.decode('utf-8')))['id']
-#                                     if values['attachment_ids']:
-#                                         for attachment in self.getAttachments(values['attachment_ids']):
-#                                             attachment_response = requests.post(
-#                                                 'https://graph.microsoft.com/beta/me/messages/' + o365_id + '/attachments',
-#                                                 data=json.dumps(attachment),
-#                                                 headers={
-#                                                     'Host': 'outlook.office.com',
-#                                                     'Authorization': 'Bearer {0}'.format(self.env.user.token),
-#                                                     'Accept': 'application/json',
-#                                                     'Content-Type': 'application/json',
-#                                                     'X-Target-URL': 'http://outlook.office.com',
-#                                                     'connection': 'keep-Alive'
-#                                                 })
-#                                     send_response = requests.post(
-#                                         'https://graph.microsoft.com/v1.0/me/messages/' + o365_id + '/send',
-#                                         headers={
-#                                             'Host': 'outlook.office.com',
-#                                             'Authorization': 'Bearer {0}'.format(self.env.user.token),
-#                                             'Accept': 'application/json',
-#                                             'Content-Type': 'application/json',
-#                                             'X-Target-URL': 'http://outlook.office.com',
-#                                             'connection': 'keep-Alive'
-#                                         })
-#                                     # values['office_id'] = json.loads((response.content.decode('utf-8')))['conversationId']
-#
-#                                     if send_response.status_code == 401:
-#                                         raise osv.except_osv(("Access Token Expired!"),
-#                                                              (" Please Regenerate Access Token !"))
-#
-#                                     if send_response.status_code != 202:
-#                                         raise osv.except_osv(_("Error!"), (_(
-#                                             "Mail not sent to " + to_partner.email + ' with status code ' + str(
-#                                                 response.status_code))))
-#
-#                                 if response.status_code == 401:
-#                                     raise osv.except_osv(_("Access Token Expired!"), (_(
-#                                         "Please Regenerate Access Token or go to office365 settings in users and in Mails tab disable checkbox")))
-#                                 elif response.status_code != 201:
-#                                     raise osv.except_osv(_("Error!"), (_(
-#                                         "Mail not sent to " + to_partner.email + ' with status code ' + str(
-#                                             response.status_code))))
-#                         else:
-#                             if "office_id" in values:
-#                                 o365_id = values['office_id']
-#                     ################## New Code ##################
-#                     # coming from mail.js that does not have pid in its values
-#
-#                     if self.env.context.get('default_starred'):
-#                         self = self.with_context({'default_starred_partner_ids': [(4, self.env.user.partner_id.id)]})
-#
-#                     if 'email_from' not in values:  # needed to compute reply_to
-#                         values['email_from'] = self._get_default_from()
-#                     if not values.get('message_id'):
-#                         values['message_id'] = self._get_message_id(values)
-#                     if 'reply_to' not in values:
-#                         values['reply_to'] = self._get_reply_to(values)
-#                     if 'record_name' not in values and 'default_record_name' not in self.env.context:
-#                         values['record_name'] = self._get_record_name(values)
-#
-#                     if 'attachment_ids' not in values:
-#                         values.setdefault('attachment_ids', [])
-#
-#                     # extract base64 images
-#                     if 'body' in values:
-#                         Attachments = self.env['ir.attachment']
-#                         data_to_url = {}
-#
-#                         def base64_to_boundary(match):
-#                             key = match.group(2)
-#                             if not data_to_url.get(key):
-#                                 name = 'image%s' % len(data_to_url)
-#                                 attachment = Attachments.create({
-#                                     'name': name,
-#                                     'datas': match.group(2),
-#                                     'datas_fname': name,
-#                                     'res_model': 'mail.message',
-#                                 })
-#                                 values['attachment_ids'].append((4, attachment.id))
-#                                 data_to_url[key] = '/web/image/%s' % attachment.id
-#                             return '%s%s alt="%s"' % (data_to_url[key], match.group(3), name)
-#
-#                         values['body'] = _image_dataurl.sub(base64_to_boundary, tools.ustr(values['body']))
-#
-#                     # print(values)
-#                     values['mail_from'] = None
-#                     message = super(CustomMessage, self).create(values)
-#                     message._invalidate_documents()
-#
-#                     # if not self.env.context.get('message_create_from_mail_mail'):
-#                     #     message._notify(force_send=self.env.context.get('mail_notify_force_send', True),
-#                     #                     user_signature=self.env.context.get('mail_notify_user_signature', True))
-#                     if conv_id:
-#                         message.office_id = conv_id
-#
-#                     return message
-#             else:
-#                 if "subject" in values:
-#                     # attachments_list = self.getAttachments(values['attachment_ids'])
-#                     subject = values['subject'] if values['subject'] else values['body']
-#                     body = values['body']
-#                     to_partner = None
-#                     if values['model'] == 'mail.channel':
-#                         from_partner = self.env['res.partner'].search([('email', '=', self.env.user.email)])
-#                         from_partner = from_partner[0] if from_partner else from_partner
-#                         channel_partner = self.env['mail.channel.partner'].search(
-#                             [('channel_id', '=', values['res_id']), ('partner_id', '!=', from_partner.id)])
-#                         to_partner = channel_partner[0].partner_id if channel_partner else channel_partner
-#                     if values['model'] == 'account.invoice' or values['model'] == 'crm.lead' or values[
-#                         'model'] == 'sale.order' or values['model'] == 'res.partner':
-#                         obj = self.env[values['model']].search([('id', '=', values['res_id'])])
-#                         if values['model'] == 'res.partner':
-#                             to_partner = obj
-#                         else:
-#                             to_partner = obj.partner_id
-#
-#                     if to_partner and "office_id" not in values:
-#                         if not self.env.user.token or not body or body == "" or body == (
-#                                 _("Contact created")) or body == _(
-#                             "Quotation created") or _("has joined the My Company network.") in body:
-#                             not_send_email = ""
-#                         elif to_partner.email == False:
-#                             raise osv.except_osv(_("Error!"),
-#                                                  (_("Unable to send email, please fill the Contact's email address.")))
-#                         else:
-#                             to_user = self.env['res.users'].search([('email', '=', to_partner.email)])
-#                             email = ""
-#                             if to_user and to_user.office365_email:
-#                                 email = to_user.office365_email
-#                             else:
-#                                 email = to_partner.email
-#                             data = {
-#                                 "message": {
-#                                     "subject": subject if subject else body,
-#
-#                                     "body": {
-#                                         "contentType": "Text",
-#                                         "content": body
-#                                     },
-#                                     "toRecipients": [
-#                                         {
-#                                             "emailAddress": {
-#                                                 'address': email
-#                                             }
-#                                         }
-#                                     ],
-#                                     "ccRecipients": []
-#                                 },
-#                                 "saveToSentItems": "true"
-#                             }
-#                             new_data = {
-#                                 "subject": subject,
-#                                 # "importance": "high",
-#                                 "body": {
-#                                     "contentType": "HTML",
-#                                     "content": body
-#                                 },
-#                                 "toRecipients": [
-#                                     {
-#                                         "emailAddress": {
-#                                             "address": email
-#                                         }
-#                                     }
-#                                 ]
-#                             }
-#
-#                             response = requests.post(
-#                                 'https://graph.microsoft.com/v1.0/me/messages', data=json.dumps(new_data),
-#                                 headers={
-#                                     'Host': 'outlook.office.com',
-#                                     'Authorization': 'Bearer {0}'.format(self.env.user.token),
-#                                     'Accept': 'application/json',
-#                                     'Content-Type': 'application/json',
-#                                     'X-Target-URL': 'http://outlook.office.com',
-#                                     'connection': 'keep-Alive'
-#                                 })
-#                             if 'conversationId' in json.loads((response.content.decode('utf-8'))).keys():
-#                                 conv_id = json.loads((response.content.decode('utf-8')))['conversationId']
-#
-#                             if 'id' in json.loads((response.content.decode('utf-8'))).keys():
-#
-#                                 o365_id = json.loads((response.content.decode('utf-8')))['id']
-#                                 if values['attachment_ids']:
-#                                     for attachment in self.getAttachments(values['attachment_ids']):
-#                                         attachment_response = requests.post(
-#                                             'https://graph.microsoft.com/beta/me/messages/' + o365_id + '/attachments',
-#                                             data=json.dumps(attachment),
-#                                             headers={
-#                                                 'Host': 'outlook.office.com',
-#                                                 'Authorization': 'Bearer {0}'.format(self.env.user.token),
-#                                                 'Accept': 'application/json',
-#                                                 'Content-Type': 'application/json',
-#                                                 'X-Target-URL': 'http://outlook.office.com',
-#                                                 'connection': 'keep-Alive'
-#                                             })
-#                                 send_response = requests.post(
-#                                     'https://graph.microsoft.com/v1.0/me/messages/' + o365_id + '/send',
-#                                     headers={
-#                                         'Host': 'outlook.office.com',
-#                                         'Authorization': 'Bearer {0}'.format(self.env.user.token),
-#                                         'Accept': 'application/json',
-#                                         'Content-Type': 'application/json',
-#                                         'X-Target-URL': 'http://outlook.office.com',
-#                                         'connection': 'keep-Alive'
-#                                     })
-#                                 # values['office_id'] = json.loads((response.content.decode('utf-8')))['conversationId']
-#
-#                                 if send_response.status_code == 401:
-#                                     raise osv.except_osv(("Access Token Expired!"),
-#                                                          (" Please Regenerate Access Token !"))
-#
-#                                 if send_response.status_code != 202:
-#                                     raise osv.except_osv(_("Error!"), (_(
-#                                         "Mail not sent to " + to_partner.email + ' with status code ' + str(
-#                                             response.status_code))))
-#
-#                             if response.status_code == 401:
-#                                 raise osv.except_osv(_("Access Token Expired!"), (_(
-#                                     "Please Regenerate Access Token or go to office365 settings in users and in Mails tab disable checkbox")))
-#                             elif response.status_code != 201:
-#                                 raise osv.except_osv(_("Error!"), (_(
-#                                     "Mail not sent to " + to_partner.email + ' with status code ' + str(
-#                                         response.status_code))))
-#                     else:
-#                         if "office_id" in values:
-#                             o365_id = values['office_id']
-#                 ################## New Code ##################
-#                 # coming from mail.js that does not have pid in its values
-#
-#                 if self.env.context.get('default_starred'):
-#                     self = self.with_context({'default_starred_partner_ids': [(4, self.env.user.partner_id.id)]})
-#
-#                 if 'email_from' not in values:  # needed to compute reply_to
-#                     values['email_from'] = self._get_default_from()
-#                 if not values.get('message_id'):
-#                     values['message_id'] = self._get_message_id(values)
-#                 if 'reply_to' not in values:
-#                     values['reply_to'] = self._get_reply_to(values)
-#                 if 'record_name' not in values and 'default_record_name' not in self.env.context:
-#                     values['record_name'] = self._get_record_name(values)
-#
-#                 if 'attachment_ids' not in values:
-#                     values.setdefault('attachment_ids', [])
-#
-#                 # extract base64 images
-#                 if 'body' in values:
-#                     Attachments = self.env['ir.attachment']
-#                     data_to_url = {}
-#
-#                     def base64_to_boundary(match):
-#                         key = match.group(2)
-#                         if not data_to_url.get(key):
-#                             name = 'image%s' % len(data_to_url)
-#                             attachment = Attachments.create({
-#                                 'name': name,
-#                                 'datas': match.group(2),
-#                                 'datas_fname': name,
-#                                 'res_model': 'mail.message',
-#                             })
-#                             values['attachment_ids'].append((4, attachment.id))
-#                             data_to_url[key] = '/web/image/%s' % attachment.id
-#                         return '%s%s alt="%s"' % (data_to_url[key], match.group(3), name)
-#
-#                     values['body'] = _image_dataurl.sub(base64_to_boundary, tools.ustr(values['body']))
-#
-#                 # print(values)
-#                 values['email_from'] = None
-#                 message = super(CustomMessage, self).create(values)
-#                 message._invalidate_documents()
-#
-#                 # if not self.env.context.get('message_create_from_mail_mail'):
-#                 #     message._notify(force_send=self.env.context.get('mail_notify_force_send', True),
-#                 #                     user_signature=self.env.context.get('mail_notify_user_signature', True))
-#                 if conv_id:
-#                     message.office_id = conv_id
-#
-#                 return message
-#
-#         else:
-#             message = super(CustomMessage, self).create(values)
-#             return message
-#
-#     def getAttachments(self, attachment_ids):
-#         attachment_list = []
-#         if attachment_ids:
-#             attachments = self.env['ir.attachment'].search([('id', 'in', [id[1] for id in attachment_ids])])
-#             for attachment in attachments:
-#                 attachment_list.append({
-#                     "@odata.type": "#microsoft.graph.fileAttachment",
-#                     "name": attachment.name,
-#                     "contentBytes": attachment.datas.decode("utf-8")
-#                 })
-#         return attachment_list
-#
-#     def generate_refresh_token(self):
-#         if self.env.user.refresh_token:
-#             settings = self.env['office.settings'].search([])
-#             settings = settings[0] if settings else settings
-#
-#             if not settings.client_id or not settings.redirect_url or not settings.secret:
-#                 raise osv.except_osv(_("Error!"), (_("Please ask admin to add Office365 settings!")))
-#             header = {
-#                 'Content-Type': 'application/x-www-form-urlencoded'
-#             }
-#
-#             response = requests.post(
-#                 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-#                 data='grant_type=refresh_token&refresh_token=' + self.env.user.refresh_token + '&redirect_uri=' + settings.redirect_url + '&client_id=' + settings.client_id + '&client_secret=' + settings.secret
-#                 , headers=header).content
-#
-#             response = json.loads((str(response)[2:])[:-1])
-#             if 'access_token' not in response:
-#                 response["error_description"] = response["error_description"].replace("\\r\\n", " ")
-#                 raise osv.except_osv(_("Error!"), (_(response["error"] + " " + response["error_description"])))
-#             else:
-#                 self.env.user.token = response['access_token']
-#                 self.env.user.refresh_token = response['refresh_token']
-#                 self.env.user.expires_in = int(round(time.time() * 1000))
-
-
 class CustomActivity(models.Model):
     _inherit = 'mail.activity'
 
@@ -1803,54 +1328,102 @@ class CustomActivity(models.Model):
 
     @api.model
     def create(self, values):
-        if self.env.user.expires_in:
-            expires_in = datetime.fromtimestamp(int(self.env.user.expires_in) / 1e3)
-            expires_in = expires_in + timedelta(seconds=3600)
-            nowDateTime = datetime.now()
-            if nowDateTime > expires_in:
-                self.generate_refresh_token()
-
+        """
+        overriding create message to send email on message creation
+        :param values:
+        :return:
+        """
+        ################## New Code ##################
+        ################## New Code ##################
         o365_id = None
-        if self.env.user.office365_email and not self.env.user.is_task_sync_on and values[
-            'res_id'] == self.env.user.partner_id.id:
-            data = {
-                'subject': values['summary'] if values['summary'] else values['note'],
-                "body": {
-                    "contentType": "html",
-                    "content": values['note']
-                },
-                "dueDateTime": {
-                    "dateTime": values['date_deadline'] + 'T00:00:00Z',
-                    "timeZone": "UTC"
-                },
-            }
-            response = requests.post(
-                'https://graph.microsoft.com/beta/me/outlook/tasks', data=json.dumps(data),
-                headers={
-                    'Host': 'outlook.office.com',
-                    'Authorization': 'Bearer {0}'.format(self.env.user.token),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-Target-URL': 'http://outlook.office.com',
-                    'connection': 'keep-Alive'
-                }).content
-            if 'id' in json.loads((response.decode('utf-8'))).keys():
-                o365_id = json.loads((response.decode('utf-8')))['id']
+        conv_id = None
+        context = self._context
 
-        """
-        original code!
-        """
+        current_uid = context.get('uid')
 
-        activity = super(CustomActivity, self).create(values)
-        self.env[activity.res_model].browse(activity.res_id).message_subscribe(
-            partner_ids=[activity.user_id.partner_id.id])
-        if activity.date_deadline <= fields.Date.today():
-            self.env['bus.bus'].sendone(
-                (self._cr.dbname, 'res.partner', activity.user_id.partner_id.id),
-                {'type': 'activity_updated', 'activity_created': True})
-        if o365_id:
-            activity.office_id = o365_id
-        return activity
+        user = self.env['res.users'].browse(current_uid)
+        if user.send_mail_flag:
+            if user.token:
+                if user.expires_in:
+                    expires_in = datetime.fromtimestamp(int(user.expires_in) / 1e3)
+                    expires_in = expires_in + timedelta(seconds=3600)
+                    nowDateTime = datetime.now()
+                    if nowDateTime > expires_in:
+                        self.generate_refresh_token()
+            if 'mail_message_id' in values:
+                email_obj = self.env['mail.message'].search([('id', '=', values['mail_message_id'])])
+                partner_id = values['recipient_ids'][0][1]
+                partner_obj = self.env['res.partner'].search([('id', '=', partner_id)])
+
+                new_data = {
+                    "subject": values['subject'] if values['subject'] else email_obj.body,
+                    # "importance": "high",
+                    "body": {
+                        "contentType": "HTML",
+                        "content": email_obj.body
+                    },
+                    "toRecipients": [
+                        {
+                            "emailAddress": {
+                                "address": partner_obj.email
+                            }
+                        }
+                    ]
+                }
+
+                response = requests.post(
+                    'https://graph.microsoft.com/v1.0/me/messages', data=json.dumps(new_data),
+                    headers={
+                        'Host': 'outlook.office.com',
+                        'Authorization': 'Bearer {0}'.format(user.token),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Target-URL': 'http://outlook.office.com',
+                        'connection': 'keep-Alive'
+                    })
+                if 'conversationId' in json.loads((response.content.decode('utf-8'))).keys():
+                    conv_id = json.loads((response.content.decode('utf-8')))['conversationId']
+
+                if 'id' in json.loads((response.content.decode('utf-8'))).keys():
+
+                    o365_id = json.loads((response.content.decode('utf-8')))['id']
+                    if email_obj.attachment_ids:
+                        for attachment in self.getAttachments(email_obj.attachment_ids):
+                            attachment_response = requests.post(
+                                'https://graph.microsoft.com/beta/me/messages/' + o365_id + '/attachments',
+                                data=json.dumps(attachment),
+                                headers={
+                                    'Host': 'outlook.office.com',
+                                    'Authorization': 'Bearer {0}'.format(user.token),
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'X-Target-URL': 'http://outlook.office.com',
+                                    'connection': 'keep-Alive'
+                                })
+                    send_response = requests.post(
+                        'https://graph.microsoft.com/v1.0/me/messages/' + o365_id + '/send',
+                        headers={
+                            'Host': 'outlook.office.com',
+                            'Authorization': 'Bearer {0}'.format(user.token),
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-Target-URL': 'http://outlook.office.com',
+                            'connection': 'keep-Alive'
+                        })
+
+                    message = super(CustomMessage, self).create(values)
+                    message.email_from = None
+
+                    if conv_id:
+                        message.office_id = conv_id
+
+                    return message
+
+            else:
+                return super(CustomMessage, self).create(values)
+        else:
+            return super(CustomMessage, self).create(values)
+
 
     def generate_refresh_token(self):
 
