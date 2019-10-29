@@ -18,10 +18,10 @@
     'version': '0.1',
     'depends': ['base', 'calendar', 'crm'],
     'images': [
-        'static/description/icon.png',
+        'static/description/banner.png',
     ],
     'data': [
-        #'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'views/views.xml',
         'data/scheduler.xml',
     ],
