@@ -27,14 +27,6 @@ _image_dataurl = re.compile(r'(data:image/[a-z]+?);base64,([a-z0-9+/]{3,}=*)([\'
 
 
 
-class SaleSubscription(models.Model):
-    _inherit = 'sale.subscription'
-    @api.model
-    def create(self, val):
-        res = super(SaleSubscription, self).create(val)
-        print("hey, overriding subscription app")
-        return res
-
 class OfficeSettings(models.Model):
     """
     This class separates one time office 365 settings from Token generation settings
