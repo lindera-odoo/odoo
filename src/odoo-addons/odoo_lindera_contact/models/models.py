@@ -8,11 +8,6 @@ from raven import Client
 from . import backend_client
 from datetime import datetime
 
-
-client = Client(
-    os.getenv('RAVEN_CLIENT'))
-
-
 def getCurrentTimestamp():
     return datetime.now().timestamp().__round__()
 
@@ -87,7 +82,7 @@ class LinderaContacts(models.Model):
             if typeOfHome == 'Träger':
                 role = 'company'
             if typeOfHome == 'Gruppe':
-                role = 'group'
+                role = 'organization'
 
             payload = {
                 'name': data.name,
@@ -102,9 +97,11 @@ class LinderaContacts(models.Model):
         if isCompany and companyType == 'company':
             typeOfHome = list(
                 filter(lambda tag: tag in ['Einrichtung', 'Gruppe', 'Träger'], tags))
-
-            if(len(typeOfHome) > 1 or len(tags) == 0):
-                raise osv.except_osv(('Error!'), ('Tag selection invalid'))
+            
+            if len(typeOfHome) > 1:
+                raise osv.except_osv(('Error!'), ('These tags are not allowed to be used together'))
+            if len(tags) == 0:
+                raise osv.except_osv(('Error!'), ('Please select a tag'))
             elif(len(typeOfHome) == 1):
                 typeOfHome = typeOfHome[0]
             else:
@@ -121,9 +118,9 @@ class LinderaContacts(models.Model):
                     raise osv.except_osv(('Error!'), ('Address is missing'))
 
                 parent = backend_client.getHome(parentId).json()
-                home = backend_client.postHome(payload).json()
                 # If the resource (home/company/contact) is not in lindera backend, then create it
                 if parent and parent['total'] == 0:
+                    home = backend_client.postHome(payload).json()
                     parentData = self.env['res.partner'].search(
                         [('id', '=', parentId)])
                     if parentData:
@@ -132,13 +129,18 @@ class LinderaContacts(models.Model):
                         elif(typeOfHome == 'Träger'):
                             payload = preparePayload('Gruppe', parentData)
 
-                        parentId = backend_client.postHome(payload).json()[
-                            'data']['_id']
+                        parentId = backend_client.postHome(payload).json()['data']['_id']
 
                         children = [home['data']['_id']]
 
                 # If the resource (home/company/contact) exists in lindera backend, then update the children field with the newly created resource ID
                 elif parent and parent['total'] >= 1:
+                    role = parent['data'][0]['role']
+                    if (typeOfHome == 'Einrichtung' and (role == 'home' or role == 'organization' )) or (typeOfHome == 'Träger' and (role == 'home' or role == 'company' )):
+                        raise osv.except_osv(('Error!'), ('This contact can not be assigned as parent'))
+                
+                    
+                    home = backend_client.postHome(payload).json()
                     children = parent['data'][0]['children']
                     children = list(map(lambda child: child['_id'], children))
 
