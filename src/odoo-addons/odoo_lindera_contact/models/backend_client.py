@@ -2,7 +2,6 @@ import requests as rq
 import os
 from cerberus import Validator
 from raven import Client
-from dotenv import load_dotenv
 from openerp.osv import osv
 from requests.exceptions import ConnectionError
 client = Client('https://2f93ec8aba4c419a836337bd8ff4b427:53d79797dd0642218c08b664581e4e6d@sentry.lindera.de/6')
