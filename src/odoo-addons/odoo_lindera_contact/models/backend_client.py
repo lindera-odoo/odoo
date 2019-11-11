@@ -10,7 +10,6 @@ INTERNAL_AUTHENTICATION_TOKEN = 'Bearer HfpWLjqt5k0YqIjPgYtbXXX'
 
 
 def postHome(data):
-    print("looks something is happening here")
     if(validateHomeData(data)):
         try:
             return rq.post("{}/homes".format(URL), json=data, headers={'token': INTERNAL_AUTHENTICATION_TOKEN})
