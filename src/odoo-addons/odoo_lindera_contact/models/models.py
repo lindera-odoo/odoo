@@ -112,7 +112,7 @@ class LinderaContacts(models.Model):
             if not parentId:
                 apiResponse = backend_client.postHome(payload)
                 # if apiResponse['confirmation']:
-                raise osv.except_osv(('Error!'), (apiResponse))
+                raise osv.except_osv(('Error!'), (apiResponse.status_code))
 
             # else:
             #     if addressType and addressType == 'contact':
