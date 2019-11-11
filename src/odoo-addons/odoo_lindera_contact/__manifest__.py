@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Lindera-Modules",
-
+    'name': "Lindera",
     'summary': """
-        Contacts/CRM""",
+        Contacts/CRM/Promo_Codes""",
 
     'description': """
         Long description of module's purpose
@@ -23,9 +22,9 @@
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
-        'views/views.xml',
-        'views/templates.xml',
+        'security/lindera_security.xml',
+        'views/lindera_menu.xml',
+        'views/promocode_view.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
