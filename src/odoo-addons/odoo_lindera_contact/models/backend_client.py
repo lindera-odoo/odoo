@@ -12,7 +12,7 @@ INTERNAL_AUTHENTICATION_TOKEN = 'Bearer HfpWLjqt5k0YqIjPgYtb'
 def postHome(data):
     if(validateHomeData(data)):
         try:
-            return rq.post("{}/homes".format(URL), json=data, headers={'token': INTERNAL_AUTHENTICATION_TOKEN})
+            return rq.post("{}/homes".format(URL), json=data, headers={'authorization': 'Bearer HfpWLjqt5k0YqIjPgYtb'})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
             client.captureMessage(err)
@@ -24,7 +24,7 @@ def postHome(data):
 
 def getHome(id):
     try:
-        return rq.get(URL+"/homes?filter={}={}".format('odooID', id), headers={'token': INTERNAL_AUTHENTICATION_TOKEN})
+        return rq.get(URL+"/homes?filter={}={}".format('odooID', id), headers={'authorization': INTERNAL_AUTHENTICATION_TOKEN})
     except ConnectionError as err:
         message = 'Unable to establish connection to backend server'
         client.captureMessage(err)
@@ -38,7 +38,7 @@ def getHome(id):
 def updateHome(id, data):
     if(validateHomeData(data)):
         try:
-            return rq.put("{}/homes/{}".format(URL, id), json=data, headers={'token': INTERNAL_AUTHENTICATION_TOKEN})
+            return rq.put("{}/homes/{}".format(URL, id), json=data, headers={'authorization': INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
             client.captureMessage(err)
