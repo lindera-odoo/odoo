@@ -5,14 +5,14 @@ from raven import Client
 from openerp.osv import osv
 from requests.exceptions import ConnectionError
 client = Client('https://2f93ec8aba4c419a836337bd8ff4b427:53d79797dd0642218c08b664581e4e6d@sentry.lindera.de/6')
-URL = 'https://backend-testing.lindera.de/v2'
+URL = ''
 INTERNAL_AUTHENTICATION_TOKEN = 'Bearer HfpWLjqt5k0YqIjPgYtb'
 
 
 def postHome(data):
     if(validateHomeData(data)):
         try:
-            return rq.post("{}/homes".format(URL), json=data, headers={'token': 'Bearer HfpWLjqt5k0YqIjPgYtb'})
+            return rq.post("https://backend-testing.lindera.de/v2/homes", json=data, headers={'token': 'Bearer HfpWLjqt5k0YqIjPgYtb'})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
             client.captureMessage(err)
