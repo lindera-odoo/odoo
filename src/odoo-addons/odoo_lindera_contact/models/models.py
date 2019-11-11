@@ -110,9 +110,9 @@ class LinderaContacts(models.Model):
             payload = preparePayload(typeOfHome, res)
 
             if not parentId:
-                # apiResponse = backend_client.postHome(payload).json()
+                apiResponse = backend_client.postHome(payload).json()
                 # if apiResponse['confirmation']:
-                raise osv.except_osv(('Error!'), ('Unauthorized attempt to access resource on Lindera API'))
+                raise osv.except_osv(('Error!'), (apiResponse))
 
             # else:
             #     if addressType and addressType == 'contact':
