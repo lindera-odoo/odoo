@@ -12,7 +12,7 @@ INTERNAL_AUTHENTICATION_TOKEN = 'Bearer HfpWLjqt5k0YqIjPgYtb'
 def postHome(data):
     if(validateHomeData(data)):
         try:
-            return rq.post("https://backend-testing.lindera.de/v2/homes", json=data, headers={'token': 'Bearer HfpWLjqt5k0YqIjPgYtb'})
+            return rq.post("https://backend-testing.lindera.de/v2/homes", json=data, headers={'Authorization': 'Bearer HfpWLjqt5k0YqIjPgYtb'})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
             client.captureMessage(err)
