@@ -111,48 +111,51 @@ class LinderaContacts(models.Model):
 
             if not parentId:
                 apiResponse = backend_client.postHome(payload)
-                raise osv.except_osv(('Error!'), (apiResponse.text))
+                if apiResponse.status_code == 200:
+                    return res
+                else:
+                    raise osv.except_osv(('Error!'), (apiResponse.text))
 
-            # else:
-            #     if addressType and addressType == 'contact':
-            #         raise osv.except_osv(('Error!'), ('Address is missing'))
+            else:
+                if addressType and addressType == 'contact':
+                    raise osv.except_osv(('Error!'), ('Address is missing'))
 
-            #     parent = backend_client.getHome(parentId).json()
-            #     # If the resource (home/company/contact) is not in lindera backend, then create it
-            #     if parent and parent['total'] == 0:
-            #         home = backend_client.postHome(payload).json()
-            #         parentData = self.env['res.partner'].search(
-            #             [('id', '=', parentId)])
-            #         if parentData:
-            #             if(typeOfHome == 'Einrichtung'):
-            #                 payload = preparePayload('Träger', parentData)
-            #             elif(typeOfHome == 'Träger'):
-            #                 payload = preparePayload('Gruppe', parentData)
+                parent = backend_client.getHome(parentId).json()
+                # If the resource (home/company/contact) is not in lindera backend, then create it
+                if parent and parent['total'] == 0:
+                    home = backend_client.postHome(payload).json()
+                    parentData = self.env['res.partner'].search(
+                        [('id', '=', parentId)])
+                    if parentData:
+                        if(typeOfHome == 'Einrichtung'):
+                            payload = preparePayload('Träger', parentData)
+                        elif(typeOfHome == 'Träger'):
+                            payload = preparePayload('Gruppe', parentData)
 
-            #             parentId = backend_client.postHome(payload).json()['data']['_id']
+                        parentId = backend_client.postHome(payload).json()['data']['_id']
 
-            #             children = [home['data']['_id']]
+                        children = [home['data']['_id']]
 
-            #     # If the resource (home/company/contact) exists in lindera backend, then update the children field with the newly created resource ID
-            #     elif parent and parent['total'] >= 1:
-            #         role = parent['data'][0]['role']
-            #         if (typeOfHome == 'Einrichtung' and (role == 'home' or role == 'organization' )) or (typeOfHome == 'Träger' and (role == 'home' or role == 'company' )):
-            #             raise osv.except_osv(('Error!'), ('This contact can not be assigned as parent'))
+                # If the resource (home/company/contact) exists in lindera backend, then update the children field with the newly created resource ID
+                elif parent and parent['total'] >= 1:
+                    role = parent['data'][0]['role']
+                    if (typeOfHome == 'Einrichtung' and (role == 'home' or role == 'organization' )) or (typeOfHome == 'Träger' and (role == 'home' or role == 'company' )):
+                        raise osv.except_osv(('Error!'), ('This contact can not be assigned as parent'))
                 
                     
-            #         home = backend_client.postHome(payload).json()
-            #         children = parent['data'][0]['children']
-            #         children = list(map(lambda child: child['_id'], children))
+                    home = backend_client.postHome(payload).json()
+                    children = parent['data'][0]['children']
+                    children = list(map(lambda child: child['_id'], children))
 
-            #         newHomeId = home['data']['_id']
-            #         children.append(newHomeId)
+                    newHomeId = home['data']['_id']
+                    children.append(newHomeId)
 
-            #         parentId = parent['data'][0]['_id']
+                    parentId = parent['data'][0]['_id']
 
-            #     updatedField = {
-            #         'children': children
-            #     }
-            #     backend_client.updateHome(parentId, updatedField)
+                updatedField = {
+                    'children': children
+                }
+                backend_client.updateHome(parentId, updatedField)
 
         return res
 
