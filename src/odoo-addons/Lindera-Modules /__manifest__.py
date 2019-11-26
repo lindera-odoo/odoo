@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "odoo-lindera-contacts",
-
+    'name': "Lindera",
     'summary': """
-        Create Homes on the backend on contact creation""",
+        Contacts/CRM/Promo_Codes""",
 
     'description': """
         Long description of module's purpose
@@ -19,13 +18,13 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'crm', 'contacts'],
+    'depends': ['base', 'crm'],
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
-        'views/views.xml',
-        'views/templates.xml',
+        'security/lindera_security.xml',
+        'views/lindera_menu.xml',
+        'views/promocode_view.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
