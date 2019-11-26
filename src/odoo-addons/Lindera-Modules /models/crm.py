@@ -15,6 +15,7 @@ class LinderaCRM(models.Model):
     def write(self, vals):
         result = super(LinderaCRM, self).write(vals)
 
+        # TODO I think you mean vals.keys()... this probably still works, when there is a value with stage_id doesn't it?
         if 'stage_id' not in vals:
             return
 
@@ -24,6 +25,7 @@ class LinderaCRM(models.Model):
         # Get the current timestamp in seconds
         cts = getCurrentTimestamp()
 
+        # TODO might want to make this a class method, since it even accesses self...
         def checkIfHomeExists():
             # Get associated partner's (contact/home/compnay) data
             partnerId = self.read()[0]['partner_id'][0]
@@ -36,7 +38,7 @@ class LinderaCRM(models.Model):
             else:
                 mongoId = homeData['data'][0]['_id']
                 return mongoId
-
+        # TODO maybe this one too. It just makes it more reusable especially if the models need to work with each other
         def update(id, field):
             updatedField = {
                 'subscriptionEndDate': field

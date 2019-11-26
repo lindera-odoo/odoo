@@ -21,7 +21,14 @@ class Contact(models.Model):
         parentId = res.parent_id.id
         addressType = res.type
 
+        # TODO: might want to make this a class method, so it can be used from elsewhere,
+        #  maybe make it using self instead of the parameters.
+        #  But if you are sure it will never be used anywhere else you can leave it like this
         def preparePayload(typeOfHome, data):
+            # TODO: maybe solve this through a dictionary. It would result in a more specific error,
+            #  since now it will only produce an error since role is not defined,
+            #  but the error does not tell you what typeOfHome was.
+            #  you could also check if role is actually defined and throw an error if it is not with typeOfHome.
             if typeOfHome == 'Einrichtung':
                 role = 'home'
             if typeOfHome == 'Träger':
@@ -69,6 +76,9 @@ class Contact(models.Model):
                     parentData = self.env['res.partner'].search(
                         [('id', '=', parentId)])
                     if parentData:
+                        # TODO: what if its neither? is it okay to use the old payload?
+                        # Don't think only about the current typeOfHome but also what happens when there is a new one/
+                        #  someone messing around trying to insert his own type
                         if(typeOfHome == 'Einrichtung'):
                             payload = preparePayload('Träger', parentData)
                         elif(typeOfHome == 'Träger'):
@@ -89,6 +99,7 @@ class Contact(models.Model):
                     children = parent['data'][0]['children']
                     children = list(map(lambda child: child['_id'], children))
 
+                    # TODO could it happen, that newHomeID is already in there?
                     newHomeId = home['data']['_id']
                     children.append(newHomeId)
 

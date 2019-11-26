@@ -4,12 +4,17 @@ from cerberus import Validator
 from raven import Client
 from dotenv import load_dotenv
 from openerp.osv import osv
+from requests.exceptions import ConnectionError
 load_dotenv()
+#TODO: might want to put the raven client in a seperate file. Right now it is only used here, but that might change.
 client = Client(
     os.getenv('RAVEN_CLIENT'))
+
+#TODO: maybe we can set these envs through a docker command? Joern might know a way for that,
+#  because that is being done for backend, but I don't know how odoo.sh handles it
 URL = os.getenv('URL')
 INTERNAL_AUTHENTICATION_TOKEN = os.getenv('INTERNAL_AUTHENTICATION_TOKEN')
-from requests.exceptions import ConnectionError
+
 
 
 def postHome(data):
