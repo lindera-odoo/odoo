@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_form_promocode" model="ir.ui.view">
+        <field name="name">Promocode Form</field>
+        <field name="model">lindera.promocode</field>
+        <field name="arch" type="xml">
+        <form string="Promocode">
+            <sheet>
+                <group>
+                    <field name="code" />
+                    <field name="sales_partner_id" />
+                </group>
+            </sheet>
+        </form>
+        </field>
+    </record>
+
+    <record id="view_tree_promocode" model="ir.ui.view">
+        <field name="name">Promocode List</field>
+        <field name="model">lindera.promocode</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="code"/>
+                <field name="sales_partner_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_search_promocode" model="ir.ui.view">
+        <field name="name">Promocode Filters</field>
+        <field name="model">lindera.promocode</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="sales_partner_id"/>
+            </search>
+        </field>
+    </record>
+</odoo>

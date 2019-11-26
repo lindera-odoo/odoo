@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<odoo>
+	<!-- Lindera App Menu -->
+    <menuitem id="menu_lindera" name="Lindera" />
+
+	<!-- Action to open promo code list -->
+    <act_window id="action_lindera_promocode"
+    	name="Promo code"
+    	res_model="lindera.promocode"
+    	view_mode="tree,form"
+	/>
+    <!-- Menu item to open promo code list -->
+    <menuitem id="menu_lindera_promocode"
+    	name="Promo Codes"
+        parent="menu_lindera"
+        action="action_lindera_promocode"
+	/>
+</odoo>
