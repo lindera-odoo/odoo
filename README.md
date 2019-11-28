@@ -10,5 +10,7 @@ Making postgres user for odoo since default is not allowed
 $ sudo -u postgres createuser -s $USER
 $ createdb $USER
 
-install requirements of odoo
+install requirements of odoo. Don't try to do it via conda/pycharm... the requirements mess up the python version for whatever reason
+$ sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
 $ pip3 install -r requirements.txt
+do the same for the requirements of lindera-odoo-integration
