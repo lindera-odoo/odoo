@@ -4,15 +4,15 @@ from cerberus import Validator
 from raven import Client
 from openerp.osv import osv
 from requests.exceptions import ConnectionError
-client = Client('https://2f93ec8aba4c419a836337bd8ff4b427:53d79797dd0642218c08b664581e4e6d@sentry.lindera.de/6')
-URL = 'https://backend-testing.lindera.de/v2'
-INTERNAL_AUTHENTICATION_TOKEN = 'Bearer HfpWLjqt5k0YqIjPgYtb'
+client = Client(os.environ.get('RAVEN_CLIENT'))
+URL = os.environ.get('URL')
+INTERNAL_AUTHENTICATION_TOKEN = os.environ.get('INTERNAL_AUTHENTICATION_TOKEN')
 
 
 def postHome(data):
     if(validateHomeData(data)):
         try:
-            return rq.post("{}/homes".format(URL), json=data, headers={'Authorization': INTERNAL_AUTHENTICATION_TOKEN })
+            return rq.post("{}/homes".format(URL), json=data, headers={'Authorization': INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
             client.captureMessage(err)
@@ -21,6 +21,7 @@ def postHome(data):
             message = 'Something went wrong'
             client.captureMessage(err)
             raise osv.except_osv(('Error!'), (message))
+
 
 def getHome(id):
     try:
