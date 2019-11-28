@@ -6,15 +6,12 @@ from dotenv import load_dotenv
 from openerp.osv import osv
 from requests.exceptions import ConnectionError
 load_dotenv()
-#TODO: might want to put the raven client in a seperate file. Right now it is only used here, but that might change.
-client = Client(
-    os.getenv('RAVEN_CLIENT'))
-
-#TODO: maybe we can set these envs through a docker command? Joern might know a way for that,
+# TODO: might want to put the raven client in a seperate file. Right now it is only used here, but that might change.
+client = Client(os.environ.get('RAVEN_CLIENT'))
+# TODO: maybe we can set these envs through a docker command? Joern might know a way for that,
 #  because that is being done for backend, but I don't know how odoo.sh handles it
-URL = os.getenv('URL')
-INTERNAL_AUTHENTICATION_TOKEN = os.getenv('INTERNAL_AUTHENTICATION_TOKEN')
-
+URL = os.environ.get('URL')
+INTERNAL_AUTHENTICATION_TOKEN = os.environ.get('INTERNAL_AUTHENTICATION_TOKEN')
 
 
 def postHome(data):
@@ -29,6 +26,7 @@ def postHome(data):
             message = 'Something went wrong'
             client.captureMessage(err)
             raise osv.except_osv(('Error!'), (message))
+
 
 def getHome(id):
     try:
