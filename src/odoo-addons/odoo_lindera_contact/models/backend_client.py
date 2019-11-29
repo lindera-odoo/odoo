@@ -1,12 +1,16 @@
+from requests.exceptions import ConnectionError
 import requests as rq
 import os
 from cerberus import Validator
 from raven import Client
 from openerp.osv import osv
-from requests.exceptions import ConnectionError
-client = Client(os.environ.get('RAVEN_CLIENT'))
-URL = os.environ.get('URL')
-INTERNAL_AUTHENTICATION_TOKEN = os.environ.get('INTERNAL_AUTHENTICATION_TOKEN')
+from dotenv import load_dotenv
+load_dotenv()
+
+
+client = Client(os.getenv('RAVEN_CLIENT'))
+INTERNAL_AUTHENTICATION_TOKEN = os.getenv('INTERNAL_AUTHENTICATION_TOKEN')
+URL = os.getenv("URL")
 
 
 def postHome(data):
