@@ -20,7 +20,7 @@ def postHome(data):
         except Exception as err:
             message = 'Something went wrong'
             client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
+            raise osv.except_osv(('Error!'), (err))
 
 
 def getHome(id):
