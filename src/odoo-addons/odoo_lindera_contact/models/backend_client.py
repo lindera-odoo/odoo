@@ -3,7 +3,6 @@ import requests as rq
 import os
 from cerberus import Validator
 from raven import Client
-from dotenv import load_dotenv
 from openerp.osv import osv
 from requests.exceptions import ConnectionError
 
