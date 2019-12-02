@@ -2,3 +2,4 @@
 
 from . import contact
 from . import promo_code
+from . import mailSync
