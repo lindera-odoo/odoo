@@ -23,7 +23,6 @@ class BackendClient():
                 self.client.captureMessage(err)
                 raise osv.except_osv(('Error!'), (message))
             except Exception as err:
-                # message = 'Something went wrong'
                 self.client.captureMessage(err)
                 raise osv.except_osv(('Error!'), (err))
 
@@ -31,9 +30,8 @@ class BackendClient():
         try:
             return rq.get(self.URL+"/homes?filter={}={}".format('odooID', id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
-            message = 'Unable to establish connection to backend server'
             self.client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
+            raise osv.except_osv(('Error!'), (err))
         except Exception as err:
             message = 'Something went wrong'
             self.client.captureMessage(err)
@@ -48,9 +46,8 @@ class BackendClient():
                 self.client.captureMessage(err)
                 raise osv.except_osv(('Error!'), (message))
             except Exception as err:
-                message = 'Something went wrong'
                 self.client.captureMessage(err)
-                raise osv.except_osv(('Error!'), (message))
+                raise osv.except_osv(('Error!'), (err))
 
     def validateHomeData(self, data):
         v = Validator()

@@ -33,21 +33,21 @@ class Contact(models.Model):
                 ('Error!'), ('Please, setup system parameters for lindera backend'))
 
         def preparePayload(typeOfHome, data):
-            if typeOfHome == 'einrichtung':
-                role = 'home'
-            if typeOfHome == 'träger':
-                role = 'company'
-            if typeOfHome == 'Gruppe':
-                role = 'organization'
+            homeMapping = {
+                'einrichtung': 'home',
+                'träger': 'company',
+                'gruppe': 'organization'
+            }
 
             payload = {
                 'name': data.name,
                 'city': data.city,
                 'street': data.street,
                 'zip': data.zip,
-                'role': role,
+                'role': homeMapping[typeOfHome],
                 'odooID': data.id
             }
+
             return payload
 
         if isCompany and companyType == 'company':
