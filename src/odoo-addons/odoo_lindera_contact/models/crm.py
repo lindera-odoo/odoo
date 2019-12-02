@@ -15,6 +15,19 @@ class LinderaCRM(models.Model):
     def write(self, vals):
         result = super(LinderaCRM, self).write(vals)
 
+        url = self.env['ir.config_parameter'].get_param('lindera.backend')
+        token = self.env['ir.config_parameter'].get_param(
+            'lindera.internal_authentication_token')
+        ravenClient = self.env['ir.config_parameter'].get_param(
+            'lindera.raven_client')
+
+        if (url and token and ravenClient):
+            backendClient = backend_client.BackendClient(
+                url, token, ravenClient)
+        else:
+            raise osv.except_osv(
+                ('Error!'), ('Please, setup system parameters for lindera backend'))
+
         if 'stage_id' not in vals:
             return
 
@@ -29,7 +42,7 @@ class LinderaCRM(models.Model):
             partnerId = self.read()[0]['partner_id'][0]
 
             # Check if the contact exists in lindera backend
-            homeData = backend_client.getHome(partnerId).json()
+            homeData = backendClient.getHome(partnerId).json()
             if homeData['total'] == 0 and len(homeData['data']) == 0:
                 raise osv.except_osv(
                     ('Error!'), ('The associated partner does not exist in Lindera database, please create it first'))
@@ -41,7 +54,7 @@ class LinderaCRM(models.Model):
             updatedField = {
                 'subscriptionEndDate': field
             }
-            return backend_client.updateHome(id, updatedField)
+            return backendClient.updateHome(id, updatedField)
 
         if name == '8 W-Test live' or name == 'Einführung':
             mID = checkIfHomeExists()

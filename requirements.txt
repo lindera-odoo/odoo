@@ -2,4 +2,3 @@
 selenium
 cerberus
 raven
-python-dotenv
