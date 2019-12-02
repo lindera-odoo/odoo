@@ -23,9 +23,9 @@ class BackendClient():
                 self.client.captureMessage(err)
                 raise osv.except_osv(('Error!'), (message))
             except Exception as err:
-                message = 'Something went wrong'
+                # message = 'Something went wrong'
                 self.client.captureMessage(err)
-                raise osv.except_osv(('Error!'), (message))
+                raise osv.except_osv(('Error!'), (err))
 
     def getHome(self, id):
         try:
