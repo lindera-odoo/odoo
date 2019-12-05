@@ -1,22 +1,60 @@
 import os
-from odoo import models, api
+from odoo import models, api, fields
 from O365 import Account, FileSystemTokenBackend
+import odoo
 
-CLIENT_ID = os.getenv('CLIENT_ID')
-CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-CALLBACK_URL = os.getenv('CALLBACK_URL')
+# CLIENT_ID = '91ff48ec-0d1a-46b0-ba2b-3eca18e64eae'
+# CLIENT_SECRET = 'b6sb0kW]mingcb=:f0/GdO0dJ5v@p]jz'
+# CALLBACK_URL = 'http://localhost:8069/'
+
 
 class Office365UserSettings(models.Model):
 	_name = 'lindera.auth.usersettings'
 
-	@api.one
+	@api.model
+	def view_init(self, fields_list):
+		self.env.user.auth_url = odoo.http.request.httprequest.referrer
+
+	@api.multi
 	def authFirstStep(self):
+		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
+		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
+		CALLBACK_URL = self.env['ir.config_parameter'].get_param('lindera.callback_url')
+
 		account = Account((CLIENT_ID, CLIENT_SECRET))
-		self.env.user.state = account.con.get_authorization_url(requested_scopes=['basic', 'message_all'], redirect_uri=CALLBACK_URL)[0]
+		url, self.env.user.auth_state = account.con.get_authorization_url(
+			requested_scopes=account.protocol.get_scopes_for(['basic', 'message_all']), redirect_uri=CALLBACK_URL)
+		return {
+			'type': 'ir.actions.act_url',
+			'url': url,
+			'target': 'self',
+			'res_id': self.id,
+		}
 
-	@staticmethod
-	def __state():
-		account = Account((CLIENT_ID, CLIENT_SECRET))
-		return account.con.get_authorization_url(requested_scopes=['basic', 'message_all'], redirect_uri=CALLBACK_URL)[1]
+	@api.multi
+	def authSecondStep(self):
+		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
+		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
+		CALLBACK_URL = self.env['ir.config_parameter'].get_param('lindera.callback_url')
+
+		path = os.path.abspath(os.path.dirname(__file__) + '/../tokens')
+		token_backend = FileSystemTokenBackend(token_path=path, token_filename=self.env.user.email + '.txt')
+		account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+		account.con.token_backend = token_backend
+
+		#TODO: make it use https locally till then dirty fix...
+		url = self.env.user.auth_url
+		if not 'https' in url:
+			url = url.replace('http', 'https')
 
 
+		result = account.con.request_token(url,
+		                                   state=self.env.user.auth_state,
+		                                   redirect_uri=CALLBACK_URL)
+		if result:
+			return {
+				'type': 'ir.actions.act_url',
+				'url': CALLBACK_URL,
+				'target': 'self',
+				'res_id': self.id,
+			}

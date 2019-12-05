@@ -14,3 +14,11 @@ install requirements of odoo. Don't try to do it via conda/pycharm... the requir
 $ sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
 $ pip3 install -r requirements.txt
 do the same for the requirements of lindera-odoo-integration
+
+Needed System Parameter, that need to be set in Odoo!
+'lindera.backend'
+'lindera.internal_authentication_token'
+'lindera.raven_client'
+'lindera.client_id'
+'lindera.client_secret'
+'lindera.callback_url'

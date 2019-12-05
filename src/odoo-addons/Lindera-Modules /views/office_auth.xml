@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<odoo>
+	<!-- Lindera App Menu -->
+    <menuitem id="menu_lindera_auth" name="Lindera Office 365" />
+    <!-- Model View for auth -->
+    <record model="ir.ui.view" id="office_form_view">
+        <field name="name">auth.form</field>
+        <field name="model">lindera.auth.usersettings</field>
+        <field name="arch" type="xml">
+            <form string="Office365 Settings" create="false" edit="false">
+                <sheet>
+                    <h1>Office Authentication</h1>
+                    Please click the Button and log in. Then come back and click step two.<br/>
+                    <br/>
+                    <button type="object" name="authFirstStep" string="Step 1" class="oe_highlight"
+icon="fa-refresh fa-2x" style="width:100%"/>
+                    <br/>
+                    <br/>
+                    <button type="object" name="authSecondStep" string="Step 2" class="oe_highlight"
+icon="fa-refresh fa-2x" style="width:100%"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+	<!-- Action to open authenticator -->
+    <act_window id="action_lindera_auth_first"
+    	name="Authentication"
+    	res_model="lindera.auth.usersettings"
+    	view_mode="form"
+        view_type="form"
+        target="inline"
+	/>
+    <!-- Menu item to open authenticator -->
+    <menuitem id="menu_lindera_auth_first"
+    	name="Authentication"
+        parent="menu_lindera_auth"
+        action="action_lindera_auth_first"
+	/>
+</odoo>

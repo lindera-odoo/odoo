@@ -1,0 +1,4 @@
+id,name,model_id/id,group_id/id,perm_read,perm_write,perm_create,perm_unlink
+access_lindera_auth_usersettings,access_lindera_auth_usersettings,model_lindera_auth_usersettings,lindera_group_user,1,1,1,0
+access_lindera_promocode,access_lindera_promocode,model_lindera_promocode,lindera_group_user,1,1,1,0
+access_lindera_office_mail,access_lindera_office_mail,model_lindera_office_mail,lindera_group_user,1,1,1,0
