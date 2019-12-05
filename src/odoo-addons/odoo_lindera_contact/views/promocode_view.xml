@@ -5,6 +5,9 @@
         <field name="model">lindera.promocode</field>
         <field name="arch" type="xml">
         <form string="Promocode">
+            <group>
+                <div style="text-align: center; color: red">Example promo code: 25XZYC. The first two characters (25%) shows the discount amount</div>
+            </group>
             <sheet>
                 <group>
                     <field name="code" />

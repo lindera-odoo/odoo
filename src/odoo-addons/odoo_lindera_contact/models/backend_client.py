@@ -30,8 +30,9 @@ class BackendClient():
         try:
             return rq.get(self.URL+"/homes?filter={}={}".format('odooID', id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
+            message = 'Unable to establish connection to backend server'
             self.client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (err))
+            raise osv.except_osv(('Error!'), (message))
         except Exception as err:
             self.client.captureMessage(err)
             raise osv.except_osv(('Error!'), (err))
@@ -63,5 +64,5 @@ class BackendClient():
         result = v.validate(data, schema)
         if(not result):
             raise osv.except_osv(
-                ('Error!'), ('Address in missing'))
+                ('Error!'), ('Address of the contact is missing'))
         return result

@@ -40,12 +40,24 @@ class LinderaCRM(models.Model):
         if partner:
             partnerId = partner[0]
             # Check if the contact exists in lindera backend
-
             bClient = self.setupBackendClient()
             homeData = bClient.getHome(partnerId).json()
             if homeData['total'] == 0 and len(homeData['data']) == 0:
-                raise osv.except_osv(
-                    ('Error!'), ('The associated partner does not exist in Lindera database, please create it first'))
+                partnerData = self.env['res.partner'].search(
+                    [('id', '=', partnerId)])
+
+                payload = {
+                    'name': partnerData.name,
+                    'city': partnerData.city,
+                    'street': partnerData.street,
+                    'zip': partnerData.zip,
+                    'role': 'organization',
+                    'odooID': partnerData.id
+                }
+
+                data = bClient.postHome(payload).json()
+                return data['data']['_id']
+
             else:
                 mongoId = homeData['data'][0]['_id']
                 return mongoId
@@ -63,13 +75,19 @@ class LinderaCRM(models.Model):
         # Get the current timestamp in seconds
         cts = getCurrentTimestamp()
 
-        if name == '8 W-Test live' or name == 'Einführung':
+        if name == 'Salestermin geplant' or name == 'Terminplanung 8 W-Test' or name == '8 W-Test':
             mongoId = self.checkIfHomeExists()
-            futureTs = cts + (60 * 60 * 24 * 70)
+            futureTs = cts + (60 * 60 * 24 * 120)
             expirationDate = datetime.fromtimestamp(futureTs).isoformat()
             self.updateHome(mongoId, expirationDate)
 
-        if name == 'On hold':
+        elif name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live':
+            mongoId = self.checkIfHomeExists()
+            futureTs = cts + (60 * 60 * 24 * 12000)
+            expirationDate = datetime.fromtimestamp(futureTs).isoformat()
+            self.updateHome(mongoId, expirationDate)
+
+        else:
             mongoId = self.checkIfHomeExists()
             pastTs = cts - (60 * 60 * 24)
             expirationDate = datetime.fromtimestamp(pastTs).isoformat()

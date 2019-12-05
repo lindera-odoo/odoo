@@ -15,7 +15,7 @@ class Contact(models.Model):
 
         isCompany = res.is_company
         companyType = res.company_type
-        tags = list(map(lambda tag: tag.name, res.category_id))
+        tags = list(map(lambda tag: tag.name.lower(), res.category_id))
         parentId = res.parent_id.id
         addressType = res.type
 
