@@ -1,7 +1,9 @@
 import os
 from odoo import models, fields, api
-from O365 import Account, FileSystemTokenBackend
+from O365 import Account
+from .odooTokenStore import odooTokenStore
 import threading
+import datetime
 
 BATCH = 20
 
@@ -25,10 +27,9 @@ class CustomUser(models.Model):
 		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 
-		path = os.path.abspath(os.path.dirname(__file__) + '/../tokens')
-		for file in os.listdir(path):
-			if os.path.exists(path + '/' + file):
-				token_backend = FileSystemTokenBackend(token_path=path, token_filename=file)
+		for syncUser in self.env['res.users'].search([]):
+			token_backend = odooTokenStore(syncUser)
+			if token_backend.check_token():
 				account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
 				if account.is_authenticated:
 					mailbox = account.mailbox()
@@ -42,7 +43,7 @@ class CustomUser(models.Model):
 						########################### INBOX ##############################################################
 						if message in inbox:
 							# related partner might be weird without this...
-							if message.sender.address != file:
+							if message.sender.address != syncUser.email:
 								contact = self.env['res.partner'].search([('email', "=", message.sender.address)])
 								if contact:
 									user = self.env['res.users'].search([('partner_id', "=", contact[0].id)])
@@ -50,7 +51,6 @@ class CustomUser(models.Model):
 										mail = self.env['mail.message'].search([('subject', '=', message.subject),
 										                                        ('date', '=', message.sent),
 										                                        ('email_from', '=', contact[0].email)])
-
 										if not mail:
 											attachments = []
 											for attachment in message.attachments:
@@ -68,7 +68,8 @@ class CustomUser(models.Model):
 												'attachment_ids': [[6, 0, attachments]],
 												'model': 'res.partner',
 												'res_id': contact[0].id,
-												'author_id': contact[0].id
+												'author_id': contact[0].id,
+												'message_type': 'email'
 											})
 											self.env.cr.commit()
 						################################ SENT ##########################################################
@@ -76,14 +77,23 @@ class CustomUser(models.Model):
 							author = self.env['res.users'].search([('email', "=", message.sender.address)])
 							for recipient in message.to:
 								# related partner might be weird without this...
-								if recipient.address != file:
+								if recipient.address != syncUser.email:
 									contact = self.env['res.partner'].search([('email', "=", recipient.address)])
 									if contact:
 										user = self.env['res.users'].search([('partner_id', "=", contact[0].id)])
 										if not user:
-											mail = self.env['mail.message'].search([('subject', '=', message.subject),
-											                                        ('date', '=', message.sent),
-											                                        ('res_id', '=', contact[0].id)])
+											# check if date
+											assert isinstance(message.sent, datetime.datetime), 'Must be a date!'
+											self.env.cr.execute("SELECT id FROM mail_message WHERE ABS(EXTRACT(EPOCH FROM (date::timestamp - '" + str(message.sent)[:-6] + "'::timestamp))) < 2")
+											self.env.cr.execute("SELECT id FROM mail_message ")
+											results = self.env.cr.fetchall()
+											mail = False
+											for res in results:
+												mail = self.env['mail.message'].search([('subject', '=', message.subject),
+												                                        ('id', '=', res[0]),
+												                                        ('res_id', '=', contact[0].id)])
+												if mail:
+													break
 
 											if not mail:
 												attachments = []
@@ -103,7 +113,8 @@ class CustomUser(models.Model):
 														'attachment_ids': [[6, 0, attachments]],
 														'model': 'res.partner',
 														'res_id': contact[0].id,
-														'author_id': author[0].commercial_partner_id.id
+														'author_id': author[0].commercial_partner_id.id,
+														'message_type': 'email'
 													})
 												else:
 													self.env['mail.message'].create({
@@ -113,7 +124,7 @@ class CustomUser(models.Model):
 														'email_from': message.sender.address,
 														'attachment_ids': [[6, 0, attachments]],
 														'model': 'res.partner',
-														'res_id': contact[0].id
+														'res_id': contact[0].id,
+														'message_type': 'email'
 													})
 												self.env.cr.commit()
-				pass

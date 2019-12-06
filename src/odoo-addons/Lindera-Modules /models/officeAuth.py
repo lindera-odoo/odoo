@@ -2,6 +2,7 @@ import os
 from odoo import models, api, fields
 from O365 import Account, FileSystemTokenBackend
 import odoo
+from .odooTokenStore import odooTokenStore
 
 # CLIENT_ID = '91ff48ec-0d1a-46b0-ba2b-3eca18e64eae'
 # CLIENT_SECRET = 'b6sb0kW]mingcb=:f0/GdO0dJ5v@p]jz'
@@ -9,52 +10,52 @@ import odoo
 
 
 class Office365UserSettings(models.Model):
-	_name = 'lindera.auth.usersettings'
+    _name = 'lindera.auth.usersettings'
 
-	@api.model
-	def view_init(self, fields_list):
-		self.env.user.auth_url = odoo.http.request.httprequest.referrer
+    @api.model
+    def view_init(self, *args):
+        self.env.user.auth_url = odoo.http.request.httprequest.referrer
 
-	@api.multi
-	def authFirstStep(self):
-		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
-		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
-		CALLBACK_URL = self.env['ir.config_parameter'].get_param('lindera.callback_url')
+    @api.multi
+    def authFirstStep(self):
+        CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
+        CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
+        CALLBACK_URL = self.env['ir.config_parameter'].get_param('lindera.callback_url')
 
-		account = Account((CLIENT_ID, CLIENT_SECRET))
-		url, self.env.user.auth_state = account.con.get_authorization_url(
-			requested_scopes=account.protocol.get_scopes_for(['basic', 'message_all']), redirect_uri=CALLBACK_URL)
-		return {
-			'type': 'ir.actions.act_url',
-			'url': url,
-			'target': 'self',
-			'res_id': self.id,
-		}
+        account = Account((CLIENT_ID, CLIENT_SECRET))
+        url, self.env.user.auth_state = account.con.get_authorization_url(
+            requested_scopes=account.protocol.get_scopes_for(['basic', 'message_all']), redirect_uri=CALLBACK_URL)
+        return {
+            'type': 'ir.actions.act_url',
+            'url': url,
+            'target': 'self',
+            'res_id': self.id,
+        }
 
-	@api.multi
-	def authSecondStep(self):
-		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
-		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
-		CALLBACK_URL = self.env['ir.config_parameter'].get_param('lindera.callback_url')
+    @api.multi
+    def authSecondStep(self):
+        CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
+        CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
+        CALLBACK_URL = self.env['ir.config_parameter'].get_param('lindera.callback_url')
 
-		path = os.path.abspath(os.path.dirname(__file__) + '/../tokens')
-		token_backend = FileSystemTokenBackend(token_path=path, token_filename=self.env.user.email + '.txt')
-		account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
-		account.con.token_backend = token_backend
+        path = os.path.abspath(os.path.dirname(__file__) + '/../tokens')
+        token_backend = odooTokenStore(self.env.user)
+        account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+        account.con.token_backend = token_backend
 
-		#TODO: make it use https locally till then dirty fix...
-		url = self.env.user.auth_url
-		if not 'https' in url:
-			url = url.replace('http', 'https')
+        #TODO: make it use https locally till then dirty fix...
+        url = self.env.user.auth_url
+        if not 'https' in url:
+            url = url.replace('http', 'https')
 
 
-		result = account.con.request_token(url,
-		                                   state=self.env.user.auth_state,
-		                                   redirect_uri=CALLBACK_URL)
-		if result:
-			return {
-				'type': 'ir.actions.act_url',
-				'url': CALLBACK_URL,
-				'target': 'self',
-				'res_id': self.id,
-			}
+        result = account.con.request_token(url,
+                                           state=self.env.user.auth_state,
+                                           redirect_uri=CALLBACK_URL)
+        if result:
+            return {
+                'type': 'ir.actions.act_url',
+                'url': CALLBACK_URL,
+                'target': 'self',
+                'res_id': self.id,
+            }

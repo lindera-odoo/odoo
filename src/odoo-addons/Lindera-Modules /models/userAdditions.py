@@ -1,6 +1,6 @@
 from odoo import models, fields
 
-class CustomUser(models.Model):
+class LinderOfficeUser(models.Model):
     """
     Add more fields and functions to the user
     """

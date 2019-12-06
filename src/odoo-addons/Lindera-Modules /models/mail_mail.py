@@ -5,7 +5,8 @@ import base64
 from io import BytesIO
 
 from odoo import models, fields, api
-from O365 import Account, FileSystemTokenBackend
+from O365 import Account
+from .odooTokenStore import odooTokenStore
 from odoo import tools
 from odoo.addons.base.models.ir_mail_server import MailDeliveryException
 
@@ -23,12 +24,10 @@ class linderaMail(models.Model):
 		ids = self.ids
 
 		for id in ids:
-			path = os.path.abspath(os.path.dirname(__file__) + '/../tokens')
 			mail = self.browse(id)
-			file = mail.author_id.email + '.txt'
-			if os.path.exists(path + '/' + file):
+			token_backend = odooTokenStore(self.env.user)
+			if token_backend.check_token():
 				try:
-					token_backend = FileSystemTokenBackend(token_path=path, token_filename=file)
 					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
 					if account.is_authenticated:
 						IrAttachment = self.env['ir.attachment']
@@ -72,6 +71,8 @@ class linderaMail(models.Model):
 							message.attachments.add(attachments)
 
 							message.send()
+
+							test = message.body_preview
 
 							process_pids.append(process_pid)
 						# do not try to send via the normal way
