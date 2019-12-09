@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<odoo>
+	<!-- Model View for auth -->
+    <record model="ir.ui.view" id="officemail_sync_view">
+        <field name="name">Mail Synchronization</field>
+        <field name="model">lindera.office.mail</field>
+        <field name="arch" type="xml">
+            <form string="Office365 Mail Synchronization" create="false" edit="false">
+                <sheet>
+                    <h1>Office365 Mail Synchronization</h1>
+                    <br/>
+                    <button type="object" name="syncAllMailsScheduler" string="Synchronize" class="oe_highlight" style="width:100%"/>
+                    <br/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+	<!-- Action to open authenticator -->
+    <act_window id="action_lindera_mail_sync_all"
+    	name="Mail Synchronization"
+    	res_model="lindera.office.mail"
+    	view_mode="form"
+        view_type="form"
+        target="inline"
+	/>
+    <!-- Menu item to open promo code list -->
+    <menuitem id="menu_lindera_mails"
+    	name="Synchronize Mails"
+        parent="menu_lindera"
+        action="action_lindera_mail_sync_all"
+	/>
+</odoo>
