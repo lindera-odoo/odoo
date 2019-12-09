@@ -9,6 +9,7 @@ from O365 import Account
 from .odooTokenStore import odooTokenStore
 from odoo import tools
 from odoo.addons.base.models.ir_mail_server import MailDeliveryException
+from .ravenSingleton import ravenSingleton
 
 _logger = logging.getLogger(__name__)
 
@@ -20,6 +21,8 @@ class linderaMail(models.Model):
 	def send(self, auto_commit=False, raise_exception=False):
 		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
+		ravenClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
+		ravenSingle = ravenSingleton(ravenClient)
 
 		ids = self.ids
 
@@ -80,6 +83,7 @@ class linderaMail(models.Model):
 						_logger.info('Mail with ID %r successfully sent', mail.id)
 						mail._postprocess_sent_message(success_pids=process_pids)
 				except Exception as e:
+					ravenSingle.Client.captureMessage(e)
 					failure_reason = tools.ustr(e)
 					_logger.exception('failed sending mail (id: %s) due to %s', mail.id, failure_reason)
 					mail.write({'state': 'exception', 'failure_reason': failure_reason})

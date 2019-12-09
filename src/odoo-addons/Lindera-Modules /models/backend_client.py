@@ -2,7 +2,7 @@ from odoo import models, fields, api
 import requests as rq
 import os
 from cerberus import Validator
-from raven import Client
+from .ravenSingleton import ravenSingleton
 from dotenv import load_dotenv
 from openerp.osv import osv
 from requests.exceptions import ConnectionError
@@ -13,7 +13,7 @@ class BackendClient():
     def __init__(self, url, token, ravenClient):
         self.URL = url
         self.INTERNAL_AUTHENTICATION_TOKEN = token
-        self.client = Client(ravenClient)
+        self.ravenSingleton = ravenSingleton(url)
 
     def postHome(self, data):
         if(self.validateHomeData(data)):
@@ -21,10 +21,10 @@ class BackendClient():
                 return rq.post("{}/homes".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
             except ConnectionError as err:
                 message = 'Unable to establish connection to backend server'
-                self.client.captureMessage(err)
+                self.ravenSingleton.Client.captureMessage(err)
                 raise osv.except_osv(('Error!'), (message))
             except Exception as err:
-                self.client.captureMessage(err)
+                self.ravenSingleton.Client.captureMessage(err)
                 raise osv.except_osv(('Error!'), (self.URL, err))
 
     def getHome(self, id):
@@ -32,11 +32,11 @@ class BackendClient():
             return rq.get(self.URL+"/homes?filter={}={}".format('odooID', id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
-            self.client.captureMessage(err)
+            self.ravenSingleton.Client.captureMessage(err)
             raise osv.except_osv(('Error!'), (message))
         except Exception as err:
             message = 'Something went wrong'
-            self.client.captureMessage(err)
+            self.ravenSingleton.Client.captureMessage(err)
             raise osv.except_osv(('Error!'), (message))
 
     def updateHome(self, id, data):
@@ -45,11 +45,11 @@ class BackendClient():
                 return rq.put("{}/homes/{}".format(self.URL, id), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
             except ConnectionError as err:
                 message = 'Unable to establish connection to backend server'
-                self.client.captureMessage(err)
+                self.ravenSingleton.Client.captureMessage(err)
                 raise osv.except_osv(('Error!'), (message))
             except Exception as err:
                 message = 'Something went wrong'
-                self.client.captureMessage(err)
+                self.ravenSingleton.Client.captureMessage(err)
                 raise osv.except_osv(('Error!'), (message))
 
     def validateHomeData(self, data):
