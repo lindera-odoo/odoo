@@ -10,7 +10,7 @@ import datetime
 BATCH = 20
 
 
-class CustomUser(models.Model):
+class linderaMailSyncer(models.Model):
 	"""
     Mail sync addition to users
     """
