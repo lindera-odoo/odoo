@@ -50,6 +50,7 @@ class LinderaCRM(models.Model):
 
     @api.multi
     def write(self, vals):
+        previouse_stage = self.stage_id
         result = super(LinderaCRM, self).write(vals)
 
         if 'stage_id' not in vals:
@@ -60,8 +61,9 @@ class LinderaCRM(models.Model):
         name = stage.name
         # Get the current timestamp in seconds
         cts = getCurrentTimestamp()
+        previouse_stage_name = previouse_stage.name
 
-        if name == 'Salestermin geplant' or name == 'Terminplanung 8 W-Test' or name == '8 W-Test':
+        if name == 'Salestermin geplant':
             mongoId = self.checkIfHomeExists()
             if mongoId:
                 futureTs = cts + (60 * 60 * 24 * 120)
@@ -70,16 +72,20 @@ class LinderaCRM(models.Model):
             else:
                 return result
 
-        elif name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live':
+        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Intergration':
+            if previouse_stage_name == 'Salestermin geplant':
+                return result
+
             mongoId = self.checkIfHomeExists()
             if mongoId:
                 futureTs = cts + (60 * 60 * 24 * 12000)
-                expirationDate = datetime.fromtimestamp(futureTs).isoformat()
+                expirationDate = datetime.fromtimestamp(
+                    futureTs).isoformat()
                 self.updateHome(mongoId, expirationDate)
             else:
                 return result
 
-        else:
+        if name == 'On hold':
             mongoId = self.checkIfHomeExists()
             if mongoId:
                 pastTs = cts - (60 * 60 * 24)

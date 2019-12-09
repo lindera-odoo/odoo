@@ -36,7 +36,9 @@ class Contact(models.Model):
             homeMapping = {
                 'einrichtung': 'home',
                 'träger': 'company',
-                'gruppe': 'organization'
+                'gruppe': 'organization',
+                'salespartner': 'home',
+                'versicherung': 'home'
             }
 
             payload = {
@@ -52,7 +54,7 @@ class Contact(models.Model):
 
         if isCompany and companyType == 'company':
             typeOfHome = list(
-                filter(lambda tag: tag in ['einrichtung', 'gruppe', 'träger'], tags))
+                filter(lambda tag: tag in ['einrichtung', 'gruppe', 'träger', 'salespartner', 'versicherung'], tags))
 
             if len(typeOfHome) > 1:
                 raise osv.except_osv(
