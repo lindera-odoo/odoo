@@ -24,7 +24,9 @@ class Office365UserSettings(models.Model):
 
         account = Account((CLIENT_ID, CLIENT_SECRET))
         url, self.env.user.auth_state = account.con.get_authorization_url(
-            requested_scopes=account.protocol.get_scopes_for(['basic', 'message_all']), redirect_uri=CALLBACK_URL)
+            requested_scopes=account.protocol.get_scopes_for(['basic', 'message_all', 'address_book_all',
+                                                              'address_book_all_shared']),
+            redirect_uri=CALLBACK_URL)
         return {
             'type': 'ir.actions.act_url',
             'url': url,
@@ -40,6 +42,7 @@ class Office365UserSettings(models.Model):
 
         path = os.path.abspath(os.path.dirname(__file__) + '/../tokens')
         token_backend = odooTokenStore(self.env.user)
+        token_backend.delete_token()
         account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
         account.con.token_backend = token_backend
 

@@ -2,12 +2,13 @@ import os
 from odoo import models, fields, api
 from openerp.osv import osv
 from O365 import Account
+from O365.address_book import Contact
 from .odooTokenStore import odooTokenStore
 from .ravenSingleton import ravenSingleton
 import threading
 import datetime
 
-class CustomUser(models.Model):
+class linderaContactSyncer(models.Model):
 	"""
     Mail sync addition to users
     """
@@ -15,11 +16,7 @@ class CustomUser(models.Model):
 	_name = 'lindera.office.contact'
 
 	@api.model
-	def syncMailsScheduler(self):
-		self.syncContacts()
-
-	# @api.model
-	def syncAllMailsScheduler(self):
+	def syncContactsScheduler(self):
 		self.syncContacts()
 
 	def syncContacts(self):
@@ -37,9 +34,33 @@ class CustomUser(models.Model):
 					if account.is_authenticated:
 						partners = self.env['res.partner'].search([])
 						address_book = account.address_book()
-						for partner in partners:
 
-							contact = address_book.new_contact()
+						for partner in partners:
+							checkContact = address_book.get_contact_by_email(partner.email)
+							if checkContact is None:
+								contact = address_book.new_contact()
+								if not partner.is_company:
+									if partner.company_id:
+										contact.company_name = partner.company_id.name
+								contact.name = partner.name
+								contact.display_name = partner.display_name
+								contact.emails.add(partner.email)
+								if partner.function:
+									contact.job_title = partner.function
+								if partner.title:
+									contact.title = partner.title.name
+								if partner.mobile:
+									contact.mobile_phone = partner.mobile
+
+								if partner.phone:
+									contact.home_phones = partner.phone
+								if partner.company_id:
+									if partner.company_id.phone:
+										contact.business_phones = partner.company_id.phone
+								if partner.mobile:
+									contact.mobile_phone = partner.mobile
+
+								contact.save()
 				except Exception as err:
 					ravenSingle.Client.captureMessage(err)
 					raise osv.except_osv('Error While Syncing!', str(err))
