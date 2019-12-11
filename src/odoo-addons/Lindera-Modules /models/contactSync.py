@@ -60,11 +60,11 @@ class linderaContactSyncer(models.Model):
 											contact.business_phones = partner.company_id.phone
 									if partner.mobile:
 										contact.mobile_phone = partner.mobile
-
+									contact.categories = 'Odoo Imported'
 									contact.save()
 							except Exception as err:
 								ravenSingle.Client.captureMessage(err)
-								pass
+								raise osv.except_osv('Error While Syncing!', str(err))
 				except Exception as err:
 					ravenSingle.Client.captureMessage(err)
 					raise osv.except_osv('Error While Syncing!', str(err))
