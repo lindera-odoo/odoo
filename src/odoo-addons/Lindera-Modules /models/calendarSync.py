@@ -25,3 +25,15 @@ class linderaCalendarSyncer(models.Model):
 		ravenSingle = ravenSingleton(ravenClient)
 		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
+
+		for syncUser in self.env['res.users'].search([]):
+			token_backend = odooTokenStore(syncUser)
+			if token_backend.check_token():
+				try:
+					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+					if account.is_authenticated:
+
+						pass
+				except Exception as err:
+					ravenSingle.Client.captureMessage(err)
+					raise osv.except_osv('Error While Syncing!', str(err))
