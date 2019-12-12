@@ -25,7 +25,8 @@ class Office365UserSettings(models.Model):
         account = Account((CLIENT_ID, CLIENT_SECRET))
         url, self.env.user.auth_state = account.con.get_authorization_url(
             requested_scopes=account.protocol.get_scopes_for(['basic', 'message_all', 'address_book_all',
-                                                              'address_book_all_shared']),
+                                                              'address_book_all_shared', 'calendar_all',
+                                                              'calendar_shared_all']),
             redirect_uri=CALLBACK_URL)
         return {
             'type': 'ir.actions.act_url',

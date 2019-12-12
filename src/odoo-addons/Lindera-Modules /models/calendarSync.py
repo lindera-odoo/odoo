@@ -13,7 +13,7 @@ class linderaCalendarSyncer(models.Model):
     Mail sync addition to users
     """
 	# _inherit = 'res.users'
-	_name = 'lindera.office.contact'
+	_name = 'lindera.office.calendar'
 
 	@api.model
 	def syncCalendarScheduler(self):
@@ -25,14 +25,20 @@ class linderaCalendarSyncer(models.Model):
 		ravenSingle = ravenSingleton(ravenClient)
 		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
-
-		for syncUser in self.env['res.users'].search([]):
+		for syncUser in self.env['calendar.event'].search([]):
 			token_backend = odooTokenStore(syncUser)
 			if token_backend.check_token():
 				try:
 					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
 					if account.is_authenticated:
-
+						calendar = account.schedule()
+						events = calendar.get_events(1000)
+						for event in events:
+							try:
+								pass
+							except Exception as err:
+								ravenSingle.Client.captureMessage(err)
+								raise osv.except_osv('Error While Syncing!', str(err))
 						pass
 				except Exception as err:
 					ravenSingle.Client.captureMessage(err)
