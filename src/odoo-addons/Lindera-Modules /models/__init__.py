@@ -7,3 +7,4 @@ from . import mailSync
 from . import userAdditions
 from . import officeAuth
 from . import mail_mail
+from . import contactSync
