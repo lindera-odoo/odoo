@@ -47,7 +47,7 @@ class Office365UserSettings(models.Model):
         account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
         account.con.token_backend = token_backend
 
-        #TODO: make it use https locally till then dirty fix...
+        # dirty fix so that it also accepts redirect to http for testing reasons...
         url = self.env.user.auth_url
         if not 'https' in url:
             url = url.replace('http', 'https')

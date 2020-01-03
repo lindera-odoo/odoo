@@ -7,7 +7,7 @@ from .ravenSingleton import ravenSingleton
 import threading
 import datetime
 
-BATCH = 20
+BATCH = 200
 
 
 class linderaMailSyncer(models.Model):

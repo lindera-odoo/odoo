@@ -20,6 +20,6 @@ class odooTokenStore(BaseTokenBackend):
 
 	def check_token(self):
 		try:
-			return self._user.auth_token != ''
+			return self._user.auth_token != '' and self._user.auth_token is not None and self._user.auth_token is not False
 		except:
 			return False

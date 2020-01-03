@@ -75,8 +75,6 @@ class linderaMail(models.Model):
 
 							message.send()
 
-							test = message.body_preview
-
 							process_pids.append(process_pid)
 						# do not try to send via the normal way
 						mail.write({'state': 'sent', 'failure_reason': False})
@@ -96,7 +94,7 @@ class linderaMail(models.Model):
 								# get the args of the original error, wrap into a value and throw a MailDeliveryException
 								# that is an except_orm, with name and value as arguments
 								value = '. '.join(e.args)
-							raise MailDeliveryException(_("Mail Delivery Failed"), value)
+							raise MailDeliveryException(("Mail Delivery Failed"), value)
 						raise
 			else:
 				super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
