@@ -27,7 +27,7 @@ class linderaContactSyncer(models.Model):
 		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 		partners = self.env['res.partner'].search([])
-		print('Ding!')
+		raise Exception('Ding!')
 		for syncUser in self.env['res.users'].search([]):
 			print(syncUser.name)
 			token_backend = odooTokenStore(syncUser)
