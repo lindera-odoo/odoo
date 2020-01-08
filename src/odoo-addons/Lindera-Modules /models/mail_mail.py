@@ -51,7 +51,7 @@ class linderaMail(models.Model):
 						email_list = []
 						if mail.email_to:
 							values = mail._send_prepare_values()
-							values['email_to'] = tools.email_split([mail.email_to])
+							values['email_to'] = tools.email_split(mail.email_to)
 							email_list.append(values)
 						for partner in mail.recipient_ids:
 							values = mail._send_prepare_values(partner=partner)
