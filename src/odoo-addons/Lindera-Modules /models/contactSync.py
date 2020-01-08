@@ -29,9 +29,8 @@ class linderaContactSyncer(models.Model):
 		partners = self.env['res.partner'].search([])
 		for syncUser in self.env['res.users'].search([]):
 			token_backend = odooTokenStore(syncUser)
-			raise Exception(syncUser.name)
 			if token_backend.check_token():
-				print('Dong!')
+				raise Exception(syncUser.name)
 				try:
 					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
 					if account.is_authenticated:
