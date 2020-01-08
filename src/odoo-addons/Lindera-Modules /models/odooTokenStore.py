@@ -6,7 +6,7 @@ class odooTokenStore(BaseTokenBackend):
 		self._user = user
 		super(odooTokenStore, self).__init__()
 
-	def get_token(self):
+	def load_token(self):
 		self.token = self._user.auth_token
 		return self.token
 

@@ -182,7 +182,7 @@ class linderaEvent(models.Model):
 				event.recurrence.day_of_month = self.day
 
 			if self.rrule_type == 'yearly':
-				event.recurrence.day_of_month = self.day
+				event.recurrence.day_of_month = self.final_date.day
 				event.recurrence.month = self.start.month
 
 			if not self.rrule_type == 'daily':
