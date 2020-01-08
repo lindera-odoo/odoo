@@ -27,11 +27,13 @@ class linderaContactSyncer(models.Model):
 		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 		partners = self.env['res.partner'].search([])
+		print('Ding!')
 		for syncUser in self.env['res.users'].search([]):
-			token_backend = odooTokenStore(syncUser)
 			print(syncUser.name)
+			token_backend = odooTokenStore(syncUser)
+			print('Deng!')
 			if token_backend.check_token():
-				print('Ding!')
+				print('Dong!')
 				try:
 					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
 					if account.is_authenticated:
