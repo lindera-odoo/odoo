@@ -28,7 +28,8 @@ class linderaMail(models.Model):
 
 		for id in ids:
 			mail = self.browse(id)
-			token_backend = odooTokenStore(self.env.user)
+			user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id)])[0]
+			token_backend = odooTokenStore(user)
 			if token_backend.check_token():
 				try:
 					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
