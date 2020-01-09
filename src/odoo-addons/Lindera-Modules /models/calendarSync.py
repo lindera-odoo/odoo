@@ -92,7 +92,7 @@ class linderaCalendarSyncer(models.Model):
 			if organizer:
 				attendeeDict = {'email': organizer.email, 'event_id': dbEvent.id,
 				                'state': 'accepted',
-				                'partner_id': organizer[0].partner_id}
+				                'partner_id': organizer[0].partner_id.id}
 				dbEvent.attendee_ids.create(attendeeDict)
 				dbEvent.partner_ids += organizer[0].partner_id
 		else:
@@ -203,7 +203,7 @@ class linderaCalendarSyncer(models.Model):
 			if organizer:
 				attendeeDict = {'email': organizer.email, 'event_id': dbEvent.id,
 				                'state': 'accepted',
-				                'partner_id': organizer[0].partner_id}
+				                'partner_id': organizer[0].partner_id.id}
 				dbEvent.attendee_ids.create(attendeeDict)
 				dbEvent.partner_ids += organizer[0].partner_id
 		else:
