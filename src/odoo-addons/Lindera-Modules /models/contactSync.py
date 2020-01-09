@@ -39,30 +39,31 @@ class linderaContactSyncer(models.Model):
 						contacts = list(map(lambda elem: elem.main_email, contacts))
 						for partner in partners:
 							try:
-								if partner.email not in contacts and '@' in partner.email and len(partner.email) > 3:
-									contact = address_book.new_contact()
-									if not partner.is_company:
-										if partner.company_id:
-											contact.company_name = partner.company_id.name
-									contact.name = partner.name
-									contact.display_name = partner.display_name
-									contact.emails.add(partner.email)
-									if partner.function:
-										contact.job_title = partner.function
-									if partner.title:
-										contact.title = partner.title.name
-									if partner.mobile:
-										contact.mobile_phone = partner.mobile
+								if partner.email:
+									if partner.email not in contacts and '@' in partner.email and len(partner.email) > 3:
+										contact = address_book.new_contact()
+										if not partner.is_company:
+											if partner.company_id:
+												contact.company_name = partner.company_id.name
+										contact.name = partner.name
+										contact.display_name = partner.display_name
+										contact.emails.add(partner.email)
+										if partner.function:
+											contact.job_title = partner.function
+										if partner.title:
+											contact.title = partner.title.name
+										if partner.mobile:
+											contact.mobile_phone = partner.mobile
 
-									if partner.phone:
-										contact.home_phones = partner.phone
-									if partner.company_id:
-										if partner.company_id.phone:
-											contact.business_phones = partner.company_id.phone
-									if partner.mobile:
-										contact.mobile_phone = partner.mobile
-									contact.categories = 'Odoo Imported'
-									contact.save()
+										if partner.phone:
+											contact.home_phones = partner.phone
+										if partner.company_id:
+											if partner.company_id.phone:
+												contact.business_phones = partner.company_id.phone
+										if partner.mobile:
+											contact.mobile_phone = partner.mobile
+										contact.categories = 'Odoo Imported'
+										contact.save()
 							except Exception as err:
 								ravenSingle.Client.captureMessage(err)
 								raise osv.except_osv('Error While Syncing!', str(err))
