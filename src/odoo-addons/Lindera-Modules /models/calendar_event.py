@@ -1,6 +1,7 @@
 import logging
 
 from odoo import models, api, fields
+from requests.exceptions import HTTPError
 from O365 import Account
 from O365.calendar import Attendee, ResponseStatus, EventRecurrence
 from O365.utils.utils import Recipient
@@ -67,7 +68,7 @@ class linderaEvent(models.Model):
 		token_backend = odooTokenStore(self.env.user)
 		if token_backend.check_token():
 			try:
-				account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+				account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 				if account.is_authenticated:
 					calendar = account.schedule()
 					self.__removeRecurrent(calendar, self.start, self.stop, self.name)
@@ -105,7 +106,7 @@ class linderaEvent(models.Model):
 		if token_backend.check_token():
 			try:
 				# login
-				account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+				account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 				if account.is_authenticated:
 					# get calendar
 					calendar = account.schedule()
@@ -249,7 +250,7 @@ class linderaEvent(models.Model):
 			token_backend = odooTokenStore(self.env.user)
 			if token_backend.check_token():
 				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
 						# get calendar
 						calendar = account.schedule()
@@ -297,7 +298,7 @@ class linderaEvent(models.Model):
 			token_backend = odooTokenStore(self.env.user)
 			if token_backend.check_token():
 				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
 						calendar = account.schedule()
 						if self.o365ID:
@@ -308,6 +309,12 @@ class linderaEvent(models.Model):
 							else:
 								# find the right one to remove
 								self.__removeRecurrent(calendar, self.start, self.stop, self.name)
+				except HTTPError as err:
+					if err.response.status_code == 404:
+						pass
+					else:
+						ravenSingle.Client.captureMessage(err)
+						raise osv.except_osv('Error While Syncing!', str(err))
 				except Exception as err:
 					ravenSingle.Client.captureMessage(err)
 					raise osv.except_osv('Error While Syncing!', str(err))

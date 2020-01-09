@@ -31,7 +31,7 @@ class linderaMail(models.Model):
 			token_backend = odooTokenStore(self.env.user)
 			if token_backend.check_token():
 				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
 						IrAttachment = self.env['ir.attachment']
 						# remove attachments if user send the link with the access_token

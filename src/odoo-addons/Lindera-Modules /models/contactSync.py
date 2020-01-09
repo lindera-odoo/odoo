@@ -30,9 +30,9 @@ class linderaContactSyncer(models.Model):
 		for syncUser in self.env['res.users'].search([]):
 			token_backend = odooTokenStore(syncUser)
 			if token_backend.check_token():
-				raise Exception(syncUser.name)
+				# raise Exception(syncUser.name)
 				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
 						address_book = account.address_book()
 						contacts = list(address_book.get_contacts(10000, batch=1000))

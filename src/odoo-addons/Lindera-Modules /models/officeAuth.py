@@ -44,7 +44,7 @@ class Office365UserSettings(models.Model):
         path = os.path.abspath(os.path.dirname(__file__) + '/../tokens')
         token_backend = odooTokenStore(self.env.user)
         token_backend.delete_token()
-        account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+        account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
         account.con.token_backend = token_backend
 
         # dirty fix so that it also accepts redirect to http for testing reasons...

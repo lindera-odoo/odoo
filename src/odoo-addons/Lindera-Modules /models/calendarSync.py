@@ -247,7 +247,7 @@ class linderaCalendarSyncer(models.Model):
 			token_backend = odooTokenStore(syncUser)
 			if token_backend.check_token():
 				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
 						calendar = account.schedule()
 						##################################NORMAL EVENTS#################################################
