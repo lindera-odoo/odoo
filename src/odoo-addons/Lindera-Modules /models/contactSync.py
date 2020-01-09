@@ -40,7 +40,7 @@ class linderaContactSyncer(models.Model):
 						for partner in partners:
 							try:
 								if partner.email:
-									if partner.email not in contacts and '@' in partner.email and len(partner.email) > 3:
+									if (partner.email not in contacts) and ('@' in partner.email) and (len(partner.email) > 3):
 										contact = address_book.new_contact()
 										if not partner.is_company:
 											if partner.company_id:
