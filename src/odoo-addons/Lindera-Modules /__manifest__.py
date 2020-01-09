@@ -18,13 +18,17 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'crm'],
+    'depends': ['base', 'mail', 'crm'],
 
     # always loaded
     'data': [
         'security/lindera_security.xml',
+        'security/ir.model.access.csv',
         'views/lindera_menu.xml',
         'views/promocode_view.xml',
+        'views/office_auth.xml',
+        'views/office_mail.xml',
+        'data/scheduler.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

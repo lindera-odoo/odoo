@@ -11,25 +11,38 @@ def getCurrentTimestamp():
 class LinderaCRM(models.Model):
     _inherit = 'crm.lead'
 
-    @api.multi
-    def write(self, vals):
-        result = super(LinderaCRM, self).write(vals)
+    def updateHome(self, mongodbId, field):
+        updatedField = {
+            'subscriptionEndDate': field
+        }
+        bClient = self.setupBackendClient()
+        return bClient.updateHome(mongodbId, updatedField)
 
-        if 'stage_id' not in vals:
-            return
+    def setupBackendClient(self):
+        url = self.env['ir.config_parameter'].get_param('lindera.backend')
+        token = self.env['ir.config_parameter'].get_param(
+            'lindera.internal_authentication_token')
+        ravenClient = self.env['ir.config_parameter'].get_param(
+            'lindera.raven_client')
 
-        id = vals['stage_id']
-        findStageById = self.env['crm.stage'].search([('id', '=', id)])
-        name = findStageById.name
-        # Get the current timestamp in seconds
-        cts = getCurrentTimestamp()
+        if (url and token and ravenClient):
+            backendClient = backend_client.BackendClient(
+                url, token, ravenClient)
+            return backendClient
+        else:
+            raise osv.except_osv(
+                ('Error!'), ('Please, setup system parameters for lindera backend'))
 
-        def checkIfHomeExists():
-            # Get associated partner's (contact/home/compnay) data
-            partnerId = self.read()[0]['partner_id'][0]
-
+    def checkIfHomeExists(self):
+        # Get associated partner's (contact/home/compnay) data
+        data = self.read()[0]
+        partner = data['partner_id']
+        if partner:
+            partnerId = partner[0]
             # Check if the contact exists in lindera backend
-            homeData = backend_client.getHome(partnerId).json()
+
+            bClient = self.setupBackendClient()
+            homeData = bClient.getHome(partnerId).json()
             if homeData['total'] == 0 and len(homeData['data']) == 0:
                 raise osv.except_osv(
                     ('Error!'), ('The associated partner does not exist in Lindera database, please create it first'))
@@ -37,24 +50,29 @@ class LinderaCRM(models.Model):
                 mongoId = homeData['data'][0]['_id']
                 return mongoId
 
-        def update(id, field):
-            updatedField = {
-                'subscriptionEndDate': field
-            }
-            return backend_client.updateHome(id, updatedField)
+    @api.multi
+    def write(self, vals):
+        result = super(LinderaCRM, self).write(vals)
+
+        if 'stage_id' not in vals:
+            return result
+
+        id = vals['stage_id']
+        stage = self.env['crm.stage'].search([('id', '=', id)])
+        name = stage.name
+        # Get the current timestamp in seconds
+        cts = getCurrentTimestamp()
 
         if name == '8 W-Test live' or name == 'Einführung':
-            mID = checkIfHomeExists()
-
+            mongoId = self.checkIfHomeExists()
             futureTs = cts + (60 * 60 * 24 * 70)
             expirationDate = datetime.fromtimestamp(futureTs).isoformat()
-            update(mID, expirationDate)
+            self.updateHome(mongoId, expirationDate)
 
         if name == 'On hold':
-            mID = checkIfHomeExists()
-
+            mongoId = self.checkIfHomeExists()
             pastTs = cts - (60 * 60 * 24)
             expirationDate = datetime.fromtimestamp(pastTs).isoformat()
-            update(mID, expirationDate)
+            self.updateHome(mongoId, expirationDate)
 
         return result

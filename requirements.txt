@@ -1,2 +1,6 @@
 selenium
 cerberus
+raven
+python-dotenv
+aenum
+git+https://github.com/lindera-gmbh/python-o365
