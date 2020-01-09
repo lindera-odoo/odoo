@@ -140,8 +140,6 @@ class linderaCalendarSyncer(models.Model):
 				if event.recurrence.first_day_of_week:
 					for day in event.recurrence.days_of_week:
 						pattern[day[:2]] = True
-					# pattern['byday'] = ''
-					# pattern['month_by'] = 'date'
 					pattern['rrule_type'] = 'weekly'
 				elif event.recurrence.month:
 					pattern['rrule_type'] = 'yearly'
@@ -174,7 +172,6 @@ class linderaCalendarSyncer(models.Model):
 				'privacy': privacy,
 				'location': event.location['displayName'],
 				'allday': event.is_all_day,
-				# 'show_as': event.show_as.value,
 				'create_uid': uid,
 				'write_uid': uid,
 				'user_id': uid,
