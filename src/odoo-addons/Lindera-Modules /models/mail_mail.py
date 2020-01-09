@@ -71,7 +71,7 @@ class linderaMail(models.Model):
 							# Sadly no alternative body for viewing impaired...
 							message.subject = mail.subject
 							message.cc.add(tools.email_split(mail.email_cc))
-							message.reply_to.add(tools.email_split(mail.reply_to))
+							message.reply_to.add(mail.author_id.email)
 							message.attachments.add(attachments)
 
 							message.send()
