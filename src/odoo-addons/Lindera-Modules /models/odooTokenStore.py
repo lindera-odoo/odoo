@@ -1,4 +1,5 @@
 from O365.utils import BaseTokenBackend
+import json
 
 
 class odooTokenStore(BaseTokenBackend):
@@ -6,12 +7,12 @@ class odooTokenStore(BaseTokenBackend):
 		self._user = user
 		super(odooTokenStore, self).__init__()
 
-	def get_token(self):
-		self.token = self._user.auth_token
+	def load_token(self):
+		self.token = json.loads(self._user.auth_token)
 		return self.token
 
 	def save_token(self):
-		self._user.auth_token = self.token
+		self._user.auth_token = json.dumps(self.token)
 		return True
 
 	def delete_token(self):
@@ -20,6 +21,6 @@ class odooTokenStore(BaseTokenBackend):
 
 	def check_token(self):
 		try:
-			return self._user.auth_token != ''
+			return self._user.auth_token != '' and self._user.auth_token is not None and self._user.auth_token is not False
 		except:
 			return False

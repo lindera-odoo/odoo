@@ -25,7 +25,8 @@ class Office365UserSettings(models.Model):
         account = Account((CLIENT_ID, CLIENT_SECRET))
         url, self.env.user.auth_state = account.con.get_authorization_url(
             requested_scopes=account.protocol.get_scopes_for(['basic', 'message_all', 'address_book_all',
-                                                              'address_book_all_shared']),
+                                                              'address_book_all_shared', 'calendar_all',
+                                                              'calendar_shared_all']),
             redirect_uri=CALLBACK_URL)
         return {
             'type': 'ir.actions.act_url',
@@ -43,10 +44,10 @@ class Office365UserSettings(models.Model):
         path = os.path.abspath(os.path.dirname(__file__) + '/../tokens')
         token_backend = odooTokenStore(self.env.user)
         token_backend.delete_token()
-        account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+        account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
         account.con.token_backend = token_backend
 
-        #TODO: make it use https locally till then dirty fix...
+        # dirty fix so that it also accepts redirect to http for testing reasons...
         url = self.env.user.auth_url
         if not 'https' in url:
             url = url.replace('http', 'https')

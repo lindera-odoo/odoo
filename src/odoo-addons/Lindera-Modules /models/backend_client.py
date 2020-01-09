@@ -13,7 +13,7 @@ class BackendClient():
     def __init__(self, url, token, ravenClient):
         self.URL = url
         self.INTERNAL_AUTHENTICATION_TOKEN = token
-        self.ravenSingleton = ravenSingleton(url)
+        self.ravenSingleton = ravenSingleton(ravenClient)
 
     def postHome(self, data):
         if(self.validateHomeData(data)):

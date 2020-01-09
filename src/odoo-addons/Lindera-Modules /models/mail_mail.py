@@ -31,7 +31,7 @@ class linderaMail(models.Model):
 			token_backend = odooTokenStore(self.env.user)
 			if token_backend.check_token():
 				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token=token_backend)
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
 						IrAttachment = self.env['ir.attachment']
 						# remove attachments if user send the link with the access_token
@@ -51,7 +51,7 @@ class linderaMail(models.Model):
 						email_list = []
 						if mail.email_to:
 							values = mail._send_prepare_values()
-							values['email_to'] = tools.email_split([mail.email_to])
+							values['email_to'] = tools.email_split(mail.email_to)
 							email_list.append(values)
 						for partner in mail.recipient_ids:
 							values = mail._send_prepare_values(partner=partner)
@@ -75,8 +75,6 @@ class linderaMail(models.Model):
 
 							message.send()
 
-							test = message.body_preview
-
 							process_pids.append(process_pid)
 						# do not try to send via the normal way
 						mail.write({'state': 'sent', 'failure_reason': False})
@@ -96,7 +94,7 @@ class linderaMail(models.Model):
 								# get the args of the original error, wrap into a value and throw a MailDeliveryException
 								# that is an except_orm, with name and value as arguments
 								value = '. '.join(e.args)
-							raise MailDeliveryException(_("Mail Delivery Failed"), value)
+							raise MailDeliveryException(("Mail Delivery Failed"), value)
 						raise
 			else:
 				super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
