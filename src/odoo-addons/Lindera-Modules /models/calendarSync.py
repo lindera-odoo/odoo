@@ -59,6 +59,7 @@ class linderaCalendarSyncer(models.Model):
 		organizer = self.env['res.users'].search([('email', "=", event.organizer.address)])
 		if organizer:
 			uid = organizer[0].id
+			organizer = organizer[0]
 		if not dbEvent:
 			dbEvent = self.env['calendar.event'].with_context(mail_create_nosubscribe=True).create({
 				'name': event.subject,
@@ -164,6 +165,7 @@ class linderaCalendarSyncer(models.Model):
 		organizer = self.env['res.users'].search([('email', "=", event.organizer.address)])
 		if organizer:
 			uid = organizer[0].id
+			organizer = organizer[0]
 		if not dbEvent:
 			createDir = {
 				'name': event.subject,
