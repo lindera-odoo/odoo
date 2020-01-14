@@ -258,6 +258,7 @@ class linderaCalendarSyncer(models.Model):
 									pass
 							except exceptions.except_orm as err:
 								print('Concurrent Update')
+								print(err)
 							except Exception as err:
 								ravenSingle.Client.captureMessage(err)
 								self.env.cr.rollback()
@@ -282,6 +283,7 @@ class linderaCalendarSyncer(models.Model):
 										pass
 								except exceptions.except_orm as err:
 									print('Concurrent Update')
+									print(err)
 								except Exception as err:
 									ravenSingle.Client.captureMessage(err)
 									self.env.cr.rollback()
@@ -289,6 +291,7 @@ class linderaCalendarSyncer(models.Model):
 						pass
 				except exceptions.except_orm as err:
 					print('Concurrent Update')
+					print(err)
 				except Exception as err:
 					ravenSingle.Client.captureMessage(err)
 					raise osv.except_osv('Error While Syncing!', str(err))
