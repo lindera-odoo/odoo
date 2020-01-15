@@ -9,6 +9,7 @@ import datetime
 
 BATCH = 20
 
+import logging
 _logger = logging.getLogger(__name__)
 
 
