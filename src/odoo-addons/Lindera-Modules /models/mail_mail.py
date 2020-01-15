@@ -74,6 +74,7 @@ class linderaMail(models.Model):
 							message = mailbox.new_message()
 							if mail.parent_id:
 								_logger.warning('MAILWARN: Mail has Parent')
+								_logger.warning('MAILWARN: Parent Text: ' + mail.parent_id.body)
 								if mail.parent_id.o365ID:
 									_logger.warning('MAILWARN: Parent has OfficeID')
 									prev_mail = self.env['mail.message'].search(
