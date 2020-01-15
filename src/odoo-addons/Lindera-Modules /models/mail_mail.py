@@ -99,6 +99,7 @@ class linderaMail(models.Model):
 									message.conversation_id = mail.parent_id.o365ConversationID
 
 							message.send()
+							_logger.warning('MAILWARN: Mail has been sent')
 							time.sleep(1)
 							sent = list(
 								mailbox.sent_folder().get_messages(limit=len(ids), batch=20,
@@ -106,6 +107,7 @@ class linderaMail(models.Model):
 							now = datetime.datetime.utcnow()
 							for message in sent:
 								if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
+									_logger.warning('MAILWARN: Mail has Office ID')
 									mail.mail_message_id.o365ID = message.object_id
 									mail.mail_message_id.o365ConversationID = message.conversation_id
 									break
