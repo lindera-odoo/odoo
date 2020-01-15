@@ -73,18 +73,21 @@ class linderaMail(models.Model):
 							# set data
 							message = mailbox.new_message()
 							if mail.parent_id:
+								_logger.warning('MAILWARN: Mail has Parent')
 								if mail.parent_id.o365ID:
+									_logger.warning('MAILWARN: Parent has OfficeID')
 									prev_mail = self.env['mail.message'].search(
 										[('o365ConversationID', '=', mail.parent_id.o365ConversationID)])
 									if prev_mail:
 										mail.parent_id = prev_mail[0]
+									_logger.warning('MAILWARN: Try to use reply')
 									try:
 										oldMessage = mailbox.get_message(mail.parent_id.o365ID)
 										replyMessage = oldMessage.reply()
 										if replyMessage is not None:
 											message = replyMessage
 									except:
-										pass
+										_logger.warning('MAILWARN: Failed to use reply')
 							message.to.add(email.get('email_to'))
 							message.sender.address = mail.author_id.email
 							message.body = email.get('body')
