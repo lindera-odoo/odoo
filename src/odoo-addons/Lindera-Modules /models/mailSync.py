@@ -9,6 +9,8 @@ import datetime
 
 BATCH = 20
 
+_logger = logging.getLogger(__name__)
+
 
 class linderaMailSyncer(models.Model):
 	"""
@@ -69,7 +71,10 @@ class linderaMailSyncer(models.Model):
 													parent_id = None
 													prev_mail = self.env['mail.message'].search(
 														[('o365ConversationID', '=', message.conversation_id)])
+													_logger.warning('MAILSYNC: Looking for Conversation: ' + message.conversation_id)
 													if prev_mail:
+														_logger.warning('MAILSYNC: Found Parent with conversation: ' + prev_mail[0].o365ConversationID)
+														_logger.warning('MAILSYNC: Found Parent with timestamp: ' + prev_mail[0].date)
 														parent_id = prev_mail[0].id
 														target_model = prev_mail[0].model
 														target_id = prev_mail[0].res_id
