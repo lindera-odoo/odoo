@@ -93,9 +93,9 @@ class linderaCalendarSyncer(models.Model):
 			if organizer:
 				attendeeDict = {'email': organizer.email, 'event_id': dbEvent.id,
 				                'state': 'accepted',
-				                'partner_id': organizer[0].partner_id.id}
+				                'partner_id': organizer.partner_id.id}
 				dbEvent.attendee_ids.create(attendeeDict)
-				dbEvent.partner_ids += organizer[0].partner_id
+				dbEvent.partner_ids += organizer.partner_id
 		else:
 			dbEvent.active = False
 			dbEvent = dbEvent.with_context(no_mail_to_attendees=True)
@@ -107,6 +107,7 @@ class linderaCalendarSyncer(models.Model):
 				dbAttendee = dbEvent.attendee_ids.search([('email', "=", attendee.address),
 				                                          ('event_id', "=", dbEvent.id)])
 				if dbAttendee and attendee.response_status.status is not None:
+					dbAttendee = dbAttendee[0]
 					dbAttendee.state = statusMap[attendee.response_status.status.value]
 				else:
 					partner = self.env['res.partner'].search([('email', "=", attendee.address)])
@@ -202,9 +203,9 @@ class linderaCalendarSyncer(models.Model):
 			if organizer:
 				attendeeDict = {'email': organizer.email, 'event_id': dbEvent.id,
 				                'state': 'accepted',
-				                'partner_id': organizer[0].partner_id.id}
+				                'partner_id': organizer.partner_id.id}
 				dbEvent.attendee_ids.create(attendeeDict)
-				dbEvent.partner_ids += organizer[0].partner_id
+				dbEvent.partner_ids += organizer.partner_id
 		else:
 			dbEvent.active = False
 			dbEvent = dbEvent.with_context(no_mail_to_attendees=True)
@@ -217,6 +218,7 @@ class linderaCalendarSyncer(models.Model):
 				dbAttendee = dbEvent.attendee_ids.search([('email', "=", attendee.address),
 				                                          ('event_id', "=", dbEvent.id)])
 				if dbAttendee and attendee.response_status.status is not None:
+					dbAttendee = dbAttendee[0]
 					dbAttendee.state = statusMap[attendee.response_status.status.value]
 				else:
 					partner = self.env['res.partner'].search([('email', "=", attendee.address)])
