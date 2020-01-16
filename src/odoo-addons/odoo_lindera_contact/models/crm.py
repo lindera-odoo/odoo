@@ -43,7 +43,21 @@ class LinderaCRM(models.Model):
             bClient = self.setupBackendClient()
             homeData = bClient.getHome(partnerId).json()
             if homeData['total'] == 0 and len(homeData['data']) == 0:
-                return False
+                contact = self.env['res.partner'].search(
+                    [('id', '=', partnerId)])
+                # Create home in lindera backend
+                payload = {
+                    'name': contact.name,
+                    'city': contact.city,
+                    'street': contact.street,
+                    'zip': contact.zip,
+                    'role': 'home',
+                    'odooID': contact.id
+                }
+
+                result = bClient.postHome(payload).json()
+                return result['data']['_id']
+
             else:
                 mongoId = homeData['data'][0]['_id']
                 return mongoId
