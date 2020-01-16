@@ -67,5 +67,5 @@ class BackendClient():
         result = v.validate(data, schema)
         if(not result):
             raise osv.except_osv(
-                ('Error!'), ('Address in missing'))
+                ('Error!'), ('Please assign an address to the contact'))
         return result
