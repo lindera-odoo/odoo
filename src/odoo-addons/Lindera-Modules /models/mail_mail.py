@@ -73,13 +73,15 @@ class linderaMail(models.Model):
 							# set data
 							message = mailbox.new_message()
 							if mail.parent_id:
-								if not mail.parent_id.o365ID:
-									prev_mail = self.env['mail.message'].search(
-										[('o365ConversationID', '!=', None), ('parent_id', '!=', mail.parent_id.id)])
-									if prev_mail:
-										mail.parent_id = prev_mail[0]
-										
+								_logger.warning('EMAIL: has parent!')
+								# if not mail.parent_id.o365ID:
+								prev_mail = self.env['mail.message'].search(
+									[('o365ConversationID', '!=', None), ('parent_id', '!=', mail.parent_id.id)])
+								if prev_mail:
+									mail.parent_id = prev_mail[0]
+
 								if mail.parent_id.o365ID:
+									_logger.warning('EMAIL: has parent with office!')
 									prev_mail = self.env['mail.message'].search(
 										[('o365ConversationID', '=', mail.parent_id.o365ConversationID)])
 									if prev_mail:
@@ -103,7 +105,7 @@ class linderaMail(models.Model):
 								if mail.parent_id.o365ConversationID:
 									mail.mail_message_id.o365ConversationID = mail.parent_id.o365ConversationID
 									message.conversation_id = mail.parent_id.o365ConversationID
-
+							_logger.warning('EMAIL: send!')
 							message.send()
 							time.sleep(1)
 							sent = list(
@@ -112,6 +114,7 @@ class linderaMail(models.Model):
 							now = datetime.datetime.utcnow()
 							for message in sent:
 								if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
+									_logger.warning('EMAIL: has office!')
 									mail.mail_message_id.o365ID = message.object_id
 									mail.mail_message_id.o365ConversationID = message.conversation_id
 									break
