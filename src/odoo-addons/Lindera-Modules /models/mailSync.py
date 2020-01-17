@@ -9,7 +9,6 @@ import datetime
 
 BATCH = 20
 
-
 class linderaMailSyncer(models.Model):
 	"""
     Mail sync addition to users
@@ -57,11 +56,27 @@ class linderaMailSyncer(models.Model):
 										if contact:
 											user = self.env['res.users'].search([('partner_id', "=", contact[0].id)])
 											if not user:
-												mail = self.env['mail.message'].search([('subject', '=', message.subject),
-												                                        ('date', '=', message.sent),
-												                                        ('email_from', '=',
-												                                         contact[0].email)])
+												mail = self.env['mail.message'].search([('o365ID', '=', message.object_id)])
 												if not mail:
+													mail = self.env['mail.message'].search([('subject', '=', message.subject),
+													                                        ('date', '=', message.sent),
+													                                        ('email_from', '=',
+													                                         contact[0].email)])
+												if not mail:
+													target_model = 'res.partner'
+													target_id = contact[0].id
+													parent_id = None
+													prev_mail = self.env['mail.message'].search(
+														[('o365ConversationID', '=', message.conversation_id)])
+													if prev_mail:
+														parent_id = prev_mail[0].id
+														target_model = prev_mail[0].model
+														target_id = prev_mail[0].res_id
+														try:
+															target_id = prev_mail[0].res_id.id
+														except:
+															pass
+
 													attachments = []
 													for attachment in message.attachments:
 														attachment = self.env['ir.attachment'].create({
@@ -76,10 +91,13 @@ class linderaMailSyncer(models.Model):
 														'body': message.body_preview,
 														'email_from': contact[0].email,
 														'attachment_ids': [[6, 0, attachments]],
-														'model': 'res.partner',
-														'res_id': contact[0].id,
+														'model': target_model,
+														'res_id': target_id,
 														'author_id': contact[0].id,
-														'message_type': 'email'
+														'message_type': 'email',
+														'o365ID': message.object_id,
+														'o365ConversationID': message.conversation_id,
+														'parent_id': parent_id
 													})
 													self.env.cr.commit()
 								################################ SENT ##########################################################
@@ -93,22 +111,43 @@ class linderaMailSyncer(models.Model):
 												user = self.env['res.users'].search([('partner_id', "=", contact[0].id)])
 												if not user:
 													# check if date
-													assert isinstance(message.sent, datetime.datetime), 'Must be a date!'
-													self.env.cr.execute(
-														"SELECT id FROM mail_message WHERE ABS(EXTRACT(EPOCH FROM (date::timestamp - '" + str(
-															message.sent)[:-6] + "'::timestamp))) < 2")
-													self.env.cr.execute("SELECT id FROM mail_message ")
-													results = self.env.cr.fetchall()
-													mail = False
-													for res in results:
-														mail = self.env['mail.message'].search(
-															[('subject', '=', message.subject),
-															 ('id', '=', res[0]),
-															 ('res_id', '=', contact[0].id)])
-														if mail:
-															break
+													mail = self.env['mail.message'].search([('o365ID', '=', message.object_id)])
+													if not mail:
+														assert isinstance(message.sent, datetime.datetime), 'Must be a date!'
+														self.env.cr.execute(
+															"SELECT id FROM mail_message WHERE ABS(EXTRACT(EPOCH FROM (date::timestamp - '" + str(
+																message.sent)[:-6] + "'::timestamp))) < 2")
+														# self.env.cr.execute("SELECT id FROM mail_message ")
+														results = self.env.cr.fetchall()
+														if len(results) > 0:
+															results = list(map(lambda res: res[0], results))
+															mails = self.env['mail.message'].browse(results[0])
+															mail = False
+															for tmail in mails:
+																if tmail.subject == message.subject:
+																	if tmail.model == 'res.partner':
+																		if tmail.res_id == contact[0].id:
+																			mail = tmail
+																			break
+																	if tmail.model == 'crm.lead':
+																		if tmail.needaction_partner_ids[0].id == contact[0].id:
+																			mail = tmail
+																			break
 
 													if not mail:
+														target_model = 'res.partner'
+														target_id = contact[0].id
+														parent_id = None
+														prev_mail = self.env['mail.message'].search(
+															[('o365ConversationID', '=', message.conversation_id)])
+														if prev_mail:
+															parent_id = prev_mail[0].id
+															target_model = prev_mail[0].model
+															target_id = prev_mail[0].res_id
+															try:
+																target_id = prev_mail[0].res_id.id
+															except:
+																pass
 														attachments = []
 														for attachment in message.attachments:
 															attachment = self.env['ir.attachment'].create({
@@ -124,10 +163,13 @@ class linderaMailSyncer(models.Model):
 																'body': message.body_preview,
 																'email_from': message.sender.address,
 																'attachment_ids': [[6, 0, attachments]],
-																'model': 'res.partner',
-																'res_id': contact[0].id,
+																'model': target_model,
+																'res_id': target_id,
 																'author_id': author[0].commercial_partner_id.id,
-																'message_type': 'email'
+																'message_type': 'email',
+																'o365ID': message.object_id,
+																'o365ConversationID': message.conversation_id,
+																'parent_id': parent_id
 															})
 														else:
 															self.env['mail.message'].create({
@@ -136,11 +178,19 @@ class linderaMailSyncer(models.Model):
 																'body': message.body_preview,
 																'email_from': message.sender.address,
 																'attachment_ids': [[6, 0, attachments]],
-																'model': 'res.partner',
-																'res_id': contact[0].id,
-																'message_type': 'email'
+																'model': target_model,
+																'res_id': target_id,
+																'message_type': 'email',
+																'o365ID': message.object_id,
+																'o365ConversationID': message.conversation_id,
+																'parent_id': parent_id
 															})
 														self.env.cr.commit()
+													else:
+														if not mail[0].o365ID or mail[0].o365ConversationID:
+															mail[0].o365ID = message.object_id
+															mail[0].o365ConversationID = message.conversation_id
+
 							except Exception as err:
 								# error handler for single message
 								ravenSingle.Client.captureMessage(err)

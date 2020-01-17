@@ -59,6 +59,7 @@ class linderaCalendarSyncer(models.Model):
 		organizer = self.env['res.users'].search([('email', "=", event.organizer.address)])
 		if organizer:
 			uid = organizer[0].id
+			organizer = organizer[0]
 		if not dbEvent:
 			dbEvent = self.env['calendar.event'].with_context(mail_create_nosubscribe=True).create({
 				'name': event.subject,
@@ -92,9 +93,9 @@ class linderaCalendarSyncer(models.Model):
 			if organizer:
 				attendeeDict = {'email': organizer.email, 'event_id': dbEvent.id,
 				                'state': 'accepted',
-				                'partner_id': organizer[0].partner_id.id}
+				                'partner_id': organizer.partner_id.id}
 				dbEvent.attendee_ids.create(attendeeDict)
-				dbEvent.partner_ids += organizer[0].partner_id
+				dbEvent.partner_ids += organizer.partner_id
 		else:
 			dbEvent.active = False
 			dbEvent = dbEvent.with_context(no_mail_to_attendees=True)
@@ -106,6 +107,7 @@ class linderaCalendarSyncer(models.Model):
 				dbAttendee = dbEvent.attendee_ids.search([('email', "=", attendee.address),
 				                                          ('event_id', "=", dbEvent.id)])
 				if dbAttendee and attendee.response_status.status is not None:
+					dbAttendee = dbAttendee[0]
 					dbAttendee.state = statusMap[attendee.response_status.status.value]
 				else:
 					partner = self.env['res.partner'].search([('email', "=", attendee.address)])
@@ -164,6 +166,7 @@ class linderaCalendarSyncer(models.Model):
 		organizer = self.env['res.users'].search([('email', "=", event.organizer.address)])
 		if organizer:
 			uid = organizer[0].id
+			organizer = organizer[0]
 		if not dbEvent:
 			createDir = {
 				'name': event.subject,
@@ -200,9 +203,9 @@ class linderaCalendarSyncer(models.Model):
 			if organizer:
 				attendeeDict = {'email': organizer.email, 'event_id': dbEvent.id,
 				                'state': 'accepted',
-				                'partner_id': organizer[0].partner_id.id}
+				                'partner_id': organizer.partner_id.id}
 				dbEvent.attendee_ids.create(attendeeDict)
-				dbEvent.partner_ids += organizer[0].partner_id
+				dbEvent.partner_ids += organizer.partner_id
 		else:
 			dbEvent.active = False
 			dbEvent = dbEvent.with_context(no_mail_to_attendees=True)
@@ -215,6 +218,7 @@ class linderaCalendarSyncer(models.Model):
 				dbAttendee = dbEvent.attendee_ids.search([('email', "=", attendee.address),
 				                                          ('event_id', "=", dbEvent.id)])
 				if dbAttendee and attendee.response_status.status is not None:
+					dbAttendee = dbAttendee[0]
 					dbAttendee.state = statusMap[attendee.response_status.status.value]
 				else:
 					partner = self.env['res.partner'].search([('email', "=", attendee.address)])
@@ -256,6 +260,7 @@ class linderaCalendarSyncer(models.Model):
 									pass
 							except exceptions.except_orm as err:
 								print('Concurrent Update')
+								print(err)
 							except Exception as err:
 								ravenSingle.Client.captureMessage(err)
 								self.env.cr.rollback()
@@ -280,6 +285,7 @@ class linderaCalendarSyncer(models.Model):
 										pass
 								except exceptions.except_orm as err:
 									print('Concurrent Update')
+									print(err)
 								except Exception as err:
 									ravenSingle.Client.captureMessage(err)
 									self.env.cr.rollback()
@@ -287,6 +293,7 @@ class linderaCalendarSyncer(models.Model):
 						pass
 				except exceptions.except_orm as err:
 					print('Concurrent Update')
+					print(err)
 				except Exception as err:
 					ravenSingle.Client.captureMessage(err)
 					raise osv.except_osv('Error While Syncing!', str(err))
