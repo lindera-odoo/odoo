@@ -10,6 +10,9 @@ from .odooTokenStore import odooTokenStore
 from odoo import tools
 from odoo.addons.base.models.ir_mail_server import MailDeliveryException
 from .ravenSingleton import ravenSingleton
+import datetime
+import dateutil
+import time
 
 _logger = logging.getLogger(__name__)
 
@@ -28,7 +31,12 @@ class linderaMail(models.Model):
 
 		for id in ids:
 			mail = self.browse(id)
-			token_backend = odooTokenStore(self.env.user)
+			user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id)])
+			if user:
+				user = user[0]
+			else:
+				return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
+			token_backend = odooTokenStore(user)
 			if token_backend.check_token():
 				try:
 					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
@@ -64,16 +72,48 @@ class linderaMail(models.Model):
 							process_pid = email.pop("partner_id", None)
 							# set data
 							message = mailbox.new_message()
+							if mail.parent_id:
+								prev_mail = self.env['mail.message'].search(
+									[('o365ConversationID', '!=', None), ('parent_id', '!=', mail.parent_id.id)])
+								if prev_mail:
+									mail.parent_id = prev_mail[0]
+
+								if mail.parent_id.o365ID:
+									prev_mail = self.env['mail.message'].search(
+										[('o365ConversationID', '=', mail.parent_id.o365ConversationID)])
+									if prev_mail:
+										mail.parent_id = prev_mail[0]
+									try:
+										oldMessage = mailbox.get_message(mail.parent_id.o365ID)
+										replyMessage = oldMessage.reply()
+										if replyMessage is not None:
+											message = replyMessage
+									except:
+										pass
 							message.to.add(email.get('email_to'))
 							message.sender.address = mail.author_id.email
 							message.body = email.get('body')
 							# Sadly no alternative body for viewing impaired...
 							message.subject = mail.subject
 							message.cc.add(tools.email_split(mail.email_cc))
-							message.reply_to.add(tools.email_split(mail.reply_to))
+							message.reply_to.add(mail.author_id.email)
 							message.attachments.add(attachments)
+							if mail.parent_id:
+								if mail.parent_id.o365ConversationID:
+									mail.mail_message_id.o365ConversationID = mail.parent_id.o365ConversationID
+									message.conversation_id = mail.parent_id.o365ConversationID
 
 							message.send()
+							time.sleep(1)
+							sent = list(
+								mailbox.sent_folder().get_messages(limit=len(ids), batch=20,
+								                                   download_attachments=False))
+							now = datetime.datetime.utcnow()
+							for message in sent:
+								if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
+									mail.mail_message_id.o365ID = message.object_id
+									mail.mail_message_id.o365ConversationID = message.conversation_id
+									break
 
 							process_pids.append(process_pid)
 						# do not try to send via the normal way

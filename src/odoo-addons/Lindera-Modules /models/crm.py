@@ -40,18 +40,31 @@ class LinderaCRM(models.Model):
         if partner:
             partnerId = partner[0]
             # Check if the contact exists in lindera backend
-
             bClient = self.setupBackendClient()
             homeData = bClient.getHome(partnerId).json()
             if homeData['total'] == 0 and len(homeData['data']) == 0:
-                raise osv.except_osv(
-                    ('Error!'), ('The associated partner does not exist in Lindera database, please create it first'))
+                contact = self.env['res.partner'].search(
+                    [('id', '=', partnerId)])
+                # Create home in lindera backend
+                payload = {
+                    'name': contact.name,
+                    'city': contact.city,
+                    'street': contact.street,
+                    'zip': contact.zip,
+                    'role': 'home',
+                    'odooID': contact.id
+                }
+
+                result = bClient.postHome(payload).json()
+                return result['data']['_id']
+
             else:
                 mongoId = homeData['data'][0]['_id']
                 return mongoId
 
     @api.multi
     def write(self, vals):
+        previouse_stage = self.stage_id
         result = super(LinderaCRM, self).write(vals)
 
         if 'stage_id' not in vals:
@@ -62,17 +75,37 @@ class LinderaCRM(models.Model):
         name = stage.name
         # Get the current timestamp in seconds
         cts = getCurrentTimestamp()
+        previouse_stage_name = previouse_stage.name
 
-        if name == '8 W-Test live' or name == 'Einführung':
+        if name == 'Salestermin geplant':
             mongoId = self.checkIfHomeExists()
-            futureTs = cts + (60 * 60 * 24 * 70)
-            expirationDate = datetime.fromtimestamp(futureTs).isoformat()
-            self.updateHome(mongoId, expirationDate)
+            if mongoId:
+                futureTs = cts + (60 * 60 * 24 * 120)
+                expirationDate = datetime.fromtimestamp(futureTs).isoformat()
+                self.updateHome(mongoId, expirationDate)
+            else:
+                return result
+
+        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Intergration':
+            if previouse_stage_name == 'Salestermin geplant':
+                return result
+
+            mongoId = self.checkIfHomeExists()
+            if mongoId:
+                futureTs = cts + (60 * 60 * 24 * 12000)
+                expirationDate = datetime.fromtimestamp(
+                    futureTs).isoformat()
+                self.updateHome(mongoId, expirationDate)
+            else:
+                return result
 
         if name == 'On hold':
             mongoId = self.checkIfHomeExists()
-            pastTs = cts - (60 * 60 * 24)
-            expirationDate = datetime.fromtimestamp(pastTs).isoformat()
-            self.updateHome(mongoId, expirationDate)
+            if mongoId:
+                pastTs = cts - (60 * 60 * 24)
+                expirationDate = datetime.fromtimestamp(pastTs).isoformat()
+                self.updateHome(mongoId, expirationDate)
+            else:
+                return result
 
         return result
