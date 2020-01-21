@@ -120,7 +120,8 @@ class linderaMail(models.Model):
 									mail.mail_message_id.o365ConversationID = mail.parent_id.o365ConversationID
 									message.conversation_id = mail.parent_id.o365ConversationID
 
-							message.send()
+							if not message.send():
+								return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
 							try:
 								time.sleep(1)
 								sent = list(mailbox.sent_folder().get_messages(limit=len(ids), batch=len(ids),
