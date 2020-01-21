@@ -31,7 +31,12 @@ class linderaMail(models.Model):
 
 		for id in ids:
 			mail = self.browse(id)
-			_logger.warning('EMAILTO: ' + str(tools.email_split(mail.email_to)))
+			email_list = []
+			if mail.email_to:
+				email_list.append(tools.email_split(mail.email_to))
+			for partner in mail.recipient_ids:
+				email_list.append(partner.email)
+			_logger.warning('EMAILTO: ' + str(email_list))
 			user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id)])
 			if user:
 				user = user[0]
