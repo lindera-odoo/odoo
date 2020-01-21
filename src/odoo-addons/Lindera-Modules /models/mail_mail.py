@@ -104,6 +104,7 @@ class linderaMail(models.Model):
 											message = replyMessage
 									except:
 										pass
+							_logger.warning('EMAILFROM: ' + str(mail.author_id.email))
 							_logger.warning('EMAILTO: ' + str(email.get('email_to')))
 
 							message.to.add(email.get('email_to'))
