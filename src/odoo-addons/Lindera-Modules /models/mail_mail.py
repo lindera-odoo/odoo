@@ -120,6 +120,7 @@ class linderaMail(models.Model):
 									mail.mail_message_id.o365ConversationID = mail.parent_id.o365ConversationID
 									message.conversation_id = mail.parent_id.o365ConversationID
 
+							_logger.warning('EMAILPRESEND: ' + str(e))
 							try:
 								message.send()
 							except Exception as e:
