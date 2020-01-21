@@ -90,6 +90,9 @@ class linderaMail(models.Model):
 											message = replyMessage
 									except:
 										pass
+							if message.sent:
+								message = message.forward()
+
 							message.to.add(email.get('email_to'))
 							message.sender.address = mail.author_id.email
 							message.body = email.get('body')
