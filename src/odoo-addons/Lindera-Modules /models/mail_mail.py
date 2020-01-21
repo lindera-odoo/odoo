@@ -31,6 +31,7 @@ class linderaMail(models.Model):
 
 		for id in ids:
 			mail = self.browse(id)
+			_logger.warning('EMAILTO: ' + str(tools.email_split(mail.email_to)))
 			user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id)])
 			if user:
 				user = user[0]
@@ -104,9 +105,6 @@ class linderaMail(models.Model):
 											message = replyMessage
 									except:
 										pass
-							_logger.warning('EMAILFROM: ' + str(mail.author_id.email))
-							_logger.warning('EMAILTO: ' + str(email.get('email_to')))
-							_logger.warning('EMAILID: ' + str(mail.id))
 
 							message.to.add(email.get('email_to'))
 							message.sender.address = mail.author_id.email
@@ -121,12 +119,7 @@ class linderaMail(models.Model):
 									mail.mail_message_id.o365ConversationID = mail.parent_id.o365ConversationID
 									message.conversation_id = mail.parent_id.o365ConversationID
 
-							_logger.warning('EMAILPRESEND')
-							try:
-								message.send()
-							except Exception as e:
-								_logger.warning('EMAILERROR: ' + str(e))
-							_logger.warning('POSTEMAILID: ' + str(mail.id))
+							message.send()
 							try:
 								time.sleep(1)
 								sent = list(mailbox.sent_folder().get_messages(limit=len(ids), batch=len(ids),
