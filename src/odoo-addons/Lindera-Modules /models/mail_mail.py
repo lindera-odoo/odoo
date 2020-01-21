@@ -67,6 +67,20 @@ class linderaMail(models.Model):
 							values['email_to'] = partner.email
 							email_list.append(values)
 
+						same = True
+						body = email_list[0]['body']
+						mails = []
+						partners = []
+						for email in email_list:
+							same = same and (email['body'] == body)
+							mails.append(email['email_to'])
+							partners.append(email['partner_id'])
+						if same:
+							value = email_list[0]
+							value['email_to'] = mails
+							value['partner_id'] = partners
+							email_list = [value]
+
 						process_pids = []
 						for email in email_list:
 							process_pid = email.pop("partner_id", None)
@@ -90,8 +104,7 @@ class linderaMail(models.Model):
 											message = replyMessage
 									except:
 										pass
-							if message.sent:
-								message = message.forward()
+							_logger.warning('EMAILTO: ' + str(email.get('email_to')))
 
 							message.to.add(email.get('email_to'))
 							message.sender.address = mail.author_id.email
@@ -109,9 +122,8 @@ class linderaMail(models.Model):
 							message.send()
 							try:
 								time.sleep(1)
-								sent = list(
-									mailbox.sent_folder().get_messages(limit=len(ids), batch=20,
-									                                   download_attachments=False))
+								sent = list(mailbox.sent_folder().get_messages(limit=len(ids), batch=len(ids),
+								                                               download_attachments=False))
 								now = datetime.datetime.utcnow()
 								for message in sent:
 									if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
@@ -121,7 +133,11 @@ class linderaMail(models.Model):
 							except Exception as e:
 								ravenSingle.Client.captureMessage(e)
 
-							process_pids.append(process_pid)
+							if isinstance(process_pid, list):
+								for pid in process_pid:
+									process_pids.append(pid)
+							else:
+								process_pids.append(process_pid)
 						# do not try to send via the normal way
 						mail.write({'state': 'sent', 'failure_reason': False})
 						_logger.info('Mail with ID %r successfully sent', mail.id)
