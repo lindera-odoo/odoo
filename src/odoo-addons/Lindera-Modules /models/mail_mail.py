@@ -43,7 +43,7 @@ class linderaMail(models.Model):
 			else:
 				return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
 			token_backend = odooTokenStore(user)
-			if token_backend.check_token() and False:
+			if token_backend.check_token():
 				try:
 					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
