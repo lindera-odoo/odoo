@@ -104,16 +104,19 @@ class linderaMail(models.Model):
 									message.conversation_id = mail.parent_id.o365ConversationID
 
 							message.send()
-							time.sleep(1)
-							sent = list(
-								mailbox.sent_folder().get_messages(limit=len(ids), batch=20,
-								                                   download_attachments=False))
-							now = datetime.datetime.utcnow()
-							for message in sent:
-								if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
-									mail.mail_message_id.o365ID = message.object_id
-									mail.mail_message_id.o365ConversationID = message.conversation_id
-									break
+							try:
+								time.sleep(1)
+								sent = list(
+									mailbox.sent_folder().get_messages(limit=len(ids), batch=20,
+									                                   download_attachments=False))
+								now = datetime.datetime.utcnow()
+								for message in sent:
+									if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
+										mail.mail_message_id.o365ID = message.object_id
+										mail.mail_message_id.o365ConversationID = message.conversation_id
+										break
+							except Exception as e:
+								ravenSingle.Client.captureMessage(e)
 
 							process_pids.append(process_pid)
 						# do not try to send via the normal way
