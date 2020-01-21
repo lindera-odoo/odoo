@@ -36,14 +36,21 @@ class linderaMail(models.Model):
 				email_list.append(tools.email_split(mail.email_to))
 			for partner in mail.recipient_ids:
 				email_list.append(partner.email)
-			_logger.warning('EMAILTO: ' + str(email_list))
+
+			allowtosend = True
+			blacklistMails = ['service@lindera.de', 'support@lindera.odoo.com']
+			for email in email_list:
+				if email in blacklistMails:
+					allowtosend = False
+					break;
+
 			user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id)])
 			if user:
 				user = user[0]
 			else:
 				return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
 			token_backend = odooTokenStore(user)
-			if token_backend.check_token():
+			if token_backend.check_token() and allowtosend:
 				try:
 					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
