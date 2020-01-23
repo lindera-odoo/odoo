@@ -31,13 +31,26 @@ class linderaMail(models.Model):
 
 		for id in ids:
 			mail = self.browse(id)
+			email_list = []
+			if mail.email_to:
+				email_list.append(tools.email_split(mail.email_to))
+			for partner in mail.recipient_ids:
+				email_list.append(partner.email)
+
+			allowtosend = True
+			blacklistMails = ['service@lindera.de', 'support@lindera.odoo.com']
+			for email in email_list:
+				if email in blacklistMails:
+					allowtosend = False
+					break;
+
 			user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id)])
 			if user:
 				user = user[0]
 			else:
 				return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
 			token_backend = odooTokenStore(user)
-			if token_backend.check_token():
+			if token_backend.check_token() and allowtosend:
 				try:
 					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 					if account.is_authenticated:
@@ -67,6 +80,20 @@ class linderaMail(models.Model):
 							values['email_to'] = partner.email
 							email_list.append(values)
 
+						same = True
+						body = email_list[0]['body']
+						mails = []
+						partners = []
+						for email in email_list:
+							same = same and (email['body'] == body)
+							mails.append(email['email_to'])
+							partners.append(email['partner_id'])
+						if same:
+							value = email_list[0]
+							value['email_to'] = mails
+							value['partner_id'] = partners
+							email_list = [value]
+
 						process_pids = []
 						for email in email_list:
 							process_pid = email.pop("partner_id", None)
@@ -90,6 +117,7 @@ class linderaMail(models.Model):
 											message = replyMessage
 									except:
 										pass
+
 							message.to.add(email.get('email_to'))
 							message.sender.address = mail.author_id.email
 							message.body = email.get('body')
@@ -104,18 +132,24 @@ class linderaMail(models.Model):
 									message.conversation_id = mail.parent_id.o365ConversationID
 
 							message.send()
-							time.sleep(1)
-							sent = list(
-								mailbox.sent_folder().get_messages(limit=len(ids), batch=20,
-								                                   download_attachments=False))
-							now = datetime.datetime.utcnow()
-							for message in sent:
-								if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
-									mail.mail_message_id.o365ID = message.object_id
-									mail.mail_message_id.o365ConversationID = message.conversation_id
-									break
+							try:
+								time.sleep(1)
+								sent = list(mailbox.sent_folder().get_messages(limit=len(ids), batch=len(ids),
+								                                               download_attachments=False))
+								now = datetime.datetime.utcnow()
+								for message in sent:
+									if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
+										mail.mail_message_id.o365ID = message.object_id
+										mail.mail_message_id.o365ConversationID = message.conversation_id
+										break
+							except Exception as e:
+								ravenSingle.Client.captureMessage(e)
 
-							process_pids.append(process_pid)
+							if isinstance(process_pid, list):
+								for pid in process_pid:
+									process_pids.append(pid)
+							else:
+								process_pids.append(process_pid)
 						# do not try to send via the normal way
 						mail.write({'state': 'sent', 'failure_reason': False})
 						_logger.info('Mail with ID %r successfully sent', mail.id)
