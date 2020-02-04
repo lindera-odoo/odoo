@@ -83,34 +83,18 @@ class LinderaCRM(models.Model):
             if category.name == 'Einrichtung':
                 isEinrichtung = True
 
-        # columns with subscription
-        subColumns = ['Bereit für Einführung', 'In Evaluation', 'Einführung in Planung', 'Live', 'Einführung']
         if isEinrichtung:
-            if name == 'Salestermin geplant':
+            if stage.allow_subscription:
+                # columns with subscription
                 mongoId = self.checkIfHomeExists()
                 if mongoId:
-                    futureTs = cts + (60 * 60 * 24 * 120)
-                    expirationDate = datetime.fromtimestamp(futureTs).isoformat()
-                    self.updateHome(mongoId, expirationDate)
-                else:
-                    return result
-
-            if name in subColumns:
-                if previouse_stage_name == 'Salestermin geplant':
-                    return result
-
-                mongoId = self.checkIfHomeExists()
-                if mongoId:
-                    futureTs = cts + (60 * 60 * 24 * 12000)
+                    futureTs = cts + (stage.subscription_duration)
                     expirationDate = datetime.fromtimestamp(
                         futureTs).isoformat()
                     self.updateHome(mongoId, expirationDate)
                 else:
                     return result
             else:
-                if name == 'Salestermin geplant':
-                    return result
-
                 mongoId = self.checkIfHomeExists()
                 if mongoId:
                     futureTs = cts - (60 * 60 * 24)

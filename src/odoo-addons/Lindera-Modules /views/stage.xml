@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="stage_form_lindera" model="ir.ui.view">
+        <field name="name">lindera.stage.form</field>
+        <field name="model">crm.stage</field>
+        <field name="inherit_id" ref="crm.crm_stage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='fold']" position="after">
+                <field name="allow_subscription" string="Erlaube Subscription"/>
+            </xpath>
+            <xpath expr="//field[@name='probability']" position="after">
+                <field name="subscription_duration" string="Standard Subscription Dauer in s"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

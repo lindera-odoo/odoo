@@ -28,6 +28,7 @@
         'views/promocode_view.xml',
         'views/office_auth.xml',
         'views/office_mail.xml',
+        'views/stage.xml',
         'data/scheduler.xml',
     ],
     # only loaded in demonstration mode

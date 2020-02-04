@@ -11,3 +11,4 @@ from . import mail_message
 from . import contactSync
 from . import calendar_event
 from . import calendarSync
+from . import stage
