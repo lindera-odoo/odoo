@@ -77,35 +77,47 @@ class LinderaCRM(models.Model):
         cts = getCurrentTimestamp()
         previouse_stage_name = previouse_stage.name
 
-        if name == 'Salestermin geplant':
-            mongoId = self.checkIfHomeExists()
-            if mongoId:
-                futureTs = cts + (60 * 60 * 24 * 120)
-                expirationDate = datetime.fromtimestamp(futureTs).isoformat()
-                self.updateHome(mongoId, expirationDate)
-            else:
-                return result
+        # check if Einrichtung
+        isEinrichtung = False
+        for category in self.partner_id.category_id:
+            if category.name == 'Einrichtung':
+                isEinrichtung = True
 
-        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Intergration':
-            if previouse_stage_name == 'Salestermin geplant':
-                return result
+        # columns with subscription
+        subColumns = ['Bereit für Einführung', 'In Evaluation', 'Einführung in Planung', 'Live', 'Einführung']
+        if isEinrichtung:
+            if name == 'Salestermin geplant':
+                mongoId = self.checkIfHomeExists()
+                if mongoId:
+                    futureTs = cts + (60 * 60 * 24 * 120)
+                    expirationDate = datetime.fromtimestamp(futureTs).isoformat()
+                    self.updateHome(mongoId, expirationDate)
+                else:
+                    return result
 
-            mongoId = self.checkIfHomeExists()
-            if mongoId:
-                futureTs = cts + (60 * 60 * 24 * 12000)
-                expirationDate = datetime.fromtimestamp(
-                    futureTs).isoformat()
-                self.updateHome(mongoId, expirationDate)
-            else:
-                return result
+            if name in subColumns:
+                if previouse_stage_name == 'Salestermin geplant':
+                    return result
 
-        if name == 'On hold':
-            mongoId = self.checkIfHomeExists()
-            if mongoId:
-                pastTs = cts - (60 * 60 * 24)
-                expirationDate = datetime.fromtimestamp(pastTs).isoformat()
-                self.updateHome(mongoId, expirationDate)
+                mongoId = self.checkIfHomeExists()
+                if mongoId:
+                    futureTs = cts + (60 * 60 * 24 * 12000)
+                    expirationDate = datetime.fromtimestamp(
+                        futureTs).isoformat()
+                    self.updateHome(mongoId, expirationDate)
+                else:
+                    return result
             else:
-                return result
+                if name == 'Salestermin geplant':
+                    return result
+
+                mongoId = self.checkIfHomeExists()
+                if mongoId:
+                    futureTs = cts - (60 * 60 * 24)
+                    expirationDate = datetime.fromtimestamp(
+                        futureTs).isoformat()
+                    self.updateHome(mongoId, expirationDate)
+                else:
+                    return result
 
         return result
