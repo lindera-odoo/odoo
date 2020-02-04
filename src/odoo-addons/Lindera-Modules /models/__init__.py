@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from . import home
 from . import contact
 from . import crm
 from . import promo_code
@@ -11,3 +12,4 @@ from . import mail_message
 from . import contactSync
 from . import calendar_event
 from . import calendarSync
+from . import lead

@@ -2,10 +2,12 @@
 {
     'name': "Lindera",
     'summary': """
-        Contacts/CRM/Promo_Codes""",
+        Lindera intern Module""",
 
     'description': """
-        Long description of module's purpose
+        Backend Integration
+        Ofice365 Integration
+        and various other things
     """,
 
     'author': "Lindera Developers",
@@ -28,6 +30,8 @@
         'views/promocode_view.xml',
         'views/office_auth.xml',
         'views/office_mail.xml',
+        'views/home.xml',
+        'views/lead.xml',
         'data/scheduler.xml',
     ],
     # only loaded in demonstration mode

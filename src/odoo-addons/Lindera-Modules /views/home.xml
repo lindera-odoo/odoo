@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="partner_form_home" model="ir.ui.view">
+        <field name="name">res.partner.form.home.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='lang']" position="after">
+                <field name="show_senior_number" string="Show Senior Number" invisible="True"/>
+                <field name="senior_number" string="Seniorenanzahl" attrs="{'invisible':[('show_senior_number','!=', True)]}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
