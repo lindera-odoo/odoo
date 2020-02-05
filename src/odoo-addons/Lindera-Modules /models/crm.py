@@ -4,6 +4,8 @@ from datetime import datetime
 from openerp.osv import osv
 
 
+HOMETAG = 'Einrichtung'
+
 def getCurrentTimestamp():
     return datetime.now().timestamp().__round__()
 
@@ -80,7 +82,7 @@ class LinderaCRM(models.Model):
         # check if Einrichtung
         isEinrichtung = False
         for category in self.partner_id.category_id:
-            if category.name == 'Einrichtung':
+            if category.name == HOMETAG:
                 isEinrichtung = True
 
         if isEinrichtung:
