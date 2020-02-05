@@ -1,6 +1,6 @@
 from odoo import models, fields, api
 
-class LinderHome(models.Model):
+class LinderaHome(models.Model):
 	"""
 	Add more fields and functions to the home
 	"""
@@ -17,7 +17,7 @@ class LinderHome(models.Model):
 		:return: returns an event
 		"""
 
-		contact = super(LinderHome, self).create(values)
+		contact = super(LinderaHome, self).create(values)
 
 		if 'category_id' in values.keys():
 			isEinrichtung = False
@@ -48,4 +48,4 @@ class LinderHome(models.Model):
 			if not isEinrichtung:
 				self.senior_number = 0
 
-		super(LinderHome, self).write(values)
+		super(LinderaHome, self).write(values)
