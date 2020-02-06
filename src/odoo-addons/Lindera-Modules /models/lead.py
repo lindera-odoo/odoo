@@ -17,15 +17,17 @@ class Linderlead(models.Model):
 
 	@api.depends('partner_id', 'partner_id.senior_number', 'partner_id.show_senior_number')
 	def _compute_senior_number(self):
-		out = 0
-		if self.partner_id.show_senior_number:
-			out += self.partner_id.senior_number
+		for lead in self:
+			out = 0
+			if lead.partner_id.show_senior_number:
+				out += lead.partner_id.senior_number
 
-		self.senior_number = out
+			lead.senior_number = out
 
 	@api.depends('senior_number')
 	def _compute_senior_number_string(self):
-		if self.senior_number != 0:
-			self.senior_number_string = 'mit ' + str(self.senior_number) + ' Senioren'
-		else:
-			self.senior_number_string = ''
+		for lead in self:
+			if lead.senior_number != 0:
+				lead.senior_number_string = 'mit ' + str(lead.senior_number) + ' Senioren'
+			else:
+				lead.senior_number_string = ''
