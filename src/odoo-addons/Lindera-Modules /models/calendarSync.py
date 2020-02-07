@@ -99,7 +99,6 @@ class linderaCalendarSyncer(models.Model):
 		else:
 			dbEvent.active = False
 			dbEvent = dbEvent.with_context(no_mail_to_attendees=True)
-			# dbEvent.privacy = privacy
 			dbEvent.location = event.location['displayName']
 			dbEvent.allday = event.is_all_day
 			dbEvent.body = event.body
@@ -210,7 +209,6 @@ class linderaCalendarSyncer(models.Model):
 			dbEvent.active = False
 			dbEvent = dbEvent.with_context(no_mail_to_attendees=True)
 			dbEvent.write(pattern)
-			# dbEvent.privacy = privacy
 			dbEvent.location = event.location['displayName']
 			dbEvent.allday = event.is_all_day
 			dbEvent.body = event.body
