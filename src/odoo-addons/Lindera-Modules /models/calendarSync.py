@@ -252,6 +252,8 @@ class linderaCalendarSyncer(models.Model):
 						##################################NORMAL EVENTS#################################################
 						events = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=False))
 						for event in events:
+							if event.organizer.address != syncUser.email:
+								continue
 							try:
 								if event.event_type.value == 'single_instance':
 									self.handleNormalEvent(event, syncUser)
@@ -273,6 +275,8 @@ class linderaCalendarSyncer(models.Model):
 						recevents = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=True, query=query))
 						for event in recevents:
 							if event.event_type.value != 'single_instance':
+								if event.organizer.address != syncUser.email:
+									continue
 								try:
 									if event.event_type.value == 'exception':
 										self.handleNormalEvent(event, syncUser)
