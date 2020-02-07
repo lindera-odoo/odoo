@@ -9,6 +9,7 @@ import datetime
 
 BATCH = 20
 
+
 class linderaMailSyncer(models.Model):
 	"""
     Mail sync addition to users
@@ -24,14 +25,13 @@ class linderaMailSyncer(models.Model):
 	def syncAllMailsScheduler(self):
 		self.syncMails(100)
 
-	def syncMails(self, toCheck=-1):
-		ravenClient = self.env['ir.config_parameter'].get_param(
-			'lindera.raven_client')
-		ravenSingle = ravenSingleton(ravenClient)
-		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
-		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
-
-		for syncUser in self.env['res.users'].search([]):
+	def forUser(self, syncUser, toCheck=-1):
+		with api.Environment.manage():
+			ravenClient = self.env['ir.config_parameter'].get_param(
+				'lindera.raven_client')
+			ravenSingle = ravenSingleton(ravenClient)
+			CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
+			CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 			token_backend = odooTokenStore(syncUser)
 			if token_backend.check_token():
 				try:
@@ -52,16 +52,19 @@ class linderaMailSyncer(models.Model):
 								if message in inbox:
 									# related partner might be weird without this...
 									if message.sender.address != syncUser.email:
-										contact = self.env['res.partner'].search([('email', "=", message.sender.address)])
+										contact = self.env['res.partner'].search(
+											[('email', "=", message.sender.address)])
 										if contact:
 											user = self.env['res.users'].search([('partner_id', "=", contact[0].id)])
 											if not user:
-												mail = self.env['mail.message'].search([('o365ID', '=', message.object_id)])
+												mail = self.env['mail.message'].search(
+													[('o365ID', '=', message.object_id)])
 												if not mail:
-													mail = self.env['mail.message'].search([('subject', '=', message.subject),
-													                                        ('date', '=', message.sent),
-													                                        ('email_from', '=',
-													                                         contact[0].email)])
+													mail = self.env['mail.message'].search(
+														[('subject', '=', message.subject),
+														 ('date', '=', message.sent),
+														 ('email_from', '=',
+														  contact[0].email)])
 												if not mail:
 													target_model = 'res.partner'
 													target_id = contact[0].id
@@ -106,14 +109,18 @@ class linderaMailSyncer(models.Model):
 									for recipient in message.to:
 										# related partner might be weird without this...
 										if recipient.address != syncUser.email:
-											contact = self.env['res.partner'].search([('email', "=", recipient.address)])
+											contact = self.env['res.partner'].search(
+												[('email', "=", recipient.address)])
 											if contact:
-												user = self.env['res.users'].search([('partner_id', "=", contact[0].id)])
+												user = self.env['res.users'].search(
+													[('partner_id', "=", contact[0].id)])
 												if not user:
 													# check if date
-													mail = self.env['mail.message'].search([('o365ID', '=', message.object_id)])
+													mail = self.env['mail.message'].search(
+														[('o365ID', '=', message.object_id)])
 													if not mail:
-														assert isinstance(message.sent, datetime.datetime), 'Must be a date!'
+														assert isinstance(message.sent,
+														                  datetime.datetime), 'Must be a date!'
 														self.env.cr.execute(
 															"SELECT id FROM mail_message WHERE ABS(EXTRACT(EPOCH FROM (date::timestamp - '" + str(
 																message.sent)[:-6] + "'::timestamp))) < 2")
@@ -130,7 +137,9 @@ class linderaMailSyncer(models.Model):
 																			mail = tmail
 																			break
 																	if tmail.model == 'crm.lead':
-																		if tmail.needaction_partner_ids[0].id == contact[0].id:
+																		if tmail.needaction_partner_ids[0].id == \
+																				contact[
+																					0].id:
 																			mail = tmail
 																			break
 
@@ -198,3 +207,12 @@ class linderaMailSyncer(models.Model):
 					# error handling for authentication
 					ravenSingle.Client.captureMessage(err)
 					raise osv.except_osv('Error While Syncing!', str(err))
+
+	def syncMails(self, toCheck=-1):
+		threads = []
+		for syncUser in self.env['res.users'].search([]):
+			thread = threading.Thread(target=self.forUser, args=(syncUser, toCheck))
+			thread.start()
+			threads.append(thread)
+		for thread in threads:
+			thread.join()
