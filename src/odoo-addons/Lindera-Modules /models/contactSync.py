@@ -11,7 +11,7 @@ import datetime
 
 class linderaContactSyncer(models.Model):
 	"""
-    Mail sync addition to users
+    Contact sync addition to users
     """
 	# _inherit = 'res.users'
 	_name = 'lindera.office.contact'
@@ -20,14 +20,13 @@ class linderaContactSyncer(models.Model):
 	def syncContactsScheduler(self):
 		self.syncContacts()
 
-	def syncContacts(self):
-		ravenClient = self.env['ir.config_parameter'].get_param(
-			'lindera.raven_client')
-		ravenSingle = ravenSingleton(ravenClient)
-		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
-		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
-		partners = self.env['res.partner'].search([])
-		for syncUser in self.env['res.users'].search([]):
+	def forUser(self, syncUser, partners):
+		with api.Environment.manage():
+			ravenClient = self.env['ir.config_parameter'].get_param(
+				'lindera.raven_client')
+			ravenSingle = ravenSingleton(ravenClient)
+			CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
+			CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 			token_backend = odooTokenStore(syncUser)
 			if token_backend.check_token():
 				# raise Exception(syncUser.name)
@@ -40,7 +39,8 @@ class linderaContactSyncer(models.Model):
 						for partner in partners:
 							try:
 								if partner.email:
-									if (partner.email not in contacts) and ('@' in partner.email) and (len(partner.email) > 3):
+									if (partner.email not in contacts) and ('@' in partner.email) and (
+											len(partner.email) > 3):
 										contact = address_book.new_contact()
 										if not partner.is_company:
 											if partner.company_id:
@@ -70,3 +70,14 @@ class linderaContactSyncer(models.Model):
 				except Exception as err:
 					ravenSingle.Client.captureMessage(err)
 					raise osv.except_osv('Error While Syncing!', str(err))
+
+	def syncContacts(self):
+		partners = self.env['res.partner'].search([])
+		threads = []
+		for syncUser in self.env['res.users'].search([]):
+			thread = threading.Thread(target=self.forUser, args=(syncUser,partners))
+			thread.start()
+			threads.append(thread)
+		for thread in threads:
+			thread.join()
+

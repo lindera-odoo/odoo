@@ -1,15 +1,12 @@
-import os
-from odoo import models, fields, api, exceptions
+from odoo import models, api, exceptions, sql_db
+from odoo.http import request
 from openerp.osv import osv
 from O365 import Account
-from O365.calendar import Schedule
-from O365.address_book import Contact
 from .odooTokenStore import odooTokenStore
 from .ravenSingleton import ravenSingleton
 import threading
 import datetime
 from dateutil.relativedelta import relativedelta
-import pytz
 
 privacyMap = {
 	'normal': 'public',
@@ -35,10 +32,13 @@ indexMap = {
 	'last': '-1'
 }
 
+EVENT_NUM = 100
+EVENT_BATCH = 100
+
 
 class linderaCalendarSyncer(models.Model):
 	"""
-    Mail sync addition to users
+    Calendar sync addition to users
     """
 	# _inherit = 'res.users'
 	_name = 'lindera.office.calendar'
@@ -48,8 +48,8 @@ class linderaCalendarSyncer(models.Model):
 		self.syncCalendar()
 		pass
 
-	def handleNormalEvent(self, event):
-		uid = self.env.user.id
+	def handleNormalEvent(self, event, user):
+		uid = user.id
 		dbEvent = self.env['calendar.event'].search([('o365ID', "=", event.object_id)])
 		privacy = event.sensitivity.value
 		if privacy in privacyMap.keys():
@@ -99,7 +99,7 @@ class linderaCalendarSyncer(models.Model):
 		else:
 			dbEvent.active = False
 			dbEvent = dbEvent.with_context(no_mail_to_attendees=True)
-			dbEvent.privacy = privacy
+			# dbEvent.privacy = privacy
 			dbEvent.location = event.location['displayName']
 			dbEvent.allday = event.is_all_day
 			dbEvent.body = event.body
@@ -127,8 +127,8 @@ class linderaCalendarSyncer(models.Model):
 		dbEvent.active = True
 		self.env.cr.commit()
 
-	def handleRecurringEvent(self, event):
-		uid = self.env.user.id
+	def handleRecurringEvent(self, event, user):
+		uid = user.id
 		# build the recurrence rule
 		pattern = {'recurrency': True, 'final_date': str(event.recurrence.end_date), 'end_type': 'end_date',
 		           'recurrent_id': 0}
@@ -210,7 +210,7 @@ class linderaCalendarSyncer(models.Model):
 			dbEvent.active = False
 			dbEvent = dbEvent.with_context(no_mail_to_attendees=True)
 			dbEvent.write(pattern)
-			dbEvent.privacy = privacy
+			# dbEvent.privacy = privacy
 			dbEvent.location = event.location['displayName']
 			dbEvent.allday = event.is_all_day
 			dbEvent.body = event.body
@@ -238,13 +238,13 @@ class linderaCalendarSyncer(models.Model):
 		dbEvent.active = True
 		self.env.cr.commit()
 
-	def syncCalendar(self):
-		ravenClient = self.env['ir.config_parameter'].get_param(
-			'lindera.raven_client')
-		ravenSingle = ravenSingleton(ravenClient)
-		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
-		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
-		for syncUser in self.env['res.users'].search([]):
+	def forUser(self, syncUser):
+		with api.Environment.manage():
+			ravenClient = self.env['ir.config_parameter'].get_param(
+				'lindera.raven_client')
+			ravenSingle = ravenSingleton(ravenClient)
+			CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
+			CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 			token_backend = odooTokenStore(syncUser)
 			if token_backend.check_token():
 				try:
@@ -252,11 +252,11 @@ class linderaCalendarSyncer(models.Model):
 					if account.is_authenticated:
 						calendar = account.schedule()
 						##################################NORMAL EVENTS#################################################
-						events = list(calendar.get_events(1000, include_recurring=False))
+						events = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=False))
 						for event in events:
 							try:
 								if event.event_type.value == 'single_instance':
-									self.handleNormalEvent(event)
+									self.handleNormalEvent(event, syncUser)
 									pass
 							except exceptions.except_orm as err:
 								print('Concurrent Update')
@@ -272,16 +272,16 @@ class linderaCalendarSyncer(models.Model):
 						query = calendar.new_query('start').equals(start)
 						query.chain('and').on_attribute('end').equals(stop)
 
-						recevents = list(calendar.get_events(1000, include_recurring=True, query=query))
+						recevents = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=True, query=query))
 						for event in recevents:
 							if event.event_type.value != 'single_instance':
 								try:
 									if event.event_type.value == 'exception':
-										self.handleNormalEvent(event)
+										self.handleNormalEvent(event, syncUser)
 										pass
 									else:
 										master = calendar.get_default_calendar().get_event(event.series_master_id)
-										self.handleRecurringEvent(master)
+										self.handleRecurringEvent(master, syncUser)
 										pass
 								except exceptions.except_orm as err:
 									print('Concurrent Update')
@@ -297,3 +297,12 @@ class linderaCalendarSyncer(models.Model):
 				except Exception as err:
 					ravenSingle.Client.captureMessage(err)
 					raise osv.except_osv('Error While Syncing!', str(err))
+
+	def syncCalendar(self):
+		threads = []
+		for syncUser in self.env['res.users'].search([]):
+			thread = threading.Thread(target=self.forUser, args=(syncUser,))
+			thread.start()
+			threads.append(thread)
+		for thread in threads:
+			thread.join()
