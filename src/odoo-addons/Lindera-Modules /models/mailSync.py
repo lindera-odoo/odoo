@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 from odoo import models, fields, api
 from openerp.osv import osv
