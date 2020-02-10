@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from odoo import models, api, exceptions, sql_db
 from odoo.http import request
 from openerp.osv import osv
@@ -303,8 +304,9 @@ class linderaCalendarSyncer(models.Model):
 	def syncCalendar(self):
 		threads = []
 		for syncUser in self.env['res.users'].search([]):
-			thread = threading.Thread(target=self.forUser, args=(syncUser,))
-			thread.start()
-			threads.append(thread)
-		for thread in threads:
-			thread.join()
+			self.forUser(syncUser)
+			# thread = threading.Thread(target=self.forUser, args=(syncUser,))
+			# thread.start()
+			# threads.append(thread)
+		# for thread in threads:
+		# 	thread.join()
