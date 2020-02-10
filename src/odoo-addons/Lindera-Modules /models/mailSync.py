@@ -214,10 +214,11 @@ class linderaMailSyncer(models.Model):
 						raise osv.except_osv('Error While Syncing!', str(err))
 
 	def syncMails(self, toCheck=-1):
-		threads = []
+		# threads = []
 		for syncUser in self.env['res.users'].search([]):
-			thread = threading.Thread(target=self.forUser, args=(syncUser, toCheck))
-			thread.start()
-			threads.append(thread)
-		for thread in threads:
-			thread.join()
+			self.forUser(syncUser, toCheck)
+		# 	thread = threading.Thread(target=self.forUser, args=(syncUser, toCheck))
+		# 	thread.start()
+		# 	threads.append(thread)
+		# for thread in threads:
+		# 	thread.join()

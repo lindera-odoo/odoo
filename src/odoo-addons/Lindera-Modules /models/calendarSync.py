@@ -307,10 +307,11 @@ class linderaCalendarSyncer(models.Model):
 						raise osv.except_osv('Error While Syncing!', str(err))
 
 	def syncCalendar(self):
-		threads = []
+		# threads = []
 		for syncUser in self.env['res.users'].search([]):
-			thread = threading.Thread(target=self.forUser, args=(syncUser,))
-			thread.start()
-			threads.append(thread)
-		for thread in threads:
-			thread.join()
+			self.forUser(syncUser)
+		# 	thread = threading.Thread(target=self.forUser, args=(syncUser,))
+		# 	thread.start()
+		# 	threads.append(thread)
+		# for thread in threads:
+		# 	thread.join()

@@ -41,7 +41,7 @@ class linderaContactSyncer(models.Model):
 							address_book = account.address_book()
 							contacts = list(address_book.get_contacts(10000, batch=1000))
 							contacts = list(map(lambda elem: elem.main_email, contacts))
-							for partner in partners:
+							for partner in partners.with_env(new_env):
 								try:
 									if partner.email:
 										if (partner.email not in contacts) and ('@' in partner.email) and (
@@ -78,12 +78,13 @@ class linderaContactSyncer(models.Model):
 
 	def syncContacts(self):
 		partners = self.env['res.partner'].search([])
-		threads = []
+		# threads = []
 		for syncUser in self.env['res.users'].search([]):
-			thread = threading.Thread(target=self.forUser, args=(syncUser,partners))
-			thread.start()
-			threads.append(thread)
+			self.forUser(syncUser, partners)
+			# thread = threading.Thread(target=self.forUser, args=(syncUser, partners))
+			# thread.start()
+			# threads.append(thread)
 
-		for thread in threads:
-			thread.join()
+		# for thread in threads:
+		# 	thread.join()
 
