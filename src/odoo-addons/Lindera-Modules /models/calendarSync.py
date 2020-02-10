@@ -1,4 +1,4 @@
-from odoo import models, api, exceptions, sql_db
+from odoo import models, api, exceptions, registry
 from odoo.http import request
 from openerp.osv import osv
 from O365 import Account
@@ -238,78 +238,79 @@ class linderaCalendarSyncer(models.Model):
 
 	def forUser(self, syncUser):
 		with api.Environment.manage():
-			ravenClient = self.env['ir.config_parameter'].get_param(
-				'lindera.raven_client')
-			ravenSingle = ravenSingleton(ravenClient)
-			CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
-			CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
-			token_backend = odooTokenStore(syncUser)
-			if token_backend.check_token():
-				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-					if account.is_authenticated:
-						calendar = account.schedule()
-						##################################NORMAL EVENTS#################################################
-						events = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=False))
-						for event in events:
-							if event.organizer.address != syncUser.email:
-								continue
-							try:
-								if event.event_type.value == 'single_instance':
-									self.handleNormalEvent(event, syncUser)
-									pass
-							except exceptions.except_orm as err:
-								print('Concurrent Update')
-								print(err)
-							except Exception as err:
-								ravenSingle.Client.captureMessage(err)
-								self.env.cr.rollback()
-								raise osv.except_osv('Error While Syncing!', str(err))
-						########################################RECURRENT EVENTS########################################
-						start = datetime.datetime.utcnow()
-						stop = start + datetime.timedelta(days=7)
+			with registry(self.env.cr.dbname).cursor() as new_cr:
+				# Create a new environment with new cursor database
+				new_env = api.Environment(new_cr, self.env.uid, self.env.context)
+				# with_env replace original env for this method
+				withenv = self.with_env(new_env)
 
-						query = calendar.new_query('start').equals(start)
-						query.chain('and').on_attribute('end').equals(stop)
-
-						recevents = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=True, query=query))
-						for event in recevents:
-							if event.event_type.value != 'single_instance':
+				ravenClient = withenv.env['ir.config_parameter'].get_param(
+					'lindera.raven_client')
+				ravenSingle = ravenSingleton(ravenClient)
+				CLIENT_ID = withenv.env['ir.config_parameter'].get_param('lindera.client_id')
+				CLIENT_SECRET = withenv.env['ir.config_parameter'].get_param('lindera.client_secret')
+				token_backend = odooTokenStore(syncUser)
+				if token_backend.check_token():
+					try:
+						account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
+						if account.is_authenticated:
+							calendar = account.schedule()
+							##################################NORMAL EVENTS#################################################
+							events = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=False))
+							for event in events:
 								if event.organizer.address != syncUser.email:
 									continue
 								try:
-									if event.event_type.value == 'exception':
-										self.handleNormalEvent(event, syncUser)
-										pass
-									else:
-										master = calendar.get_default_calendar().get_event(event.series_master_id)
-										self.handleRecurringEvent(master, syncUser)
+									if event.event_type.value == 'single_instance':
+										withenv.handleNormalEvent(event, syncUser)
 										pass
 								except exceptions.except_orm as err:
 									print('Concurrent Update')
 									print(err)
 								except Exception as err:
 									ravenSingle.Client.captureMessage(err)
-									self.env.cr.rollback()
+									withenv.env.cr.rollback()
 									raise osv.except_osv('Error While Syncing!', str(err))
-						pass
-				except exceptions.except_orm as err:
-					print('Concurrent Update')
-					print(err)
-				except Exception as err:
-					ravenSingle.Client.captureMessage(err)
-					raise osv.except_osv('Error While Syncing!', str(err))
+							########################################RECURRENT EVENTS########################################
+							start = datetime.datetime.utcnow()
+							stop = start + datetime.timedelta(days=7)
+
+							query = calendar.new_query('start').equals(start)
+							query.chain('and').on_attribute('end').equals(stop)
+
+							recevents = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=True, query=query))
+							for event in recevents:
+								if event.event_type.value != 'single_instance':
+									if event.organizer.address != syncUser.email:
+										continue
+									try:
+										if event.event_type.value == 'exception':
+											withenv.handleNormalEvent(event, syncUser)
+											pass
+										else:
+											master = calendar.get_default_calendar().get_event(event.series_master_id)
+											withenv.handleRecurringEvent(master, syncUser)
+											pass
+									except exceptions.except_orm as err:
+										print('Concurrent Update')
+										print(err)
+									except Exception as err:
+										ravenSingle.Client.captureMessage(err)
+										withenv.env.cr.rollback()
+										raise osv.except_osv('Error While Syncing!', str(err))
+							pass
+					except exceptions.except_orm as err:
+						print('Concurrent Update')
+						print(err)
+					except Exception as err:
+						ravenSingle.Client.captureMessage(err)
+						raise osv.except_osv('Error While Syncing!', str(err))
 
 	def syncCalendar(self):
 		threads = []
 		for syncUser in self.env['res.users'].search([]):
-			if len(threads) < 5:
-				thread = threading.Thread(target=self.forUser, args=(syncUser,))
-				thread.start()
-				threads.append(thread)
-			else:
-				for thread in threads:
-					thread.join()
-					threads.remove(thread)
+			thread = threading.Thread(target=self.forUser, args=(syncUser,))
+			thread.start()
+			threads.append(thread)
 		for thread in threads:
 			thread.join()
