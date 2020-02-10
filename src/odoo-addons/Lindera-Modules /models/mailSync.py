@@ -212,8 +212,14 @@ class linderaMailSyncer(models.Model):
 	def syncMails(self, toCheck=-1):
 		threads = []
 		for syncUser in self.env['res.users'].search([]):
-			thread = threading.Thread(target=self.forUser, args=(syncUser, toCheck))
-			thread.start()
-			threads.append(thread)
-		for thread in threads:
-			thread.join()
+			self.forUser(syncUser, toCheck)
+		# 	if len(threads) < 5:
+		# 		thread = threading.Thread(target=self.forUser, args=(syncUser, toCheck))
+		# 		thread.start()
+		# 		threads.append(thread)
+		# 	else:
+		# 		for thread in threads:
+		# 			thread.join()
+		# 			threads.remove(thread)
+		# for thread in threads:
+		# 	thread.join()
