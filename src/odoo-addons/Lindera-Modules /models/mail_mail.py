@@ -38,7 +38,7 @@ class linderaMail(models.Model):
 				email_list.append(partner.email)
 
 			allowtosend = True
-			blacklistMails = ['service@lindera.de', 'support@lindera.odoo.com']
+			blacklistMails = ['service@lindera.de', 'support@lindera.odoo.com', 'vendor-bills@lindera.odoo.com']
 			for email in email_list:
 				if email in blacklistMails:
 					allowtosend = False
