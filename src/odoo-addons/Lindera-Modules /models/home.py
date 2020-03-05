@@ -38,14 +38,15 @@ class LinderaHome(models.Model):
 		:param values: changed fields
 		:return: bool writeSuccess
 		"""
-		if 'category_id' in values.keys():
-			isEinrichtung = False
-			for id in values['category_id'][0][2]:
-				cat = self.env['res.partner.category'].browse(id)
-				if cat.name == 'Einrichtung':
-					isEinrichtung = True
-			self.show_senior_number = isEinrichtung
-			if not isEinrichtung:
-				self.senior_number = 0
+		for home in self:
+			if 'category_id' in values.keys():
+				isEinrichtung = False
+				for id in values['category_id'][0][2]:
+					cat = self.env['res.partner.category'].browse(id)
+					if cat.name == 'Einrichtung':
+						isEinrichtung = True
+				home.show_senior_number = isEinrichtung
+				if not isEinrichtung:
+					home.senior_number = 0
 
 		super(LinderaHome, self).write(values)
