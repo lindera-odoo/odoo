@@ -21,9 +21,9 @@ class Linderlead(models.Model):
 	date_string = fields.Char(compute='_compute_date_string',
 	                          help='String Containing the start and end Date of a Contract',
 	                          store=True)
-	show_dates = fields.Boolean('show_senior_number')
+	show_dates = fields.Boolean(compute='_compute_show_dates', store=True)
 
-	@api.depends('partner_id', 'partner_id.senior_number', 'partner_id.show_senior_number')
+	@api.depends('partner_id', 'partner_id.senior_number', 'partner_id.show_senior_number', 'partner_id.category_id')
 	def _compute_senior_number(self):
 		for lead in self:
 			out = 0
@@ -40,14 +40,18 @@ class Linderlead(models.Model):
 			else:
 				lead.senior_number_string = ''
 
-	@api.depends('start_date', 'end_date')
+	@api.depends('start_date', 'end_date', 'show_dates')
 	def _compute_date_string(self):
 		for lead in self:
-			lead.show_dates = True
-			if lead.start_date and lead.end_date:
-				# TODO: check for Versicherung tag
-				lead.show_dates = True
+			if lead.start_date and lead.end_date and lead.show_dates:
 				lead.date_string = str(lead.start_date) + ' - ' + str(lead.end_date)
 			else:
 				lead.date_string = ''
-				lead.show_dates = False
+
+	@api.depends('partner_id', 'partner_id.category_id')
+	def _compute_show_dates(self):
+		for lead in self:
+			lead.show_dates = False
+			for cat in lead.partner_id.category_id:
+				if cat.name == 'Versicherung':
+					lead.show_dates = True

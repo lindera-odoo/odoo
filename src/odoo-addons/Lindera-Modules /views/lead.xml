@@ -7,8 +7,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='team_id']" position="after">
                 <field name="show_dates" string="Show Dates" invisible="True"/>
-                <field name="start_date" string="Start"/>
-                <field name="end_date" string="Ende"/>
+                <field name="start_date" string="Start" attrs="{'invisible':[('show_dates','!=', True)]}"/>
+                <field name="end_date" string="Ende" attrs="{'invisible':[('show_dates','!=', True)]}"/>
             </xpath>
         </field>
     </record>
@@ -21,8 +21,10 @@
                 <field name="senior_number_string"/>
                 <field name="date_string"/>
             </xpath>
-            <xpath expr="//field[@widget='priority']" position="before">
-                <field name="date_string" widget="date_string" string="Projektlaufzeit"/>
+            <xpath expr="//t[@t-esc='record.partner_id.value']" position="after">
+                <div>
+                    <t t-esc="record.date_string.value"/>
+                </div>
             </xpath>
             <xpath expr="//t[@t-esc='record.partner_id.value']" position="after">
                 <t t-esc="record.senior_number_string.value"/>
@@ -36,8 +38,9 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="senior_number" string="Senioren"/>
-                <field name="start_date" string="Start"/>
-                <field name="end_date" string="Ende"/>
+                <field name="show_dates" string="Show Dates" invisible="True"/>
+                <field name="start_date" string="Start" attrs="{'invisible':[('show_dates','!=', True)]}"/>
+                <field name="end_date" string="Ende" attrs="{'invisible':[('show_dates','!=', True)]}"/>
             </xpath>
         </field>
     </record>
