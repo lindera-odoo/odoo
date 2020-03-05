@@ -8,18 +8,18 @@ class Linderlead(models.Model):
 	_inherit = 'crm.lead'
 
 	senior_number_string = fields.Char(compute='_compute_senior_number_string',
-	                            help='String Containing Senior Number or empty string',
+	                            help='string containing senior number or empty string',
 	                            store=True)
 
 	senior_number = fields.Integer(compute='_compute_senior_number',
-	                               help='String Containing Senior Number or empty string',
+	                               help='string containing senior number or empty string',
 	                               store=True)
 
 	start_date = fields.Date('start_date')
 	end_date = fields.Date('end_date')
 
 	date_string = fields.Char(compute='_compute_date_string',
-	                          help='String Containing the start and end Date of a Contract',
+	                          help='string containing the start and end date of a contract',
 	                          store=True)
 	show_dates = fields.Boolean(compute='_compute_show_dates', store=True)
 
