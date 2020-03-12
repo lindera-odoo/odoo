@@ -96,7 +96,6 @@ class linderaContactSyncer(models.Model):
 					address_book = account.address_book()
 					contacts = list(address_book.get_contacts(limit=100, batch=100))
 					todelete = list(filter(lambda elem: 'Odoo Imported' in elem.categories, contacts))
-					import threading
 					for contact in todelete:
 						contact.delete()
 			except Exception as err:
