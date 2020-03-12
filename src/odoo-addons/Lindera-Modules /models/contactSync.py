@@ -20,6 +20,10 @@ class linderaContactSyncer(models.Model):
 	def syncContactsScheduler(self):
 		self.syncContacts()
 
+	@api.model
+	def syncContactsCleaner(self):
+		self.cleanContacts()
+
 	def forUser(self, syncUser, partners):
 		ravenClient = self.env['ir.config_parameter'].get_param(
 			'lindera.raven_client')
@@ -33,12 +37,13 @@ class linderaContactSyncer(models.Model):
 				account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
 				if account.is_authenticated:
 					address_book = account.address_book()
-					contacts = list(address_book.get_contacts(10000, batch=1000))
-					contacts = list(map(lambda elem: elem.main_email, contacts))
+					contacts = list(address_book.get_contacts(None, batch=1000))
+					contacts = list(filter(lambda elem: 'Odoo Imported' in elem.categories, contacts))
+					contacts = list(map(lambda elem: elem.name, contacts))
 					for partner in partners:
 						try:
 							if partner.email:
-								if (partner.email not in contacts) and ('@' in partner.email) and (
+								if (partner.name not in contacts) and ('@' in partner.email) and (
 										len(partner.email) > 3):
 									contact = address_book.new_contact()
 									if not partner.is_company:
@@ -74,3 +79,29 @@ class linderaContactSyncer(models.Model):
 		partners = self.env['res.partner'].search([])
 		for syncUser in self.env['res.users'].search([]):
 			self.forUser(syncUser,partners)
+
+
+	def cleanUser(self, syncUser):
+		ravenClient = self.env['ir.config_parameter'].get_param(
+			'lindera.raven_client')
+		ravenSingle = ravenSingleton(ravenClient)
+		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
+		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
+		token_backend = odooTokenStore(syncUser)
+		if token_backend.check_token():
+			# raise Exception(syncUser.name)
+			try:
+				account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
+				if account.is_authenticated:
+					address_book = account.address_book()
+					contacts = list(address_book.get_contacts(limit=100, batch=100))
+					todelete = list(filter(lambda elem: 'Odoo Imported' in elem.categories, contacts))
+					for contact in todelete:
+						contact.delete()
+			except Exception as err:
+				ravenSingle.Client.captureMessage(err)
+				raise osv.except_osv('Error While Syncing!', str(err))
+
+	def cleanContacts(self):
+		for syncUser in self.env['res.users'].search([]):
+			self.cleanUser(syncUser)
