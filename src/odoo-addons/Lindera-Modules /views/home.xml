@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="partner_form_home" model="ir.ui.view">
+            <field name="name">res.partner.form.home.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='lang']" position="after">
+                    <field name="show_senior_number" string="Show Senior Number" invisible="True"/>
+                    <field name="senior_number" string="Seniorenanzahl" attrs="{'invisible':[('show_senior_number','!=', True)]}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="partner_kanban_home" model="ir.ui.view">
+            <field name="name">res.partner.kanban.home.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.res_partner_kanban_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='display_name']" position="after">
+                    <field name="show_senior_number"/>
+                    <field name="senior_number"/>
+                </xpath>
+                <xpath expr="//strong[@class='o_kanban_record_title oe_partner_heading']" position="after">
+                    <xpath expr="//field[@name='display_name']" position="after">
+                        <span attrs="{'invisible':[('show_senior_number','!=', True)]}">mit <field name="senior_number"/> Senioren</span>
+                    </xpath>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

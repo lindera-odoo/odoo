@@ -149,7 +149,7 @@ class linderaEvent(models.Model):
 		event.subject = self.name
 		event.start = self.start
 		event.end = self.stop
-		event.privacy = self.privacy
+		# event.privacy = self.privacy not synced since they work differently...
 		if self.location:
 			event.location = {'displayName': self.location}
 		event.is_all_day = self.allday
