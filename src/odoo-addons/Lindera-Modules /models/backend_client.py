@@ -17,7 +17,7 @@ class BackendClient():
 
     def notifyBackendToCreateReport(self, data):
         try:
-            return rq.post("{}/analysis/create_report".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+            return rq.post("{}/internal/create_report".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
             self.ravenSingleton.Client.captureMessage(err)
