@@ -11,6 +11,27 @@ def getCurrentTimestamp():
 class LinderaCRM(models.Model):
     _inherit = 'crm.lead'
 
+    def generate(self):
+        leads = self.env['crm.lead'].search([])
+        targetLeads = []
+        partnerIds = []
+
+        for lead in leads:
+            tag_ids = lead.tag_ids
+            for tag_id in tag_ids:
+                if tag_id.name == 'Kunde / Pflegeberatung' and (lead.stage_id.name == 'Live' or lead.stage_id.name == 'In Evaluation'):
+                    targetLeads.append(lead)
+        if targetLeads:
+            for targetLead in targetLeads:
+                data = targetLead.read()[0]
+                partner = data['partner_id']
+                if partner:
+                    partnerId = partner[0]
+                    partnerIds.append(partnerId)
+        if partnerIds:
+            bClient = self.setupBackendClient()
+            bClient.notifyBackendToCreateReport(partnerIds)
+
     def updateHome(self, mongodbId, field):
         updatedField = {
             'subscriptionEndDate': field
