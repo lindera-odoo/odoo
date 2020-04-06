@@ -39,6 +39,10 @@ class linderaMail(models.Model):
 
 			allowtosend = True
 			blacklistMails = ['service@lindera.de', 'support@lindera.odoo.com', 'vendor-bills@lindera.odoo.com', 'invoices@lindera.de']
+			channels = self.env['crm.team'].search([])
+			for channel in channels:
+				blacklistMails.append(channel.alias_id.name_get()[1])
+
 			for email in email_list:
 				if email in blacklistMails:
 					allowtosend = False
