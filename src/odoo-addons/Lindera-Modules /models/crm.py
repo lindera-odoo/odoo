@@ -30,9 +30,7 @@ class LinderaCRM(models.Model):
                     partnerIds.append(partnerId)
         if partnerIds:
             bClient = self.setupBackendClient()
-            x = bClient.notifyBackendToCreateReport(partnerIds)
-            raise osv.except_osv(
-                ('Error!'), (x))
+            bClient.notifyBackendToCreateReport(partnerIds)
 
     def updateHome(self, mongodbId, field):
         updatedField = {
