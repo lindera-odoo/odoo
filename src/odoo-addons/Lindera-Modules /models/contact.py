@@ -59,10 +59,8 @@ class Contact(models.Model):
                     ('Error!'), ('These tags are not allowed to be used together'))
             if len(tags) == 0:
                 raise osv.except_osv(('Error!'), ('Please select a tag'))
-            elif(len(typeOfHome) == 1):
+            if(len(typeOfHome) == 1):
                 typeOfHome = typeOfHome[0]
-            else:
-                return res
 
             payload = preparePayload(typeOfHome, res)
 
