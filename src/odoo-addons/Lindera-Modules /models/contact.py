@@ -56,7 +56,7 @@ class Contact(models.Model):
 
             if len(typeOfHome) == 0:
                 raise osv.except_osv(
-                    ('Error!'), ('Please select at least one of these tags: "Einrichtung", "Träger, or "Gruppe"'))
+                    ('Error!'), ('All companies must have one of the following tags: "Einrichtung", "Träger" or "Gruppe"'))
 
             if len(typeOfHome) > 0:
                 if len(typeOfHome) > 1:
