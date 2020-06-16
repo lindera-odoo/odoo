@@ -11,7 +11,7 @@ class LinderaTicket(models.Model):
     def write(self, values):
         _logger.warning('Dumping Data for Logs since odoo never heard from debugging....')
         _logger.warning(str(values))
-        res = super(LinderaTicket, self).create(values)
+        res = super(LinderaTicket, self).write(values)
         _logger.warning('More Dumping')
         _logger.warning(str(res))
         _logger.warning('Dumping Done')
