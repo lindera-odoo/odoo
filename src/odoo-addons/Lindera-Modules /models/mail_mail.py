@@ -179,33 +179,3 @@ class linderaMail(models.Model):
                         raise
             else:
                 super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
-
-    @api.model
-    def create(self, val):
-        res = super(linderaMail, self).create(val)
-    
-        _logger.warning('Logging Mail create')
-        _logger.warning(res.model)
-        _logger.warning(res.body)
-        if res.model == 'helpdesk.ticket':
-            if res.res_id:
-                _logger.warning(res.res_id)
-        _logger.warning('Logging Mail create end')
-    
-        return res
-
-    @api.model
-    def write(self, val):
-        res = super(linderaMail, self).write(val)
-    
-        _logger.warning('Logging Mail write')
-        _logger.warning(self.model)
-        _logger.warning(self.body)
-        if self.model == 'helpdesk.ticket':
-            if self.res_id:
-                _logger.warning(self.res_id)
-        _logger.warning('Logging Mail write end')
-    
-        return res
-
-
