@@ -40,6 +40,8 @@ class linderaMail(models.Model):
                                 create_data['city'] = data['zip_city'].split(' ')[1]
                             
                             partner = self.env['res.partner'].create(create_data)
+                        else:
+                            partner = partner[0]
                         _logger.warning(partner)
                         ticket.partner_email = partner.email
                         ticket.partner_id = partner.id
