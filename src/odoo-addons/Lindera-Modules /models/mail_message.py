@@ -1,4 +1,6 @@
 from odoo import models, fields, api
+from openerp.osv import osv
+from .ravenSingleton import ravenSingleton
 import json
 import re
 import logging
@@ -14,19 +16,12 @@ class linderaMail(models.Model):
     def create(self, val):
         res = super(linderaMail, self).create(val)
     
-        _logger.warning('Logging Message create')
-        _logger.warning(res.model)
-        _logger.warning(res.body)
         if res.model == 'helpdesk.ticket':
             if res.res_id:
-                _logger.warning(res.res_id)
                 ticket = self.env['helpdesk.ticket'].browse(res.res_id)
-                _logger.warning(str(ticket.partner_email))
-                _logger.warning('@lindera' in str(ticket.partner_email))
                 if '@lindera' in str(ticket.partner_email) and res.body:
                     try:
                         clean = re.sub('<.*?>', '', res.body)
-                        _logger.warning(clean)
                         data = json.loads(clean)
                         partner = self.env['res.partner'].search([('email', '=', data['email'])])
                         if not partner:
@@ -42,15 +37,11 @@ class linderaMail(models.Model):
                             partner = self.env['res.partner'].create(create_data)
                         else:
                             partner = partner[0]
-                        _logger.warning(partner)
                         ticket.partner_email = partner.email
                         ticket.partner_id = partner.id
                         self.env.cr.commit()
                     except Exception as e:
-                        _logger.warning(e)
-
-                
-        _logger.warning('Logging Message create end')
-    
+                        ravenSingle.Client.captureMessage(e)
+                        raise osv.except_osv('Error While Syncing!', str(e))
     
         return res
