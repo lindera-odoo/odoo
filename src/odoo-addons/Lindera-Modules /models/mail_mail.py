@@ -186,6 +186,7 @@ class linderaMail(models.Model):
     
         _logger.warning('Logging Mail create')
         _logger.warning(self.model)
+        _logger.warning(self.body)
         if self.model == 'helpdesk.ticket':
             if self.res_id:
                 _logger.warning(self.res_id)
@@ -199,6 +200,7 @@ class linderaMail(models.Model):
     
         _logger.warning('Logging Mail write')
         _logger.warning(self.write)
+        _logger.warning(self.body)
         if self.model == 'helpdesk.ticket':
             if self.res_id:
                 _logger.warning(self.res_id)
