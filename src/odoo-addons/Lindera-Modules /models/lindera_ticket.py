@@ -3,7 +3,7 @@ from odoo import models, fields, api
 import logging
 _logger = logging.getLogger(__name__)
 
-class LinderaTicket:
+class LinderaTicket(models.Model):
     _inherit = 'helpdesk.ticket'
     _logger.warning('inherited ticket')
 
