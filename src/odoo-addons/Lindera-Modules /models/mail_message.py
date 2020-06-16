@@ -12,11 +12,26 @@ class linderaMail(models.Model):
     @api.model
     def create(self, val):
         res = super(linderaMail, self).create(val)
-
+    
+        _logger.warning('Logging Message create')
         _logger.warning(self.model)
         if self.model == 'helpdesk.ticket':
             if self.res_id:
                 _logger.warning(self.res_id)
-                
-        
+        _logger.warning('Logging Message create end')
+    
+    
+        return res
+
+    @api.model
+    def write(self, val):
+        res = super(linderaMail, self).create(val)
+    
+        _logger.warning('Logging Message write')
+        _logger.warning(self.write)
+        if self.model == 'helpdesk.ticket':
+            if self.res_id:
+                _logger.warning(self.res_id)
+        _logger.warning('Logging Message write end')
+    
         return res
