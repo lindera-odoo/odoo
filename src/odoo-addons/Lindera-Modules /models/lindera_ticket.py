@@ -20,6 +20,7 @@ class LinderaTicket(models.Model):
         if '@lindera' in self.partner_email and 'partner_email' not in values.keys():
             for message in self.message_ids:
                 try:
+                    _logger.warning(message)
                     _logger.warning(message.body)
                     test = json.loads(message.body)
                 except:
