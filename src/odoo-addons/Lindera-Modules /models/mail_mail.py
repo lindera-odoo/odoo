@@ -179,5 +179,3 @@ class linderaMail(models.Model):
                         raise
             else:
                 super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
-
-
