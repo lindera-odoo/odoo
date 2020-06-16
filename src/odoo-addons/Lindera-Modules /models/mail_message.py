@@ -44,6 +44,8 @@ class linderaMail(models.Model):
                         ticket.partner_email = partner.email
                         ticket.partner_id = partner.id
                         self.env.cr.commit()
+                    except json.JSONDecodeError:
+                        pass
                     except Exception as e:
                         ravenSingle.Client.captureMessage(e)
                         raise osv.except_osv('Error While Syncing!', str(e))
