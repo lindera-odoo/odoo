@@ -24,6 +24,7 @@ class linderaMail(models.Model):
                         'lindera.raven_client')
                     ravenSingle = ravenSingleton(ravenClient)
                     try:
+                        _logger.warning(res.body)
                         clean = re.sub('<.*?>', '', res.body)
                         data = json.loads(clean)
                         partner = self.env['res.partner'].search([('email', '=', data['email'])])
