@@ -13,4 +13,3 @@ from . import contactSync
 from . import calendar_event
 from . import calendarSync
 from . import lead
-from . import lindera_ticket
