@@ -14,11 +14,11 @@ class linderaMail(models.Model):
         res = super(linderaMail, self).create(val)
     
         _logger.warning('Logging Message create')
-        _logger.warning(self.model)
-        _logger.warning(self.body)
-        if self.model == 'helpdesk.ticket':
-            if self.res_id:
-                _logger.warning(self.res_id)
+        _logger.warning(res.model)
+        _logger.warning(res.body)
+        if res.model == 'helpdesk.ticket':
+            if res.res_id:
+                _logger.warning(res.res_id)
         _logger.warning('Logging Message create end')
     
     
