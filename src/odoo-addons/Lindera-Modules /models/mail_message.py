@@ -21,8 +21,9 @@ class linderaMail(models.Model):
             if res.res_id:
                 _logger.warning(res.res_id)
                 ticket = self.env['helpdesk.ticket'].browse(res.res_id)
-                _logger.warning(ticket.partner_email)
-                if '@lindera' in ticket.partner_email:
+                _logger.warning(str(ticket.partner_email))
+                _logger.warning('@lindera' in str(ticket.partner_email))
+                if '@lindera' in str(ticket.partner_email):
                     try:
                         clean = re.sub('<.*?>', '', self.body)
                         _logger.warning(clean)
@@ -43,8 +44,8 @@ class linderaMail(models.Model):
                         ticket.partner_email = partner.email
                         ticket.partner_id = partner.id
                         self.env.cr.commit()
-                    except:
-                        pass
+                    except Exception as e:
+                        _logger.warning(e)
 
                 
         _logger.warning('Logging Message create end')
