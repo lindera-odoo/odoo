@@ -6,9 +6,9 @@ class LinderaTicket:
     @api.model
     def create(self, val):
         print('Dumping Data for Logs since odoo never heard from debugging....')
-        print(val)
-        res = super(LinderaTicket, self).create(val)
-        print('More Dumping')
-        print(res)
-        print('Dumping Done')
-        return res
+        raise val
+        # res = super(LinderaTicket, self).create(val)
+        # print('More Dumping')
+        # print(res)
+        # print('Dumping Done')
+        # return res
