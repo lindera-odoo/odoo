@@ -23,9 +23,9 @@ class linderaMail(models.Model):
                 ticket = self.env['helpdesk.ticket'].browse(res.res_id)
                 _logger.warning(str(ticket.partner_email))
                 _logger.warning('@lindera' in str(ticket.partner_email))
-                if '@lindera' in str(ticket.partner_email) and self.body:
+                if '@lindera' in str(ticket.partner_email) and res.body:
                     try:
-                        clean = re.sub('<.*?>', '', self.body)
+                        clean = re.sub('<.*?>', '', res.body)
                         _logger.warning(clean)
                         data = json.loads(clean)
                         partner = self.env['res.partner'].search([('email', '=', data['email'])])
