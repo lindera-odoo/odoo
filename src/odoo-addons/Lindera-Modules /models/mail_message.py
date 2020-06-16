@@ -20,6 +20,9 @@ class linderaMail(models.Model):
             if res.res_id:
                 ticket = self.env['helpdesk.ticket'].browse(res.res_id)
                 if '@lindera' in str(ticket.partner_email) and res.body:
+                    ravenClient = self.env['ir.config_parameter'].get_param(
+                        'lindera.raven_client')
+                    ravenSingle = ravenSingleton(ravenClient)
                     try:
                         clean = re.sub('<.*?>', '', res.body)
                         data = json.loads(clean)
