@@ -43,7 +43,7 @@ class linderaMail(models.Model):
                         ticket.partner_email = partner.email
                         ticket.partner_id = partner.id
                         
-                        res.message_type = 'notification'
+                        res.message_type = 'comment'
                         
                         self.env.cr.commit()
                     except json.JSONDecodeError:
