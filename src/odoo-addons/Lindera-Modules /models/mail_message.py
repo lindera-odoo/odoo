@@ -14,10 +14,10 @@ class linderaMail(models.Model):
     
     @api.model
     def create(self, val):
-        if val['model'] == 'helpdesk.ticket':
-            if val['res_id']:
+        if 'model' in val.keys() and val['model'] == 'helpdesk.ticket':
+            if 'res_id' in val.keys() and  val['res_id']:
                 ticket = self.env['helpdesk.ticket'].browse(val['res_id'])
-                if '@lindera' in str(ticket.partner_email) and val['body']:
+                if '@lindera' in str(ticket.partner_email) and 'body' in val.keys() and val['body']:
                     ravenClient = self.env['ir.config_parameter'].get_param(
                         'lindera.raven_client')
                     ravenSingle = ravenSingleton(ravenClient)
