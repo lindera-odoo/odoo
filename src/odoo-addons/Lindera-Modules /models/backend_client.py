@@ -23,7 +23,7 @@ class BackendClient():
             self.ravenSingleton.Client.captureMessage(err)
             raise osv.except_osv(('Error!'), (message))
         except Exception as err:
-            self.ravenSingleton.Client.captureMessage(err)
+            self.ravenSingleton.Client.captureMessage(err) 
             raise osv.except_osv(('Error!'), (self.URL, err))
 
     def postHome(self, data):
