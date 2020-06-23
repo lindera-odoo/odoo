@@ -27,7 +27,7 @@ class linderaMail(models.Model):
                         partner = self.env['res.partner'].search([('email', '=', data['email'])])
                         if not partner:
                             create_data = {
-                                'name': data['contact_name'],
+                                'name': data['name'],
                                 'email': data['email']
                             }
                             if 'street' in data.keys(): create_data['street'] = data['address']
