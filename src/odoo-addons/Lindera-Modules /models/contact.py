@@ -25,6 +25,12 @@ class Contact(models.Model):
         isCompany = self.is_company
         companyType = self.company_type
 
+        contact = self.env['sale.subscription'].search(
+            [('partner_id', '=', self.id)])
+
+        raise osv.except_osv(
+            ('Error!'), (contact.name))
+
         if isCompany and companyType == 'company':
             # Setup Lindera Backend Client Object
             backendClient = backend_client.BackendClient.setupBackendClient(
