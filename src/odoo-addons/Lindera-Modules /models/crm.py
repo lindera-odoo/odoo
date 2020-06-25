@@ -45,7 +45,7 @@ class LinderaCRM(models.Model):
                 return mongoId
             else:
                 result = contact.createHomeInLinderaDB()
-                mongodbId = result['data']['_id']
+                mongodbId = result['data'][0]['_id']
                 return mongodbId
 
     @api.multi
@@ -99,6 +99,7 @@ class LinderaCRM(models.Model):
                 }
 
                 contact.updateHome(mongoId, updatedField)
+
             else:
                 return result
 
