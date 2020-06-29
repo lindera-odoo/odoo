@@ -15,8 +15,6 @@ homeMapping = {
 class Contact(models.Model):
     _inherit = 'res.partner'
 
-    print("test")
-
     @api.model
     def create(self, val):
         res = super(Contact, self).create(val)
