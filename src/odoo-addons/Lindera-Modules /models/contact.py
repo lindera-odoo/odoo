@@ -44,11 +44,11 @@ class Contact(models.Model):
 
         data = self.isHomeExistsInLinderaDB(contactId)
 
-        contact = self.env['sale.subscription'].search(
+        subscription = self.env['sale.subscription'].search(
             [('partner_id', '=', contactId)])
 
         raise osv.except_osv(
-            ('Error!'), (contact.name))
+            ('Error!'), (subscription.date, subscription.date_start))
 
         if not data:
             return
@@ -62,8 +62,8 @@ class Contact(models.Model):
             updatedData['street'] = vals['street']
 
         if "street2" in vals:
-            updatedData['street'] = updatedData['street'] + \
-                ' ' + vals['street2']
+            updatedData['street'] = updatedData['street'] +
+            ' ' + vals['street2']
 
         if "city" in vals:
             updatedData['city'] = vals['city']
