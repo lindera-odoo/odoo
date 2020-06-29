@@ -78,7 +78,12 @@ class linderaContactSyncer(models.Model):
 	def syncContacts(self):
 		partners = self.env['res.partner'].search([])
 		for syncUser in self.env['res.users'].search([]):
-			self.forUser(syncUser,partners)
+			if syncUser.email != 'steffen.temme@lindera.de':
+				continue
+			try:
+				self.forUser(syncUser, partners)
+			except:
+				pass
 
 
 	def cleanUser(self, syncUser):
