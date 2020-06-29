@@ -48,7 +48,7 @@ class Contact(models.Model):
             [('partner_id', '=', contactId)])
 
         raise osv.except_osv(
-            ('Error!'), (subscription.date, subscription.date_start))
+            ('Error!'), (type(subscription)))
 
         if not data:
             return
