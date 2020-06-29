@@ -37,6 +37,7 @@ class Contact(models.Model):
                 'odooID': self.id
             }
             backendClient.postHome(payload).json()
+            print("tset")
 
     @api.multi
     def write(self, vals):
