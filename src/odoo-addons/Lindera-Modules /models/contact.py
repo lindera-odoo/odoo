@@ -47,7 +47,7 @@ class Contact(models.Model):
                 'role': homeMapping[typeOfHome],
                 'odooID': data.id
             }
-
+            print("test")
             return payload
 
         if isCompany and companyType == 'company':
