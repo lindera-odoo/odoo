@@ -45,7 +45,7 @@ class LinderaCRM(models.Model):
                 return mongoId
             else:
                 result = contact.createHomeInLinderaDB()
-                mongodbId = result['data'][0]['_id']
+                mongodbId = result['data']['_id']
                 return mongodbId
 
     @api.multi
