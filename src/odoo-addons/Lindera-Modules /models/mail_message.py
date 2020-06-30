@@ -17,17 +17,13 @@ class linderaMail(models.Model):
         if 'model' in val.keys() and val['model'] == 'helpdesk.ticket':
             if 'res_id' in val.keys() and val['res_id']:
                 ticket = self.env['helpdesk.ticket'].browse(val['res_id'])
-                _logger.warning('Mail Receiver: Ding')
-                _logger.warning('Mail Receiver: ' + str(ticket.partner_email))
                 if '@lindera' in str(ticket.partner_email) and 'body' in val.keys() and val['body']:
                     ravenClient = self.env['ir.config_parameter'].get_param(
                         'lindera.raven_client')
                     ravenSingle = ravenSingleton(ravenClient)
     
-                    _logger.warning('Mail Receiver: Dong')
                     try:
                         clean = re.sub('<.*?>', '', val['body']).replace('&quot;', '"').replace('\n', ' ')
-                        _logger.warning('Mail Receiver: ' + clean)
                         data = json.loads(clean)
                         partner = self.env['res.partner'].search([('email', '=', data['email'])])
                         if not partner:
@@ -51,9 +47,8 @@ class linderaMail(models.Model):
         
                         ticket.env.cr.commit()
                     except json.JSONDecodeError:
-                        _logger.warning('Mail Receiver: JSONDecodeError')
+                        pass
                     except Exception as e:
-                        _logger.warning('Mail Receiver: ' + str(e))
                         ravenSingle.Client.captureMessage(e)
                         raise osv.except_osv('Error While Syncing!', str(e))
                     
