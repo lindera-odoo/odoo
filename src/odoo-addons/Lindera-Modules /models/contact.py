@@ -60,10 +60,6 @@ class Contact(models.Model):
         if "street" in vals:
             updatedData['street'] = vals['street']
 
-        if "street2" in vals:
-            updatedData['street'] = updatedData['street'] +
-            ' ' + vals['street2']
-
         if "city" in vals:
             updatedData['city'] = vals['city']
 
