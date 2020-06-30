@@ -26,7 +26,7 @@ class linderaMail(models.Model):
     
                     _logger.warning('Mail Receiver: Dong')
                     try:
-                        clean = re.sub('<.*?>', '', val['body']).replace('&quot;', '"')
+                        clean = re.sub('<.*?>', '', val['body']).replace('&quot;', '"').replace('\n', ' ')
                         _logger.warning('Mail Receiver: ' + clean)
                         data = json.loads(clean)
                         partner = self.env['res.partner'].search([('email', '=', data['email'])])
