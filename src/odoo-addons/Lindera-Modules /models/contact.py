@@ -24,7 +24,7 @@ class Contact(models.Model):
                 'zip': self.zip,
                 'odooID': self.id
             }
-            backendClient.postHome(payload).json()
+            return backendClient.postHome(payload).json()
 
     def isHomeExistsInLinderaDB(self, homeId):
         bClient = backend_client.BackendClient.setupBackendClient(self)
