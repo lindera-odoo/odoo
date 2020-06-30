@@ -26,11 +26,55 @@ class Contact(models.Model):
             }
             backendClient.postHome(payload).json()
 
+    def isHomeExistsInLinderaDB(self, homeId):
+        bClient = backend_client.BackendClient.setupBackendClient(self)
+        homeData = bClient.getHome(homeId).json()
+        if homeData['total'] == 0 and len(homeData['data']) == 0:
+            return False
+        else:
+            return homeData
+
+    def updateHome(self, mongodbId, data):
+        bClient = backend_client.BackendClient.setupBackendClient(self)
+        return bClient.updateHome(mongodbId, data)
+
     @api.model
     def create(self, val):
         res = super(Contact, self).create(val)
         res.createHomeInLinderaDB()
         return res
+
+    @api.multi
+    def write(self, vals):
+        contactId = self.id
+        data = self.isHomeExistsInLinderaDB(contactId)
+
+        if not data:
+            return
+
+        updatedData = {}
+
+        if "name" in vals:
+            updatedData['name'] = vals['name']
+
+        if "street" in vals:
+            updatedData['street'] = vals['street']
+
+        if "street2" in vals:
+            updatedData['street'] = updatedData['street'] +
+            ' ' + vals['street2']
+
+        if "city" in vals:
+            updatedData['city'] = vals['city']
+
+        if "zip" in vals:
+            updatedData['zip'] = vals['zip']
+
+        homeMongodbId = data['data'][0]['_id']
+        self.updateHome(homeMongodbId, updatedData)
+
+        result = super(Contact, self).write(vals)
+        return result
 
     # @api.model
     # def create(self, val):

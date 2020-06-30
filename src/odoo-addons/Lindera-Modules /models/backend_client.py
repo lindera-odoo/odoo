@@ -81,13 +81,11 @@ class BackendClient():
     def validateHomeData(self, data):
         v = Validator()
         schema = {
-            'name': {'type': 'string', 'empty': False},  # map
-            'role': {'type': 'string', 'allowed': ['home', 'company', 'organization']},
+            'name': {'type': 'string', 'empty': False},
             'street': {'type': 'string', 'empty': False},
             'zip': {'type': 'string', 'empty': False},
             'city':  {'type': 'string', 'empty': False},
             'odooID': {'type': 'number'},
-            'children': {'type': 'list'},
             'subscriptionEndDate': {'type': 'string'}
         }
         result = v.validate(data, schema)
