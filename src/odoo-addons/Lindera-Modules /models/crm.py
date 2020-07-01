@@ -97,8 +97,11 @@ class LinderaCRM(models.Model):
             if mongoId:
                 subscription = self.getSubscriptionEndDate(contact)
                 if subscription and subscription.date:
+
+                    subEndDate = subscription.date.isoformat()
+
                     raise osv.except_osv(
-                        ('Error!'), (type(subscription.date)))
+                        ('Error!'), (subEndDate))
                 else:
                     raise osv.except_osv(
                         ('Error!'), ("Associated contact should have a subscription end date"))
