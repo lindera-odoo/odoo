@@ -99,22 +99,14 @@ class LinderaCRM(models.Model):
                 if subscription and subscription.date:
 
                     subEndDate = subscription.date.isoformat()
+                    updatedField = {
+                        'subscriptionEndDate': subEndDate
+                    }
+                    contact.updateHome(mongoId, updatedField)
 
-                    raise osv.except_osv(
-                        ('Error!'), (subEndDate))
                 else:
                     raise osv.except_osv(
                         ('Error!'), ("Associated contact should have a subscription end date"))
-                futureTs = cts + (60 * 60 * 24 * 12000)
-                expirationDate = datetime.fromtimestamp(
-                    futureTs).isoformat()
-
-                updatedField = {
-                    'subscriptionEndDate': expirationDate
-                }
-
-                contact.updateHome(mongoId, updatedField)
-
             else:
                 return result
 
