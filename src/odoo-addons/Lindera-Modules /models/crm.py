@@ -48,6 +48,11 @@ class LinderaCRM(models.Model):
                 mongodbId = result['data']['_id']
                 return mongodbId
 
+    def getSubscriptionEndDate(self, contact):
+        subscription = self.env['sale.subscription'].search(
+            [('partner_id', '=', contact.id)])
+        return subscription
+
     @api.multi
     def write(self, vals):
         previouse_stage = self.stage_id
@@ -90,11 +95,13 @@ class LinderaCRM(models.Model):
 
             mongoId = self.checkIfHomeExists(contact)
             if mongoId:
-                subscription = self.env['sale.subscription'].search(
-                    [('partner_id', '=', contact.id)])
-
-                raise osv.except_osv(
-                    ('Error!'), (subscription.date_start, subscription.date))
+                subscription = self.getSubscriptionEndDate(contact)
+                if subscription and subscription.date:
+                    raise osv.except_osv(
+                        ('Error!'), (type(subscription.date)))
+                else:
+                    raise osv.except_osv(
+                        ('Error!'), ("Associated contact should have a subscription end date"))
                 futureTs = cts + (60 * 60 * 24 * 12000)
                 expirationDate = datetime.fromtimestamp(
                     futureTs).isoformat()
