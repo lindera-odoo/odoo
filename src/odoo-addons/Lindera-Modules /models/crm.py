@@ -90,6 +90,11 @@ class LinderaCRM(models.Model):
 
             mongoId = self.checkIfHomeExists(contact)
             if mongoId:
+                subscription = self.env['sale.subscription'].search(
+                    [('partner_id', '=', contact.id)])
+
+                raise osv.except_osv(
+                    ('Error!'), (subscription.date_start, subscription.date))
                 futureTs = cts + (60 * 60 * 24 * 12000)
                 expirationDate = datetime.fromtimestamp(
                     futureTs).isoformat()
