@@ -46,11 +46,12 @@ class Contact(models.Model):
 
     @api.multi
     def write(self, vals):
+        result = super(Contact, self).write(vals)
         contactId = self.id
         data = self.isHomeExistsInLinderaDB(contactId)
 
         if not data:
-            return
+            return result
 
         updatedData = {}
 
