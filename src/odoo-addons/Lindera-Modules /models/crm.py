@@ -35,10 +35,22 @@ class LinderaCRM(models.Model):
     def checkIfHomeExists(self, contact):
         isCompany = contact.is_company
         if not isCompany:
-            raise osv.except_osv(
-                ('Error!'), ('Associated contact should be type of company'))
+            parentCompany = contact.parent_id
+            parentCompanyId = parentCompany.id
+            if not parentCompanyId:
+                raise osv.except_osv(
+                    ('Error!'), ('Associated contact should have a parent company'))
+            else:
+                homeData = contact.isHomeExistsInLinderaDB(parentCompanyId)
+                if homeData:
+                    mongoId = homeData['data'][0]['_id']
+                    return mongoId
+                else:
+                    result = parentCompany.createHomeInLinderaDB()
+                    mongodbId = result['data']['_id']
+                    return mongodbId
+
         else:
-            # Check if the contact exists in lindera backend
             homeData = contact.isHomeExistsInLinderaDB(contact.id)
             if homeData:
                 mongoId = homeData['data'][0]['_id']
@@ -89,24 +101,32 @@ class LinderaCRM(models.Model):
             else:
                 return result
 
-        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Intergration':
+        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Intergration' or name == 'Salestermin geplant' or name == 'On hold':
             if previouse_stage_name == 'Salestermin geplant':
                 return result
 
             mongoId = self.checkIfHomeExists(contact)
             if mongoId:
-                subscription = self.getSubscriptionEndDate(contact)
-                if subscription and subscription.date:
+                parentCompany = contact.parent_id
+                if parentCompany:
+                    contactsSubscriptionEndDate = parentCompany
+                else:
+                    contactsSubscriptionEndDate = contact
 
+                subscription = self.getSubscriptionEndDate(
+                    contactsSubscriptionEndDate)
+                if subscription and subscription.date:
                     subEndDate = subscription.date.isoformat()
-                    updatedField = {
-                        'subscriptionEndDate': subEndDate
-                    }
-                    contact.updateHome(mongoId, updatedField)
 
                 else:
-                    raise osv.except_osv(
-                        ('Error!'), ("Associated contact should have a subscription end date"))
+                    pastTs = cts - (60 * 60 * 24)
+                    subEndDate = datetime.fromtimestamp(pastTs).isoformat()
+
+                updatedField = {
+                    'subscriptionEndDate': subEndDate
+                }
+                contact.updateHome(mongoId, updatedField)
+
             else:
                 return result
 
