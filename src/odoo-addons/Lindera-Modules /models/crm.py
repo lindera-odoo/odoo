@@ -27,7 +27,19 @@ class LinderaCRM(models.Model):
                 partner = data['partner_id']
                 if partner:
                     partnerId = partner[0]
-                    partnerIds.append(partnerId)
+                    contact = self.env['res.partner'].search(
+                        [('id', '=', partnerId)])
+
+                    isCompany = contact.is_company
+                    parentCompany = contact.parent_id
+                    parentCompanyId = parentCompany.id
+
+                    if isCompany:
+                        targetContactId = partnerId
+                    else:
+                        targetContactId = parentCompanyId
+
+                    partnerIds.append(targetContactId)
         if partnerIds:
             bClient = backend_client.BackendClient.setupBackendClient(
                 self)
@@ -35,6 +47,7 @@ class LinderaCRM(models.Model):
 
     def checkIfHomeExists(self, contact):
         isCompany = contact.is_company
+
         if not isCompany:
             parentCompany = contact.parent_id
             parentCompanyId = parentCompany.id
@@ -88,6 +101,9 @@ class LinderaCRM(models.Model):
             partnerId = partner[0]
             contact = self.env['res.partner'].search(
                 [('id', '=', partnerId)])
+        else:
+            raise osv.except_osv(
+                ('Error!'), ('CRM card does not have a contact'))
 
         if name == 'Salestermin geplant':
             mongoId = self.checkIfHomeExists(contact)
@@ -102,17 +118,19 @@ class LinderaCRM(models.Model):
             else:
                 return result
 
-        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Intergration' or name == 'Salestermin geplant' or name == 'On hold':
+        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Integration':
             if previouse_stage_name == 'Salestermin geplant':
                 return result
 
             mongoId = self.checkIfHomeExists(contact)
             if mongoId:
-                parentCompany = contact.parent_id
-                if parentCompany:
-                    contactsSubscriptionEndDate = parentCompany
-                else:
+                isCompany = contact.is_company
+
+                if isCompany:
                     contactsSubscriptionEndDate = contact
+                else:
+                    parentCompany = contact.parent_id
+                    contactsSubscriptionEndDate = parentCompany
 
                 subscription = self.getSubscriptionEndDate(
                     contactsSubscriptionEndDate)
