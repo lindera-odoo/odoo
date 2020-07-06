@@ -86,7 +86,8 @@ class BackendClient():
             'zip': {'type': 'string', 'empty': False},
             'city':  {'type': 'string', 'empty': False},
             'odooID': {'type': 'number'},
-            'subscriptionEndDate': {'type': 'string'}
+            'subscriptionEndDate': {'type': 'string'},
+            'status': {'type': 'string'},
         }
         result = v.validate(data, schema)
         if(not result):

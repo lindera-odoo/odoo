@@ -22,7 +22,8 @@ class Contact(models.Model):
                 'street': self.street if self.street else '' + ',' + self.street2 if self.street2 else '',
                 'city': self.city,
                 'zip': self.zip,
-                'odooID': self.id
+                'odooID': self.id,
+                'status': 'registered',
             }
             return backendClient.postHome(payload).json()
 
