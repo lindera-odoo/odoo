@@ -136,14 +136,13 @@ class LinderaCRM(models.Model):
                     targetContact)
 
                 if subscription:
-                    raise osv.except_osv(
-                        ('Error!'), ("it has sub"))
-                else:
-                    raise osv.except_osv(
-                        ('Error!'), ("no subscription"))
-
-                if subscription and subscription.date:
-                    subEndDate = subscription.date.isoformat()
+                    if subscription.date:
+                        subEndDate = subscription.date.isoformat()
+                    else:
+                        futureTs = cts + (60 * 60 * 24 * 120)
+                        expirationDate = datetime.fromtimestamp(
+                            futureTs).isoformat()
+                        subEndDate = expirationDate
 
                 else:
                     pastTs = cts - (60 * 60 * 24)
