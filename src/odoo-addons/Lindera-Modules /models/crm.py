@@ -127,13 +127,17 @@ class LinderaCRM(models.Model):
                 isCompany = contact.is_company
 
                 if isCompany:
-                    contactsSubscriptionEndDate = contact
+                    targetContact = contact
                 else:
                     parentCompany = contact.parent_id
-                    contactsSubscriptionEndDate = parentCompany
+                    targetContact = parentCompany
 
                 subscription = self.getSubscriptionEndDate(
-                    contactsSubscriptionEndDate)
+                    targetContact)
+
+                raise osv.except_osv(
+                    ('Error!'), (subscription))
+
                 if subscription and subscription.date:
                     subEndDate = subscription.date.isoformat()
 
