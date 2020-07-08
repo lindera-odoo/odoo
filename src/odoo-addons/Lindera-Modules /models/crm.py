@@ -27,61 +27,57 @@ class LinderaCRM(models.Model):
                 partner = data['partner_id']
                 if partner:
                     partnerId = partner[0]
-                    partnerIds.append(partnerId)
+                    contact = self.env['res.partner'].search(
+                        [('id', '=', partnerId)])
+
+                    isCompany = contact.is_company
+                    parentCompany = contact.parent_id
+                    parentCompanyId = parentCompany.id
+
+                    if isCompany:
+                        targetContactId = partnerId
+                    else:
+                        targetContactId = parentCompanyId
+
+                    partnerIds.append(targetContactId)
         if partnerIds:
-            bClient = self.setupBackendClient()
+            bClient = backend_client.BackendClient.setupBackendClient(
+                self)
             bClient.notifyBackendToCreateReport(partnerIds)
 
-    def updateHome(self, mongodbId, field):
-        updatedField = {
-            'subscriptionEndDate': field
-        }
-        bClient = self.setupBackendClient()
-        return bClient.updateHome(mongodbId, updatedField)
+    def checkIfHomeExists(self, contact):
+        isCompany = contact.is_company
 
-    def setupBackendClient(self):
-        url = self.env['ir.config_parameter'].get_param('lindera.backend')
-        token = self.env['ir.config_parameter'].get_param(
-            'lindera.internal_authentication_token')
-        ravenClient = self.env['ir.config_parameter'].get_param(
-            'lindera.raven_client')
-
-        if (url and token and ravenClient):
-            backendClient = backend_client.BackendClient(
-                url, token, ravenClient)
-            return backendClient
-        else:
-            raise osv.except_osv(
-                ('Error!'), ('Please, setup system parameters for lindera backend'))
-
-    def checkIfHomeExists(self):
-        # Get associated partner's (contact/home/compnay) data
-        data = self.read()[0]
-        partner = data['partner_id']
-        if partner:
-            partnerId = partner[0]
-            # Check if the contact exists in lindera backend
-            bClient = self.setupBackendClient()
-            homeData = bClient.getHome(partnerId).json()
-            if homeData['total'] == 0 and len(homeData['data']) == 0:
-                contact = self.env['res.partner'].search(
-                    [('id', '=', partnerId)])
-                # Create home in lindera backend
-                payload = {
-                    'name': contact.name,
-                    'city': contact.city,
-                    'street': contact.street,
-                    'zip': contact.zip,
-                    'role': 'home',
-                    'odooID': contact.id
-                }
-
-                result = bClient.postHome(payload).json()
-                return result['data']['_id']
-
+        if not isCompany:
+            parentCompany = contact.parent_id
+            parentCompanyId = parentCompany.id
+            if not parentCompanyId:
+                raise osv.except_osv(
+                    ('Error!'), ('Associated contact should have a parent company'))
             else:
+                homeData = contact.isHomeExistsInLinderaDB(parentCompanyId)
+                if homeData:
+                    mongoId = homeData['data'][0]['_id']
+                    return mongoId
+                else:
+                    result = parentCompany.createHomeInLinderaDB()
+                    mongodbId = result['data']['_id']
+                    return mongodbId
+
+        else:
+            homeData = contact.isHomeExistsInLinderaDB(contact.id)
+            if homeData:
                 mongoId = homeData['data'][0]['_id']
                 return mongoId
+            else:
+                result = contact.createHomeInLinderaDB()
+                mongodbId = result['data']['_id']
+                return mongodbId
+
+    def getSubscriptionEndDate(self, contact):
+        subscription = self.env['sale.subscription'].search(
+            [('partner_id', '=', contact.id)])
+        return subscription
 
     @api.multi
     def write(self, vals):
@@ -98,34 +94,77 @@ class LinderaCRM(models.Model):
         cts = getCurrentTimestamp()
         previouse_stage_name = previouse_stage.name
 
+        # Read the associated contact
+        data = self.read()[0]
+        partner = data['partner_id']
+        if partner:
+            partnerId = partner[0]
+            contact = self.env['res.partner'].search(
+                [('id', '=', partnerId)])
+        else:
+            raise osv.except_osv(
+                ('Error!'), ('CRM card does not have a contact'))
+
         if name == 'Salestermin geplant':
-            mongoId = self.checkIfHomeExists()
+            mongoId = self.checkIfHomeExists(contact)
             if mongoId:
                 futureTs = cts + (60 * 60 * 24 * 120)
                 expirationDate = datetime.fromtimestamp(futureTs).isoformat()
-                self.updateHome(mongoId, expirationDate)
+
+                updatedField = {
+                    'subscriptionEndDate': expirationDate
+                }
+                contact.updateHome(mongoId, updatedField)
             else:
                 return result
 
-        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Intergration':
+        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Integration':
             if previouse_stage_name == 'Salestermin geplant':
                 return result
 
-            mongoId = self.checkIfHomeExists()
+            mongoId = self.checkIfHomeExists(contact)
             if mongoId:
-                futureTs = cts + (60 * 60 * 24 * 12000)
-                expirationDate = datetime.fromtimestamp(
-                    futureTs).isoformat()
-                self.updateHome(mongoId, expirationDate)
+                isCompany = contact.is_company
+
+                if isCompany:
+                    targetContact = contact
+                else:
+                    parentCompany = contact.parent_id
+                    targetContact = parentCompany
+
+                subscription = self.getSubscriptionEndDate(
+                    targetContact)
+
+                if subscription:
+                    if subscription.date:
+                        subEndDate = subscription.date.isoformat()
+                    else:
+                        futureTs = cts + (60 * 60 * 24 * 120)
+                        expirationDate = datetime.fromtimestamp(
+                            futureTs).isoformat()
+                        subEndDate = expirationDate
+
+                else:
+                    pastTs = cts - (60 * 60 * 24)
+                    subEndDate = datetime.fromtimestamp(pastTs).isoformat()
+
+                updatedField = {
+                    'subscriptionEndDate': subEndDate
+                }
+                contact.updateHome(mongoId, updatedField)
+
             else:
                 return result
 
         if name == 'On hold':
-            mongoId = self.checkIfHomeExists()
+            mongoId = self.checkIfHomeExists(contact)
             if mongoId:
                 pastTs = cts - (60 * 60 * 24)
                 expirationDate = datetime.fromtimestamp(pastTs).isoformat()
-                self.updateHome(mongoId, expirationDate)
+                updatedField = {
+                    'subscriptionEndDate': expirationDate
+                }
+                contact.updateHome(mongoId, updatedField)
             else:
                 return result
 
