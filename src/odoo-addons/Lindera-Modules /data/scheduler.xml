@@ -50,8 +50,8 @@
             <field name="state">code</field>
             <field name="active" eval="True"/>
             <field name="code">model.generate()</field>
-            <field name='interval_number'>5</field>
-            <field name='interval_type'>minutes</field>
+            <field name='interval_number'>1</field>
+            <field name='interval_type'>months</field>
             <field name="numbercall">-1</field>
             <field name="user_id" ref="base.user_root"/>
         </record>
