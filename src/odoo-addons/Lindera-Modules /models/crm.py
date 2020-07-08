@@ -45,7 +45,7 @@ class LinderaCRM(models.Model):
                 self)
             x = bClient.notifyBackendToCreateReport(partnerIds)
             raise osv.except_osv(
-                ('Error!'), (x))
+                ('Error!'), (x, partnerIds))
 
     def checkIfHomeExists(self, contact):
         isCompany = contact.is_company
