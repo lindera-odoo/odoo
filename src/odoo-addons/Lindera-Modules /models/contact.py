@@ -13,8 +13,6 @@ class Contact(models.Model):
         isCompany = self.is_company
         companyType = self.company_type
 
-        print(isCompany, self.name)
-
         if isCompany and companyType == 'company':
             # Setup Lindera Backend Client Object
             backendClient = backend_client.BackendClient.setupBackendClient(
@@ -76,7 +74,8 @@ class Contact(models.Model):
             parentCompany = res.parent_id
             parentCompanyId = parentCompany.id
             if parentCompanyId:
-                res.inviteUser()
+                x = res.inviteUser()
+                raise osv.except_osv(('Error!'), (x))
         return res
 
     @api.multi
