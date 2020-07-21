@@ -59,12 +59,12 @@ class LinderaCRM(models.Model):
             else:
                 homeData = contact.isHomeExistsInLinderaDB(parentCompanyId)
                 if homeData:
-                    mongoId = homeData['data'][0]['_id']
-                    return mongoId
+                    mongodbId = homeData['data'][0]['_id']
                 else:
                     result = parentCompany.createHomeInLinderaDB()
                     mongodbId = result['data']['_id']
-                    return mongodbId
+                contact.inviteUser()
+                return mongodbId
 
         else:
             homeData = contact.isHomeExistsInLinderaDB(contact.id)
