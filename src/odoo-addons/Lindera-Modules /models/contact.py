@@ -74,8 +74,7 @@ class Contact(models.Model):
             parentCompany = res.parent_id
             parentCompanyId = parentCompany.id
             if parentCompanyId:
-                x = res.inviteUser()
-                raise osv.except_osv(('Error!'), (x))
+                res.inviteUser()
         return res
 
     @api.multi
