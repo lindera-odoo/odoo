@@ -39,42 +39,10 @@ class Contact(models.Model):
         bClient = backend_client.BackendClient.setupBackendClient(self)
         return bClient.updateHome(mongodbId, data)
 
-    def inviteUser(self):
-        contactEmail = self.email
-
-        if not contactEmail:
-            raise osv.except_osv(
-                ('Error!'), ('We tried to invite {} to {} as an admin, but email did not find'.format(self.name, self.parent_id.name)))
-
-        homeData = self.isHomeExistsInLinderaDB(self.parent_id.id)
-        if homeData:
-            mongodbId = homeData['data'][0]['_id']
-        else:
-            result = self.parent_id.createHomeInLinderaDB()
-            mongodbId = result['data']['_id']
-
-        data = {
-            'email': [{"email": contactEmail}],
-            'homeID': mongodbId,
-            'role': 'home_admin'
-        }
-        bClient = backend_client.BackendClient.setupBackendClient(self)
-        return bClient.inviteUser(data).json()
-
     @api.model
     def create(self, val):
         res = super(Contact, self).create(val)
-
-        isCompany = res.is_company
-
-        if isCompany:
-            res.createHomeInLinderaDB()
-            return res
-        else:
-            parentCompany = res.parent_id
-            parentCompanyId = parentCompany.id
-            if parentCompanyId:
-                res.inviteUser()
+        res.createHomeInLinderaDB()
         return res
 
     @api.multi

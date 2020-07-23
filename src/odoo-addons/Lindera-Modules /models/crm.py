@@ -43,9 +43,7 @@ class LinderaCRM(models.Model):
         if partnerIds:
             bClient = backend_client.BackendClient.setupBackendClient(
                 self)
-            x = bClient.notifyBackendToCreateReport(partnerIds)
-            raise osv.except_osv(
-                ('Error!'), (x, partnerIds))
+            bClient.notifyBackendToCreateReport(partnerIds)
 
     def checkIfHomeExists(self, contact):
         isCompany = contact.is_company
@@ -59,12 +57,12 @@ class LinderaCRM(models.Model):
             else:
                 homeData = contact.isHomeExistsInLinderaDB(parentCompanyId)
                 if homeData:
-                    mongodbId = homeData['data'][0]['_id']
+                    mongoId = homeData['data'][0]['_id']
+                    return mongoId
                 else:
                     result = parentCompany.createHomeInLinderaDB()
                     mongodbId = result['data']['_id']
-                contact.inviteUser()
-                return mongodbId
+                    return mongodbId
 
         else:
             homeData = contact.isHomeExistsInLinderaDB(contact.id)

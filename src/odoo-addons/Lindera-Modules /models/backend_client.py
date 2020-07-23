@@ -30,17 +30,6 @@ class BackendClient():
             raise osv.except_osv(
                 ('Error!'), ('Please, setup system parameters for lindera backend'))
 
-    def inviteUser(self, data):
-        try:
-            return rq.post("{}/users/invite".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
-        except ConnectionError as err:
-            message = 'Unable to establish connection to backend server'
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
-        except Exception as err:
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (self.URL, err))
-
     def notifyBackendToCreateReport(self, data):
         try:
             return rq.post("{}/internal/create_report".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
