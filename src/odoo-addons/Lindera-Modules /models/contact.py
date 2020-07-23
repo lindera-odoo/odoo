@@ -47,10 +47,10 @@ class Contact(models.Model):
 
     @api.multi
     def write(self, vals):
-        result = super(Contact, self).write(vals)
         contactId = self.id
         raise osv.except_osv(
-            ('Error!'), (self))
+            ('Error!'), (self, self.name))
+        result = super(Contact, self).write(vals)
         data = self.isHomeExistsInLinderaDB(contactId)
 
         if not data:
