@@ -49,8 +49,6 @@ class Contact(models.Model):
     def write(self, vals):
         contactId = self.id
         data = self.isHomeExistsInLinderaDB(contactId)
-        # 236
-        # data = false
 
         if data:
             updatedData = {}
