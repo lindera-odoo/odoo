@@ -49,6 +49,8 @@ class Contact(models.Model):
     def write(self, vals):
         result = super(Contact, self).write(vals)
         contactId = self.id
+        raise osv.except_osv(
+            ('Error!'), (result, contactId))
         data = self.isHomeExistsInLinderaDB(contactId)
 
         if not data:
