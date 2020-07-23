@@ -50,7 +50,7 @@ class Contact(models.Model):
         result = super(Contact, self).write(vals)
         contactId = self.id
         raise osv.except_osv(
-            ('Error!'), (result, contactId))
+            ('Error!'), (self))
         data = self.isHomeExistsInLinderaDB(contactId)
 
         if not data:
