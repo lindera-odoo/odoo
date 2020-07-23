@@ -51,7 +51,7 @@ class Contact(models.Model):
         data = self.isHomeExistsInLinderaDB(contactId)
 
         if not data:
-            return result
+            return
 
         updatedData = {}
 
