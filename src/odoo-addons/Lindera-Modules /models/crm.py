@@ -107,7 +107,7 @@ class LinderaCRM(models.Model):
             else:
                 return result
 
-        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot gezeichnet' or name == 'Intergration':
+        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot oder Rahmenvertrag gezeichnet' or name == 'Intergration':
             if previouse_stage_name == 'Salestermin geplant':
                 return result
 
