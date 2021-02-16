@@ -31,11 +31,13 @@ class Contact(models.Model):
             raise osv.except_osv(
                 ('Error!'), ('Please, setup system parameters for lindera backend'))
         for contact in self:
-            home = backendClient.getHome(contact.id).json()
-            if home and home['total'] != 0:
-                contact.homeID = home['data'][0]['_id']
-            else:
-                contact.homeID = ''
+            tags = list(map(lambda tag: tag.name.lower(), contact.category_id))
+            contact.homeID = ''
+            if 'einrichtung' in tags:
+                home = backendClient.getHome(contact.id).json()
+                if home and home['total'] != 0:
+                    contact.homeID = home['data'][0]['_id']
+                
         
     @api.model
     def create(self, val):
