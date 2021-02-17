@@ -15,6 +15,21 @@ class BackendClient():
         self.INTERNAL_AUTHENTICATION_TOKEN = token
         self.ravenSingleton = ravenSingleton(ravenClient)
 
+    @classmethod
+    def setupBackendClient(cls, context):
+        url = context.env['ir.config_parameter'].get_param('lindera.backend')
+        token = context.env['ir.config_parameter'].get_param(
+            'lindera.internal_authentication_token')
+        ravenClient = context.env['ir.config_parameter'].get_param(
+            'lindera.raven_client')
+
+        if (url and token and ravenClient):
+            return cls(
+                url, token, ravenClient)
+        else:
+            raise osv.except_osv(
+                ('Error!'), ('Please, setup system parameters for lindera backend'))
+
     def notifyBackendToCreateReport(self, data):
         try:
             return rq.post("{}/internal/create_report".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
@@ -23,7 +38,7 @@ class BackendClient():
             self.ravenSingleton.Client.captureMessage(err)
             raise osv.except_osv(('Error!'), (message))
         except Exception as err:
-            self.ravenSingleton.Client.captureMessage(err)
+            self.ravenSingleton.Client.captureMessage(err) 
             raise osv.except_osv(('Error!'), (self.URL, err))
 
     def postHome(self, data):
@@ -66,14 +81,13 @@ class BackendClient():
     def validateHomeData(self, data):
         v = Validator()
         schema = {
-            'name': {'type': 'string', 'empty': False},  # map
-            'role': {'type': 'string', 'allowed': ['home', 'company', 'organization']},
+            'name': {'type': 'string', 'empty': False},
             'street': {'type': 'string', 'empty': False},
             'zip': {'type': 'string', 'empty': False},
             'city':  {'type': 'string', 'empty': False},
             'odooID': {'type': 'number'},
-            'children': {'type': 'list'},
-            'subscriptionEndDate': {'type': 'string'}
+            'subscriptionEndDate': {'type': 'string'},
+            'status': {'type': 'string'},
         }
         result = v.validate(data, schema)
         if(not result):
