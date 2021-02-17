@@ -12,18 +12,7 @@ class Contact(models.Model):
     homeID = fields.Text('homeID', store=False, compute='_add_empty_homeID')
 
     def _add_empty_homeID(self):
-        url = self.env['ir.config_parameter'].get_param('lindera.backend')
-        token = self.env['ir.config_parameter'].get_param(
-            'lindera.internal_authentication_token')
-        ravenClient = self.env['ir.config_parameter'].get_param(
-            'lindera.raven_client')
-    
-        if (url and token and ravenClient):
-            backendClient = backend_client.BackendClient(
-                url, token, ravenClient)
-        else:
-            raise osv.except_osv(
-                ('Error!'), ('Please, setup system parameters for lindera backend'))
+        backendClient = backend_client.BackendClient.setupBackendClient(self)
         for contact in self:
             tags = list(map(lambda tag: tag.name.lower(), contact.category_id))
             contact.homeID = ''
