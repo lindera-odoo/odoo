@@ -107,10 +107,13 @@ class linderaMail(models.Model):
                             # set data
                             message = mailbox.new_message()
                             if mail.parent_id:
-                                prev_mail = self.env['mail.message'].search(
-                                    [('o365ConversationID', '!=', None), ('parent_id', '!=', mail.parent_id.id)])
-                                if prev_mail:
-                                    mail.parent_id = prev_mail[0]
+                                if not mail.parent_id.o365ID:
+                                    prev_mail = self.env['mail.message'].search(
+                                        [('o365ConversationID', '!=', None),
+                                         ('model', '=', mail.model),
+                                         ('res_id', '=', mail.res_id)])
+                                    if prev_mail:
+                                        mail.parent_id = prev_mail[0]
 
                                 if mail.parent_id.o365ID:
                                     prev_mail = self.env['mail.message'].search(
