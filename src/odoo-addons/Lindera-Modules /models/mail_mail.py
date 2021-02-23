@@ -106,27 +106,32 @@ class linderaMail(models.Model):
                             process_pid = email.pop("partner_id", None)
                             # set data
                             message = mailbox.new_message()
-                            if mail.parent_id:
-                                if not mail.parent_id.o365ID:
-                                    prev_mail = self.env['mail.message'].search(
-                                        [('o365ConversationID', '!=', None),
-                                         ('model', '=', mail.model),
-                                         ('res_id', '=', mail.res_id)])
-                                    if prev_mail:
-                                        mail.parent_id = prev_mail[0]
-
-                                if mail.parent_id.o365ID:
-                                    prev_mail = self.env['mail.message'].search(
-                                        [('o365ConversationID', '=', mail.parent_id.o365ConversationID)])
-                                    if prev_mail:
-                                        mail.parent_id = prev_mail[0]
-                                    try:
-                                        oldMessage = mailbox.get_message(mail.parent_id.o365ID)
-                                        replyMessage = oldMessage.reply()
-                                        if replyMessage is not None:
-                                            message = replyMessage
-                                    except:
-                                        pass
+                            if mail.subtype_id.name != 'Note':
+                                if mail.parent_id:
+                                    if not mail.parent_id.o365ConversationID:
+                                        prev_mail = self.env['mail.message'].search(
+                                            [('o365ConversationID', '!=', None),
+                                             ('model', '=', mail.model),
+                                             ('res_id', '=', mail.res_id),
+                                             ('subtype_id', '=', mail.subtype_id.id)])
+                                        if prev_mail:
+                                            mail.parent_id = prev_mail[0]
+    
+                                    if mail.parent_id.o365ConversationID:
+                                        prev_mail = self.env['mail.message'].search(
+                                            [('o365ConversationID', '=', mail.parent_id.o365ConversationID),
+                                             ('model', '=', mail.model),
+                                             ('res_id', '=', mail.res_id),
+                                             ('subtype_id', '=', mail.subtype_id.id)])
+                                        if prev_mail:
+                                            mail.parent_id = prev_mail[0]
+                                            try:
+                                                oldMessage = mailbox.get_message(mail.parent_id.o365ID)
+                                                replyMessage = oldMessage.reply()
+                                                if replyMessage is not None:
+                                                    message = replyMessage
+                                            except:
+                                                pass
 
                             message.to.add(email.get('email_to'))
                             message.sender.address = mail.author_id.email
