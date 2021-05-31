@@ -47,28 +47,29 @@ class Contact(models.Model):
 
     @api.multi
     def write(self, vals):
-        contactId = self.id
-        data = self.isHomeExistsInLinderaDB(contactId)
-
-        if data:
-            updatedData = {}
-
-            if "name" in vals:
-                updatedData['name'] = vals['name']
-
-            if "street" in vals:
-                updatedData['street'] = vals['street']
-
-            if "street2" in vals:
-                updatedData['street'] = updatedData['street'] + vals['street2']
-
-            if "city" in vals:
-                updatedData['city'] = vals['city']
-
-            if "zip" in vals:
-                updatedData['zip'] = vals['zip']
-
-            homeMongodbId = data['data'][0]['_id']
-            self.updateHome(homeMongodbId, updatedData)
+        for contact in self:
+            contactId = contact.id
+            data = contact.isHomeExistsInLinderaDB(contactId)
+    
+            if data:
+                updatedData = {}
+    
+                if "name" in vals:
+                    updatedData['name'] = vals['name']
+    
+                if "street" in vals:
+                    updatedData['street'] = vals['street']
+    
+                if "street2" in vals:
+                    updatedData['street'] = updatedData['street'] + vals['street2']
+    
+                if "city" in vals:
+                    updatedData['city'] = vals['city']
+    
+                if "zip" in vals:
+                    updatedData['zip'] = vals['zip']
+    
+                homeMongodbId = data['data'][0]['_id']
+                contact.updateHome(homeMongodbId, updatedData)
 
         return super(Contact, self).write(vals)
