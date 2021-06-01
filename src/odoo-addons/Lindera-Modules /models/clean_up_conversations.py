@@ -31,7 +31,7 @@ class linderaConversationsCleaner(models.Model):
                 .sorted(key=lambda mail: mail.date)
             
             for mail in to_check:
-                if mail.parent_id is None or True:
+                if mail.parent_id is None:
                     prev_mail = self.env['mail.message'].search(
                         [('o365ConversationID', '!=', None),
                          ('model', '=', mail.model),
