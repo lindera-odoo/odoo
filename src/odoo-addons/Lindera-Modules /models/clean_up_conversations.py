@@ -36,10 +36,10 @@ class linderaConversationsCleaner(models.Model):
                         [('o365ConversationID', '!=', None),
                          ('model', '=', mail.model),
                          ('res_id', '=', mail.res_id),
-                         ('subtype_id', '=', mail.subtype_id.id),
                          ('date', '<', mail.date)]).sorted(key=lambda mail: mail.date)
                     if prev_mail:
                         changed = True
                         mail.parent_id = prev_mail[-1]
-                        mail.o365ConversationID = prev_mail[-1].o365ConversationID
+                        if not mail.subtype_id.name == 'Note':
+                            mail.o365ConversationID = prev_mail[-1].o365ConversationID
                         self.env.cr.commit()

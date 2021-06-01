@@ -59,7 +59,7 @@ class linderaMail(models.Model):
             if token_backend.check_token() and allowtosend:
                 try:
                     account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-                    if account.is_authenticated:
+                    if account.is_authenticated or True:
                         IrAttachment = self.env['ir.attachment']
                         # remove attachments if user send the link with the access_token
                         body = mail.body_html or ''
@@ -112,19 +112,17 @@ class linderaMail(models.Model):
                                         prev_mail = self.env['mail.message'].search(
                                             [('o365ConversationID', '!=', None),
                                              ('model', '=', mail.model),
-                                             ('res_id', '=', mail.res_id),
-                                             ('subtype_id', '=', mail.subtype_id.id)])
+                                             ('res_id', '=', mail.res_id)]).sorted(key=lambda element: element.date)
                                         if prev_mail:
-                                            mail.parent_id = prev_mail[0]
+                                            mail.parent_id = prev_mail[-1]
     
                                     if mail.parent_id.o365ConversationID:
                                         prev_mail = self.env['mail.message'].search(
                                             [('o365ConversationID', '=', mail.parent_id.o365ConversationID),
                                              ('model', '=', mail.model),
-                                             ('res_id', '=', mail.res_id),
-                                             ('subtype_id', '=', mail.subtype_id.id)])
+                                             ('res_id', '=', mail.res_id)]).sorted(key=lambda element: element.date)
                                         if prev_mail:
-                                            mail.parent_id = prev_mail[0]
+                                            mail.parent_id = prev_mail[-1]
                                             try:
                                                 oldMessage = mailbox.get_message(mail.parent_id.o365ID)
                                                 replyMessage = oldMessage.reply()
@@ -141,7 +139,7 @@ class linderaMail(models.Model):
                             message.cc.add(tools.email_split(mail.email_cc))
                             message.reply_to.add(mail.author_id.email)
                             message.attachments.add(attachments)
-                            if mail.parent_id:
+                            if mail.parent_id and mail.subtype_id.name != 'Note':
                                 if mail.parent_id.o365ConversationID:
                                     mail.mail_message_id.o365ConversationID = mail.parent_id.o365ConversationID
                                     message.conversation_id = mail.parent_id.o365ConversationID
