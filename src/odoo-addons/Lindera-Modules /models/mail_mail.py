@@ -59,7 +59,7 @@ class linderaMail(models.Model):
             if token_backend.check_token() and allowtosend:
                 try:
                     account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-                    if account.is_authenticated or True:
+                    if account.is_authenticated:
                         IrAttachment = self.env['ir.attachment']
                         # remove attachments if user send the link with the access_token
                         body = mail.body_html or ''
