@@ -104,33 +104,61 @@ class linderaMail(models.Model):
                         process_pids = []
                         for email in email_list:
                             process_pid = email.pop("partner_id", None)
+                            
+                            is_external = True
+                            if process_pid is not None:
+                                for pid in process_pid:
+                                    target_user = self.env['res.users'].search([("partner_id", "=", pid.id)])
+                                    if target_user:
+                                        is_external = False
+                            
                             # set data
                             message = mailbox.new_message()
+                            is_reply = False
                             if mail.subtype_id.name != 'Note':
-                                if mail.parent_id:
-                                    if not mail.parent_id.o365ConversationID:
-                                        prev_mail = self.env['mail.message'].search(
-                                            [('o365ConversationID', '!=', None),
-                                             ('model', '=', mail.model),
-                                             ('res_id', '=', mail.res_id)]).sorted(key=lambda element: element.date)
-                                        if prev_mail:
-                                            mail.parent_id = prev_mail[-1]
-    
-                                    if mail.parent_id.o365ConversationID:
-                                        prev_mail = self.env['mail.message'].search(
-                                            [('o365ConversationID', '=', mail.parent_id.o365ConversationID),
-                                             ('model', '=', mail.model),
-                                             ('res_id', '=', mail.res_id)]).sorted(key=lambda element: element.date)
-                                        if prev_mail:
-                                            mail.parent_id = prev_mail[-1]
-                                            try:
-                                                oldMessage = mailbox.get_message(mail.parent_id.o365ID)
-                                                replyMessage = oldMessage.reply()
-                                                if replyMessage is not None:
-                                                    message = replyMessage
-                                            except:
-                                                pass
+                                # find the most likely candidate for the parent
+                                prev_mail = self.env['mail.message'].search(
+                                    [('o365ConversationID', '!=', None),
+                                     ('model', '=', mail.model),
+                                     ('res_id', '=', mail.res_id),
+                                     ('message_type', '=', mail.message_type),
+                                     ('subtype_id', '=', mail.subtype_id.id),
+                                     ('id', '!=', mail.mail_message_id.id),
+                                     ('partner_ids', '=', mail.recipient_ids.id)])
+                                
+                                for pid in process_pid:
+                                    prev_mail += self.env['mail.message'].search(
+                                        [('o365ConversationID', '!=', None),
+                                         ('model', '=', mail.model),
+                                         ('res_id', '=', mail.res_id),
+                                         ('id', '!=', mail.mail_message_id.id),
+                                         ('author_id', '=', pid.id)])
+                                prev_mail = prev_mail.sorted(key=lambda element: element.date)
+                                
+                                if prev_mail:
+                                    mail.parent_id = prev_mail[-1]
 
+                                if mail.parent_id.o365ConversationID:
+                                    # find the most recent entry of this conversation (might be the reply, which does not fit the most likely)
+                                    prev_mail = self.env['mail.message'].search(
+                                        [('o365ConversationID', '=', mail.parent_id.o365ConversationID),
+                                         ('model', '=', mail.model),
+                                         ('res_id', '=', mail.res_id),
+                                         ('id', '!=', mail.mail_message_id.id)]).sorted(key=lambda element: element.date)
+                                    prev_mail = prev_mail.sorted(key=lambda element: element.date)
+                                    if prev_mail:
+                                        mail.parent_id = prev_mail[-1]
+                                        try:
+                                            oldMessage = mailbox.get_message(mail.parent_id.o365ID)
+                                            replyMessage = oldMessage.reply()
+                                            if replyMessage is not None:
+                                                message = replyMessage
+                                                is_reply = True
+                                        except:
+                                            pass
+                            
+                            if not is_external:
+                                message.to.clear()
                             message.to.add(email.get('email_to'))
                             message.sender.address = mail.author_id.email
                             message.body = email.get('body')
@@ -145,18 +173,21 @@ class linderaMail(models.Model):
                                     message.conversation_id = mail.parent_id.o365ConversationID
 
                             message.send()
-                            try:
-                                time.sleep(1)
-                                sent = list(mailbox.sent_folder().get_messages(limit=len(ids), batch=len(ids),
-                                                                               download_attachments=False))
-                                now = datetime.datetime.utcnow()
-                                for message in sent:
-                                    if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
-                                        mail.mail_message_id.o365ID = message.object_id
-                                        mail.mail_message_id.o365ConversationID = message.conversation_id
-                                        break
-                            except Exception as e:
-                                ravenSingle.Client.captureMessage(e)
+                            if not mail.mail_message_id.o365ID and is_external:
+                                try:
+                                    time.sleep(1)
+                                    sent = list(mailbox.sent_folder().get_messages(limit=len(ids), batch=len(ids),
+                                                                                   download_attachments=False))
+                                    sent.sort(key=lambda element: element.sent, reverse=True)
+                                    now = datetime.datetime.utcnow()
+                                    for message in sent:
+                                        if mail.subject == message.subject and abs(now - message.sent.utcnow()) < datetime.timedelta(seconds=2):
+                                            mail.mail_message_id.o365ID = message.object_id
+                                            mail.mail_message_id.o365ConversationID = message.conversation_id
+                                            break
+                                    time.sleep(1)
+                                except Exception as e:
+                                    ravenSingle.Client.captureMessage(e)
 
                             if isinstance(process_pid, list):
                                 for pid in process_pid:
