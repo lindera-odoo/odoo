@@ -5,6 +5,7 @@ class LinderaInvoice(models.Model):
     _inherit = "account.invoice"
 
     def setup_lead(self):
+        raise osv.except_osv('It actually reaches here!')
         # update contact if needed
         if not self.partner_id.is_company:
             if not self.partner_id.parent_id:
