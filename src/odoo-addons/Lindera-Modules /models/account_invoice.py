@@ -28,6 +28,7 @@ class LinderaInvoice(models.Model):
                 'contact_name': self.partner_id.name,
                 'type': 'opportunity',
             })
+            self.env.cr.commit()
         else:
             lead = lead[0]
             
