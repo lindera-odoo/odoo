@@ -56,7 +56,7 @@ class linderaCalendarSyncer(models.Model):
 			privacy = privacyMap[privacy]
 		else:
 			privacy = 'private'
-		organizer = self.env['res.users'].search([('email', "=", event.organizer.address)])
+		organizer = self.env['res.users'].search([('email', "=", event.organizer.address), ('share', '=', False)])
 		if organizer:
 			uid = organizer[0].id
 			organizer = organizer[0]
@@ -162,7 +162,7 @@ class linderaCalendarSyncer(models.Model):
 			privacy = privacyMap[privacy]
 		else:
 			privacy = 'private'
-		organizer = self.env['res.users'].search([('email', "=", event.organizer.address)])
+		organizer = self.env['res.users'].search([('email', "=", event.organizer.address), ('share', '=', False)])
 		if organizer:
 			uid = organizer[0].id
 			organizer = organizer[0]
@@ -300,5 +300,5 @@ class linderaCalendarSyncer(models.Model):
 				raise osv.except_osv('Error While Syncing!', str(err))
 
 	def syncCalendar(self):
-		for syncUser in self.env['res.users'].search([]):
+		for syncUser in self.env['res.users'].search([('share', '=', False)]):
 			self.forUser(syncUser)

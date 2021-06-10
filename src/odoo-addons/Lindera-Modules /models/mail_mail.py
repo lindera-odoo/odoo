@@ -50,7 +50,7 @@ class linderaMail(models.Model):
                     allowtosend = False
                     break
 
-            user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id)])
+            user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id), ('share', '=', False)])
             if user:
                 user = user[0]
             else:
@@ -108,7 +108,8 @@ class linderaMail(models.Model):
                             is_external = True
                             if process_pid is not None:
                                 for pid in process_pid:
-                                    target_user = self.env['res.users'].search([("partner_id", "=", pid.id)])
+                                    target_user = self.env['res.users'].search([("partner_id", "=", pid.id),
+                                                                                ('share', '=', False)])
                                     if target_user:
                                         is_external = False
                             
