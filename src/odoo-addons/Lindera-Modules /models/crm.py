@@ -75,9 +75,20 @@ class LinderaCRM(models.Model):
                 return mongodbId
 
     def getSubscriptionEndDate(self, contact):
-        subscription = self.env['sale.subscription'].search(
-            [('partner_id', '=', contact.id)])
-        return subscription
+        # except for the case of running locally, where we are not able to install the subscription module
+        try:
+            subscriptions = self.env['sale.subscription'].search(
+                [('partner_id', '=', contact.id)])
+        except:
+            return False
+        if subscriptions:
+            subscription = subscriptions[0]
+            for sub in subscriptions:
+                if sub.date > subscription.date:
+                    subscription = sub
+            return subscription
+        else:
+            return False
 
     @api.multi
     def write(self, vals):
@@ -152,6 +163,8 @@ class LinderaCRM(models.Model):
                     'subscriptionEndDate': subEndDate
                 }
                 contact.updateHome(mongoId, updatedField)
+                
+                contact.createUser(mongoId)
 
             else:
                 return result

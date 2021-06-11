@@ -5,6 +5,13 @@ import os
 from . import backend_client
 from datetime import datetime
 
+Languages = {
+    'de_DE': 'deu',
+    'fr_FR': 'fra',
+    'pt_BR': 'por',
+    'en_US': 'eng',
+    'en_GB': 'eng'
+}
 
 class Contact(models.Model):
     _inherit = 'res.partner'
@@ -34,6 +41,26 @@ class Contact(models.Model):
             return False
         else:
             return homeData
+        
+    def createUser(self, homeID):
+        if self.email:
+            bClient = backend_client.BackendClient.setupBackendClient(self)
+            userData = bClient.getUser(self.email).json()
+            if userData['total'] == 0 and len(userData['data']) == 0:
+                firstname = 'firstname'
+                lastname = 'lastname'
+                name_parts = self.name.split(' ')
+                if len(name_parts) > 0:
+                    firstname = name_parts[0]
+                if len(name_parts) > 1:
+                    lastname = name_parts[1]
+                bClient.postUser({
+                    'homeID': homeID,
+                    'email': self.email,
+                    'firstname': firstname,
+                    'lastname': lastname,
+                    'language': Languages[self.lang]
+                })
 
     def updateHome(self, mongodbId, data):
         bClient = backend_client.BackendClient.setupBackendClient(self)
