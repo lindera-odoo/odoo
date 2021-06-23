@@ -164,7 +164,8 @@ class LinderaCRM(models.Model):
                 }
                 contact.updateHome(mongoId, updatedField)
                 
-                contact.createUser(mongoId)
+                for user in self.create_users:
+                    user.createUser(mongoId)
 
             else:
                 return result

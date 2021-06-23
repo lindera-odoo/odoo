@@ -31,7 +31,8 @@ class LinderaInvoice(models.Model):
             self.env.cr.commit()
         else:
             lead = lead[0]
-            
+        
+        lead.create_users += self.partner_id
         live = self.env['crm.stage'].search([('name', '=', 'Live')])
         if live:
             live = live[0]
