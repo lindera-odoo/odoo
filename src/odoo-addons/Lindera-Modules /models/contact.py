@@ -41,6 +41,20 @@ class Contact(models.Model):
 
     @api.model
     def create(self, val):
+        if not val['is_company']:
+            special_tags = 0
+            for id in val['category_id'][0][2]:
+                cat = self.env['res.partner.category'].browse(id)
+                if 'einrichtung' in cat.name.lower():
+                    special_tags += 1
+                if 'träger' in cat.name.lower():
+                    special_tags += 1
+                if 'gruppe' in cat.name.lower():
+                    special_tags += 1
+            if special_tags > 0:
+                raise osv.except_osv(
+                    ('Error!'),
+                    ('Only companies are allowed to use the tags: "Einrichtung", "Träger" or "Gruppe"'))
         res = super(Contact, self).create(val)
         res.createHomeInLinderaDB()
         return res
@@ -48,6 +62,31 @@ class Contact(models.Model):
     @api.multi
     def write(self, vals):
         for contact in self:
+            if 'category_id' in vals.keys() or 'is_company' in vals.keys():
+                tags = list(map(lambda tag: tag.name.lower(), contact.category_id))
+                is_company = contact.is_company
+                if 'category_id' in vals.keys():
+                    tags = []
+                    for id in vals['category_id'][0][2]:
+                        cat = self.env['res.partner.category'].browse(id)
+                        tags.append(cat.name.lower())
+                if 'is_company' in vals.keys():
+                    is_company = vals['is_company']
+                
+                if not is_company:
+                    special_tags = 0
+                    if 'einrichtung' in tags:
+                        special_tags += 1
+                    if 'träger' in tags:
+                        special_tags += 1
+                    if 'gruppe' in tags:
+                        special_tags += 1
+    
+                    if special_tags > 0:
+                        raise osv.except_osv(
+                            ('Error!'),
+                            ('Only companies are allowed to use the tags: "Einrichtung", "Träger" or "Gruppe"'))
+            
             contactId = contact.id
             data = contact.isHomeExistsInLinderaDB(contactId)
     
