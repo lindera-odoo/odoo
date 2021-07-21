@@ -32,6 +32,7 @@
         'views/office_mail.xml',
         'views/home.xml',
         'views/lead.xml',
+        'views/stage.xml',
         'data/scheduler.xml',
     ],
     # only loaded in demonstration mode

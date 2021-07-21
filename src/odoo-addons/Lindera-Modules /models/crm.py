@@ -116,49 +116,27 @@ class LinderaCRM(models.Model):
             raise osv.except_osv(
                 ('Error!'), ('CRM card does not have a contact'))
 
-        if name == 'Salestermin geplant':
-            mongoId = self.checkIfHomeExists(contact)
-            if mongoId:
-                futureTs = cts + (60 * 60 * 24 * 120)
-                expirationDate = datetime.fromtimestamp(futureTs).isoformat()
-
-                updatedField = {
-                    'subscriptionEndDate': expirationDate
-                }
-                contact.updateHome(mongoId, updatedField)
-            else:
-                return result
-
-        if name == 'Bereit für Einführung' or name == 'In Evaluation' or name == 'Einführung in Planung' or name == 'Live' or name == 'Angebot oder Rahmenvertrag gezeichnet' or name == 'Integration':
-            if previouse_stage_name == 'Salestermin geplant':
-                return result
-
-            mongoId = self.checkIfHomeExists(contact)
-            if mongoId:
+        mongoId = self.checkIfHomeExists(contact)
+        if mongoId:
+            if stage.allow_subscription:
                 isCompany = contact.is_company
-
+    
                 if isCompany:
                     targetContact = contact
                 else:
                     parentCompany = contact.parent_id
                     targetContact = parentCompany
-
+    
                 subscription = self.getSubscriptionEndDate(
                     targetContact)
-
-                if subscription:
-                    if subscription.date:
-                        subEndDate = subscription.date.isoformat()
-                    else:
-                        futureTs = cts + (60 * 60 * 24 * 120)
-                        expirationDate = datetime.fromtimestamp(
-                            futureTs).isoformat()
-                        subEndDate = expirationDate
-
+    
+                if subscription and subscription.date:
+                    subEndDate = subscription.date.isoformat()
                 else:
-                    pastTs = cts - (60 * 60 * 24)
-                    subEndDate = datetime.fromtimestamp(pastTs).isoformat()
-
+                    futureTs = cts + (stage.subscription_duration)
+                    subEndDate = datetime.fromtimestamp(
+                        futureTs).isoformat()
+    
                 updatedField = {
                     'subscriptionEndDate': subEndDate
                 }
@@ -168,18 +146,11 @@ class LinderaCRM(models.Model):
                     user.createUser(mongoId)
 
             else:
-                return result
-
-        if name == 'On hold':
-            mongoId = self.checkIfHomeExists(contact)
-            if mongoId:
-                pastTs = cts - (60 * 60 * 24)
-                expirationDate = datetime.fromtimestamp(pastTs).isoformat()
-                updatedField = {
-                    'subscriptionEndDate': expirationDate
-                }
-                contact.updateHome(mongoId, updatedField)
-            else:
-                return result
+                futureTs = cts - (60 * 60 * 24)
+                expirationDate = datetime.fromtimestamp(
+                    futureTs).isoformat()
+                contact.updateHome(mongoId, {'subscriptionEndDate': expirationDate})
+        else:
+            return result
 
         return result
