@@ -136,14 +136,10 @@ class LinderaCRM(models.Model):
                 }
                 contact.updateHome(mongoId, updatedField)
             else:
-                mongoId = self.checkIfHomeExists()
-                if mongoId:
-                    futureTs = cts - (60 * 60 * 24)
-                    expirationDate = datetime.fromtimestamp(
-                        futureTs).isoformat()
-                    self.updateHome(mongoId, expirationDate)
-                else:
-                    return result
+                futureTs = cts - (60 * 60 * 24)
+                expirationDate = datetime.fromtimestamp(
+                    futureTs).isoformat()
+                contact.updateHome(mongoId, {'subscriptionEndDate': expirationDate})
         else:
             return result
 
