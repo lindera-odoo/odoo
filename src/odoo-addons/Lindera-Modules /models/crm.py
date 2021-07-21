@@ -130,17 +130,12 @@ class LinderaCRM(models.Model):
                 subscription = self.getSubscriptionEndDate(
                     targetContact)
     
-                if subscription:
-                    if subscription.date:
-                        subEndDate = subscription.date.isoformat()
-                    else:
-                        futureTs = cts + (stage.subscription_duration)
-                        subEndDate = datetime.fromtimestamp(
-                            futureTs).isoformat()
-    
+                if subscription and subscription.date:
+                    subEndDate = subscription.date.isoformat()
                 else:
-                    pastTs = cts - (60 * 60 * 24)
-                    subEndDate = datetime.fromtimestamp(pastTs).isoformat()
+                    futureTs = cts + (stage.subscription_duration)
+                    subEndDate = datetime.fromtimestamp(
+                        futureTs).isoformat()
     
                 updatedField = {
                     'subscriptionEndDate': subEndDate
