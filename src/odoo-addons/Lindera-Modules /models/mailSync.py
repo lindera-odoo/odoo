@@ -54,7 +54,8 @@ class linderaMailSyncer(models.Model):
 									contact = self.env['res.partner'].search(
 										[('email', "=", message.sender.address)])
 									if contact:
-										user = self.env['res.users'].search([('partner_id', "=", contact[0].id)])
+										user = self.env['res.users'].search([('partner_id', "=", contact[0].id),
+																			 ('share', '=', False)])
 										if not user:
 											mail = self.env['mail.message'].search(
 												[('o365ID', '=', message.object_id)])
@@ -104,7 +105,8 @@ class linderaMailSyncer(models.Model):
 												self.env.cr.commit()
 							################################ SENT ##########################################################
 							if message in sent:
-								author = self.env['res.users'].search([('email', "=", message.sender.address)])
+								author = self.env['res.users'].search([('email', "=", message.sender.address),
+																	   ('share', '=', False)])
 								for recipient in message.to:
 									# related partner might be weird without this...
 									if recipient.address != syncUser.email:
@@ -112,7 +114,7 @@ class linderaMailSyncer(models.Model):
 											[('email', "=", recipient.address)])
 										if contact:
 											user = self.env['res.users'].search(
-												[('partner_id', "=", contact[0].id)])
+												[('partner_id', "=", contact[0].id), ('share', '=', False)])
 											if not user:
 												# check if date
 												mail = self.env['mail.message'].search(
@@ -208,5 +210,5 @@ class linderaMailSyncer(models.Model):
 				raise osv.except_osv('Error While Syncing!', str(err))
 
 	def syncMails(self, toCheck=-1):
-		for syncUser in self.env['res.users'].search([]):
+		for syncUser in self.env['res.users'].search([('share', '=', False)]):
 			self.forUser(syncUser, toCheck)
