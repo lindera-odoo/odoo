@@ -14,3 +14,4 @@ from . import calendar_event
 from . import calendarSync
 from . import lead
 from . import clean_up_conversations
+from . import stage
