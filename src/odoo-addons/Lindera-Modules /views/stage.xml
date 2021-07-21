@@ -9,7 +9,7 @@
                 <field name="allow_subscription" string="Erlaube Subscription"/>
             </xpath>
             <xpath expr="//field[@name='probability']" position="after">
-                <field name="subscription_duration" string="Standard Subscription Dauer in s"/>
+                <field name="subscription_duration" string="Standard Subscription Dauer in Sekunden"/>
             </xpath>
         </field>
     </record>
