@@ -77,7 +77,7 @@ class linderaContactSyncer(models.Model):
 
 	def syncContacts(self):
 		partners = self.env['res.partner'].search([])
-		for syncUser in self.env['res.users'].search([]):
+		for syncUser in self.env['res.users'].search([('share', '=', False)]):
 			self.forUser(syncUser,partners)
 
 
@@ -103,5 +103,5 @@ class linderaContactSyncer(models.Model):
 				raise osv.except_osv('Error While Syncing!', str(err))
 
 	def cleanContacts(self):
-		for syncUser in self.env['res.users'].search([]):
+		for syncUser in self.env['res.users'].search([('share', '=', False)]):
 			self.cleanUser(syncUser)

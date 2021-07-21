@@ -163,7 +163,8 @@ class linderaEvent(models.Model):
 		attendees = list(filter(lambda attendee: attendee.address not in emails, attendees))
 		# filter out non user emails
 		attendees = list(
-			filter(lambda attendee: bool(self.env['res.users'].search([('email', '=', attendee.address)])), attendees))
+			filter(lambda attendee: bool(self.env['res.users'].search([('email', '=', attendee.address),
+																	   ('share', '=', False)])), attendees))
 		event.attendees.add(attendees)
 
 		oldEnd = event.recurrence.end_date

@@ -11,6 +11,7 @@
                 <field name="end_date" string="Ende" attrs="{'invisible':[('show_dates','!=', True)]}"/>
                 <field name="show_introduction_date" string="Show Dates" invisible="True"/>
                 <field name="introduction_date" string="Einführung" attrs="{'invisible':[('show_introduction_date','!=', True)]}"/>
+                <field name="create_users" string="Erstelle Nutzer" widget="many2many_tags"/>
             </xpath>
         </field>
     </record>
