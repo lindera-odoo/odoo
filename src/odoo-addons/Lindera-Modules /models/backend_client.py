@@ -79,6 +79,7 @@ class BackendClient():
 
     def notifyBackendToCreateReport(self, data):
         try:
+            self._connect()
             return rq.post("{}/internal/create_report".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
@@ -91,6 +92,7 @@ class BackendClient():
     def postHome(self, data):
         if(self.validateHomeData(data)):
             try:
+                self._connect()
                 return rq.post("{}/homes".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
             except ConnectionError as err:
                 message = 'Unable to establish connection to backend server'
@@ -102,6 +104,7 @@ class BackendClient():
 
     def getHome(self, id):
         try:
+            self._connect()
             return rq.get(self.URL+"/homes?filter={}={}".format('odooID', id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
@@ -115,6 +118,7 @@ class BackendClient():
     def updateHome(self, id, data):
         if(self.validateHomeData(data)):
             try:
+                self._connect()
                 return rq.put("{}/homes/{}".format(self.URL, id), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
             except ConnectionError as err:
                 message = 'Unable to establish connection to backend server'
@@ -144,6 +148,7 @@ class BackendClient():
     
     def getUser(self, email):
         try:
+            self._connect()
             return rq.get(self.URL+"/users?filter={}={}".format('email', email), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
@@ -172,6 +177,7 @@ class BackendClient():
     def postUser(self, data):
         if self.validateUserData(data):
             try:
+                self._connect()
                 data = {
                     'homeID': data['homeID'],
                     'email': [data],
