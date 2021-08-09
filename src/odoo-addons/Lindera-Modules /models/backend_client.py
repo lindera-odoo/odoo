@@ -12,10 +12,10 @@ MAX_ATTEMPTS = 30
 SLEEP_BETWEEN_ATTEMPS = 1
 
 class BackendClient():
-
-    def __init__(self, url, token, ravenClient, user, pw):
+    instance = None
+    def __init__(self, url, ravenClient, user, pw):
         self.URL = url
-        self.INTERNAL_AUTHENTICATION_TOKEN = token
+        self.INTERNAL_AUTHENTICATION_TOKEN = ''
         self.ravenSingleton = ravenSingleton(ravenClient)
         self.user = user
         self.pw = pw
@@ -57,26 +57,29 @@ class BackendClient():
 
     @classmethod
     def setupBackendClient(cls, context):
-        url = context.env['ir.config_parameter'].get_param('lindera.backend')
-        token = context.env['ir.config_parameter'].get_param(
-            'lindera.internal_authentication_token')
-        ravenClient = context.env['ir.config_parameter'].get_param(
-            'lindera.raven_client')
-        user = context.env['ir.config_parameter'].get_param(
-            'lindera.internal_user_email')
-        pw = context.env['ir.config_parameter'].get_param(
-            'lindera.internal_user_pw')
-
-        if (url and ravenClient):
-            client = cls(url, token, ravenClient, user, pw)
-            context.env['ir.config_parameter'].set_param('lindera.internal_authentication_token', client._connect())
-            return client
+        if cls.instance is None:
+            url = context.env['ir.config_parameter'].get_param('lindera.backend')
+    
+            ravenClient = context.env['ir.config_parameter'].get_param(
+                'lindera.raven_client')
+            user = context.env['ir.config_parameter'].get_param(
+                'lindera.internal_user_email')
+            pw = context.env['ir.config_parameter'].get_param(
+                'lindera.internal_user_pw')
+    
+            if (url and ravenClient and user and pw):
+                client = cls(url, ravenClient, user, pw)
+                cls.instance = client
+                return client
+            else:
+                raise osv.except_osv(
+                    ('Error!'), ('Please, setup system parameters for lindera backend'))
         else:
-            raise osv.except_osv(
-                ('Error!'), ('Please, setup system parameters for lindera backend'))
+            return cls.instance
 
     def notifyBackendToCreateReport(self, data):
         try:
+            self._connect()
             return rq.post("{}/internal/create_report".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
@@ -89,6 +92,7 @@ class BackendClient():
     def postHome(self, data):
         if(self.validateHomeData(data)):
             try:
+                self._connect()
                 return rq.post("{}/homes".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
             except ConnectionError as err:
                 message = 'Unable to establish connection to backend server'
@@ -100,6 +104,7 @@ class BackendClient():
 
     def getHome(self, id):
         try:
+            self._connect()
             return rq.get(self.URL+"/homes?filter={}={}".format('odooID', id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
@@ -113,6 +118,7 @@ class BackendClient():
     def updateHome(self, id, data):
         if(self.validateHomeData(data)):
             try:
+                self._connect()
                 return rq.put("{}/homes/{}".format(self.URL, id), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
             except ConnectionError as err:
                 message = 'Unable to establish connection to backend server'
@@ -142,6 +148,7 @@ class BackendClient():
     
     def getUser(self, email):
         try:
+            self._connect()
             return rq.get(self.URL+"/users?filter={}={}".format('email', email), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
         except ConnectionError as err:
             message = 'Unable to establish connection to backend server'
@@ -170,6 +177,7 @@ class BackendClient():
     def postUser(self, data):
         if self.validateUserData(data):
             try:
+                self._connect()
                 data = {
                     'homeID': data['homeID'],
                     'email': [data],
