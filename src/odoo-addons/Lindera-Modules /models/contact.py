@@ -14,11 +14,10 @@ class Contact(models.Model):
     def _add_empty_homeID(self):
         backendClient = backend_client.BackendClient.setupBackendClient(self)
         for contact in self:
-            tags = list(map(lambda tag: tag.name.lower(), contact.category_id))
             contact.homeID = ''
-            if 'einrichtung' in tags:
+            if contact.is_company:
                 home = backendClient.getHome(contact.id).json()
-                if home and home['total'] != 0:
+                if home and home['total'] != 0 and len(home['data']) == 1:
                     contact.homeID = home['data'][0]['_id']
     
     def createHomeInLinderaDB(self):
