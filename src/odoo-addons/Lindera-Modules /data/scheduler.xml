@@ -11,11 +11,22 @@
             <field name="numbercall">-1</field>
             <field name="user_id" ref="base.user_root"/>
         </record>
+        <record id="office365_cron_mail_cleaner" model="ir.cron">
+            <field name="name">Office Conversations aufräumen</field>
+            <field name="model_id" ref="model_lindera_office_mail_cleaner"/>
+            <field name="state">code</field>
+            <field name="active" eval="False"/>
+            <field name="code">model.cleanConversations()</field>
+            <field name='interval_number'>30</field>
+            <field name='interval_type'>minutes</field>
+            <field name="numbercall">0</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
         <record id="office365_cron_contacts" model="ir.cron">
             <field name="name">Contacts synchronisation</field>
             <field name="model_id" ref="model_lindera_office_contact"/>
             <field name="state">code</field>
-            <field name="active" eval="True"/>
+            <field name="active" eval="False"/>
             <field name="code">model.syncContactsScheduler()</field>
             <field name='interval_number'>30</field>
             <field name='interval_type'>minutes</field>
@@ -26,7 +37,7 @@
             <field name="name">Contacts Cleanup</field>
             <field name="model_id" ref="model_lindera_office_contact"/>
             <field name="state">code</field>
-            <field name="active" eval="True"/>
+            <field name="active" eval="False"/>
             <field name="code">model.syncContactsCleaner()</field>
             <field name='interval_number'>30</field>
             <field name='interval_type'>minutes</field>
@@ -37,7 +48,7 @@
             <field name="name">Calendar synchronisation</field>
             <field name="model_id" ref="model_lindera_office_calendar"/>
             <field name="state">code</field>
-            <field name="active" eval="True"/>
+            <field name="active" eval="False"/>
             <field name="code">model.syncCalendarScheduler()</field>
             <field name='interval_number'>5</field>
             <field name='interval_type'>minutes</field>

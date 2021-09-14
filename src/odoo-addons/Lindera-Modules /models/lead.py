@@ -26,6 +26,9 @@ class Linderlead(models.Model):
 	show_dates = fields.Boolean(compute='_compute_show_dates', store=True)
 	
 	show_introduction_date = fields.Boolean(compute='_compute_show_introduction_date', store=True)
+	
+	create_users = fields.Many2many('res.partner', string='Users', track_visibility='onchange', track_sequence=1, index=True,
+        help="Users to automatically create in the backend")
 
 	@api.depends('partner_id', 'partner_id.senior_number', 'partner_id.show_senior_number', 'partner_id.category_id')
 	def _compute_senior_number(self):
