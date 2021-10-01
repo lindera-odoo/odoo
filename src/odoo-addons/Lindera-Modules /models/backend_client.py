@@ -136,7 +136,7 @@ class BackendClient():
             'street': {'type': 'string', 'empty': False},
             'zip': {'type': 'string', 'empty': False},
             'city':  {'type': 'string', 'empty': False},
-            'odooID': {'type': 'number'},
+            'odooID': {'type': 'number', 'nullable': True},
             'subscriptionEndDate': {'type': 'string'},
             'status': {'type': 'string'},
         }

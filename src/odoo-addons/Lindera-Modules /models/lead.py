@@ -14,6 +14,8 @@ class Linderlead(models.Model):
 	senior_number = fields.Integer(compute='_compute_senior_number',
 	                               help='string containing senior number or empty string',
 	                               store=True)
+	
+	home_id = fields.Text(compute='_compute_home_id', store=False)
 
 	start_date = fields.Date('start_date')
 	end_date = fields.Date('end_date')
@@ -46,6 +48,11 @@ class Linderlead(models.Model):
 				lead.senior_number_string = 'mit ' + str(lead.senior_number) + ' Senioren\n'
 			else:
 				lead.senior_number_string = ''
+				
+	@api.depends('partner_id', 'partner_id.homeID')
+	def _compute_home_id(self):
+		for lead in self:
+			lead.home_id = lead.partner_id.homeID
 
 	@api.depends('start_date', 'end_date', 'show_dates')
 	def _compute_date_string(self):

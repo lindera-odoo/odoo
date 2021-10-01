@@ -15,7 +15,27 @@ Languages = {
 
 class Contact(models.Model):
     _inherit = 'res.partner'
+    
+    homeID = fields.Text('homeID', store=False, compute='_add_empty_homeID')
 
+    def _add_empty_homeID(self):
+        for contact in self:
+            contact.homeID = ''
+            if contact.is_company:
+                backend_id = self.env['lindera.backend.id'].search([("contact_id", "=", contact.id)])
+                if backend_id:
+                    contact.homeID = backend_id[0].home_id
+                else:
+                    backendClient = backend_client.BackendClient.setupBackendClient(self)
+                    home = backendClient.getHome(contact.id).json()
+                    if home and home['total'] != 0 and len(home['data']) == 1:
+                        contact.homeID = home['data'][0]['_id']
+                        
+                        self.env['lindera.backend.id'].create({
+                            'contact_id': contact.id,
+                            'home_id': contact.homeID
+                        })
+    
     def createHomeInLinderaDB(self):
         isCompany = self.is_company
         companyType = self.company_type
@@ -32,7 +52,12 @@ class Contact(models.Model):
                 'odooID': self.id,
                 'status': 'registered',
             }
-            return backendClient.postHome(payload).json()
+            response = backendClient.postHome(payload).json()
+            self.env['lindera.backend.id'].create({
+                'contact_id': self.id,
+                'home_id': response['data']['_id']
+            })
+            return response
 
     def isHomeExistsInLinderaDB(self, homeId):
         bClient = backend_client.BackendClient.setupBackendClient(self)
@@ -65,7 +90,7 @@ class Contact(models.Model):
     def updateHome(self, mongodbId, data):
         bClient = backend_client.BackendClient.setupBackendClient(self)
         return bClient.updateHome(mongodbId, data)
-
+        
     @api.model
     def create(self, val):
         if not val['is_company'] and 'category_id' in val.keys():
@@ -139,3 +164,17 @@ class Contact(models.Model):
                 contact.updateHome(homeMongodbId, updatedData)
 
         return super(Contact, self).write(vals)
+
+    @api.multi
+    def unlink(self):
+        for contact in self:
+            if contact.is_company:
+                backend_ids = self.env['lindera.backend.id'].search([("contact_id", "=", contact.id)])
+                
+                # should only ever be one, but since odoo does not have 1 to 1 relations
+                # it is in theory possible to have multiple here
+                for backend_id in backend_ids:
+                    # clear the odooID, so that odoo can use the ID again, without breaking the link to the backend
+                    contact.updateHome(backend_id.home_id, {'odooID': None})
+                    
+        return super(Contact, self).unlink()
