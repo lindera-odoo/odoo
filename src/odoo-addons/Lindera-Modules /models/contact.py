@@ -28,8 +28,18 @@ class Contact(models.Model):
                 else:
                     backendClient = backend_client.BackendClient.setupBackendClient(self)
                     home = backendClient.getHome(contact.id).json()
-                    if home and home['total'] != 0 and len(home['data']) == 1:
-                        contact.homeID = home['data'][0]['_id']
+                    if home and home['total'] != 0:
+                        if len(home['data']) > 1:
+                            # take the one that was created the latest.
+                            data = home['data'][-1]
+                            # clear the odooID of the others, since their odoo contact was deleted at some point
+                            for to_clear in home['data']:
+                                if to_clear['_id'] != data['_id']:
+                                    backendClient.updateHome(to_clear['_id'], {'odooID': None})
+
+                        else:
+                            data = home['data'][0]
+                        contact.homeID = data['_id']
                         
                         self.env['lindera.backend.id'].create({
                             'contact_id': contact.id,
