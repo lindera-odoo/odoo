@@ -5,41 +5,46 @@ class LinderaInvoice(models.Model):
     _inherit = "account.invoice"
 
     def setup_lead(self):
-        # update contact if needed
-        if not self.partner_id.is_company:
-            if not self.partner_id.parent_id:
-                self.partner_id.is_company = True
-                is_einrichtung = False
-                for cat in self.partner_id.category_id:
-                    if cat.name == 'Einrichtung':
-                        is_einrichtung = True
-                if not is_einrichtung:
-                    cat = self.env['res.partner.category'].search([('name', '=', 'Einrichtung')])
-                    self.partner_id.category_id += cat
-        self.env.cr.commit()
-        #create and handle lead
-        lead = self.env['crm.lead'].search([('partner_id', '=', self.partner_id.id)])
-        if not lead:
-            lead = self.env['crm.lead'].create({
-                'name': self.partner_id.display_name,
-                'partner_id': self.partner_id.id,
-                'active': True,
-                'email_from': self.partner_id.email,
-                'contact_name': self.partner_id.name,
-                'type': 'opportunity',
-            })
-            self.env.cr.commit()
-        else:
-            lead = lead[0]
+        # search for the user used in the webshop
+        user = self.env['res.user'].search([('partner_id', '=', self.partner_id.id), ('share', '=', True)])
         
-        lead.create_users += self.partner_id
-        live = self.env['crm.stage'].search([('name', '=', 'Live')])
-        if live:
-            live = live[0]
-        else:
-            raise osv.except_osv(('Error!'), ('Webshop not setup correctly! CRM needs a "Live" stage! Please contact support with this error message.'))
-        lead.stage_id = live.id
-        self.env.cr.commit()
+        # update contact if this invoice came through the webshop
+        if user:
+            # update partner if needed
+            if not self.partner_id.is_company:
+                if not self.partner_id.parent_id:
+                    self.partner_id.is_company = True
+                    is_einrichtung = False
+                    for cat in self.partner_id.category_id:
+                        if cat.name == 'Einrichtung':
+                            is_einrichtung = True
+                    if not is_einrichtung:
+                        cat = self.env['res.partner.category'].search([('name', '=', 'Einrichtung')])
+                        self.partner_id.category_id += cat
+            self.env.cr.commit()
+            #create and handle lead
+            lead = self.env['crm.lead'].search([('partner_id', '=', self.partner_id.id)])
+            if not lead:
+                lead = self.env['crm.lead'].create({
+                    'name': self.partner_id.display_name,
+                    'partner_id': self.partner_id.id,
+                    'active': True,
+                    'email_from': self.partner_id.email,
+                    'contact_name': self.partner_id.name,
+                    'type': 'opportunity',
+                })
+                self.env.cr.commit()
+            else:
+                lead = lead[0]
+            
+            lead.create_users += self.partner_id
+            live = self.env['crm.stage'].search([('name', '=', 'Live')])
+            if live:
+                live = live[0]
+            else:
+                raise osv.except_osv(('Error!'), ('Webshop not setup correctly! CRM needs a "Live" stage! Please contact support with this error message.'))
+            lead.stage_id = live.id
+            self.env.cr.commit()
         
 
     @api.model
