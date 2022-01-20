@@ -6,7 +6,7 @@ class LinderaInvoice(models.Model):
 
     def setup_lead(self):
         # search for the user used in the webshop
-        user = self.env['res.user'].search([('partner_id', '=', self.partner_id.id), ('share', '=', True)])
+        user = self.env['res.users'].search([('partner_id', '=', self.partner_id.id), ('share', '=', True)])
         
         # update contact if this invoice came through the webshop
         if user:
