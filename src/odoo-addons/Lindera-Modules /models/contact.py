@@ -103,7 +103,7 @@ class Contact(models.Model):
         
     @api.model
     def create(self, val):
-        if not val['is_company'] and 'category_id' in val.keys():
+        if 'is_company' in val.keys() and not val['is_company'] and 'category_id' in val.keys():
             special_tags = 0
             for id in val['category_id'][0][2]:
                 cat = self.env['res.partner.category'].browse(id)
