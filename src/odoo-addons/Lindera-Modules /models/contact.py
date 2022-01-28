@@ -105,14 +105,15 @@ class Contact(models.Model):
     def create(self, val):
         if 'is_company' in val.keys() and not val['is_company'] and 'category_id' in val.keys():
             special_tags = 0
-            for id in val['category_id'][0][2]:
-                cat = self.env['res.partner.category'].browse(id)
-                if 'einrichtung' in cat.name.lower():
-                    special_tags += 1
-                if 'träger' in cat.name.lower():
-                    special_tags += 1
-                if 'gruppe' in cat.name.lower():
-                    special_tags += 1
+            if len(val['category_id']) > 0 and len(val['category_id'][0]) >= 3:
+                for id in val['category_id'][0][2]:
+                    cat = self.env['res.partner.category'].browse(id)
+                    if 'einrichtung' in cat.name.lower():
+                        special_tags += 1
+                    if 'träger' in cat.name.lower():
+                        special_tags += 1
+                    if 'gruppe' in cat.name.lower():
+                        special_tags += 1
             if special_tags > 0:
                 raise osv.except_osv(
                     ('Error!'),
