@@ -74,27 +74,19 @@ class LinderaCRM(models.Model):
                 mongodbId = result['data']['_id']
                 return mongodbId
 
-    def getSubscriptionEndDate(self, contact):
-        # except for the case of running locally, where we are not able to install the subscription module
-        try:
-            subscriptions = self.env['sale.subscription'].search(
-                [('partner_id', '=', contact.id)])
-        except:
-            return False
-        if subscriptions:
-            subscription = subscriptions[0]
-            for sub in subscriptions:
-                if sub.date > subscription.date:
-                    subscription = sub
-            return subscription
-        else:
-            return False
-
     @api.multi
     def write(self, vals):
         previouse_stage = self.stage_id
         result = super(LinderaCRM, self).write(vals)
-
+        
+        if 'end_date' in vals:
+            for lead in result:
+                if lead.partner_id.homeID is not None and lead.end_date:
+                    updatedField = {
+                        'subscriptionEndDate': result.end_date.isoformat()
+                    }
+                    lead.partner_id.updateHome(lead.partner_id.homeID, updatedField)
+        
         if 'stage_id' not in vals:
             return result
 
@@ -119,28 +111,11 @@ class LinderaCRM(models.Model):
         mongoId = self.checkIfHomeExists(contact)
         if mongoId:
             if stage.allow_subscription:
-                isCompany = contact.is_company
-    
-                if isCompany:
-                    targetContact = contact
-                else:
-                    parentCompany = contact.parent_id
-                    targetContact = parentCompany
-    
-                subscription = self.getSubscriptionEndDate(
-                    targetContact)
-    
-                if subscription and subscription.date:
-                    subEndDate = subscription.date.isoformat()
-                else:
-                    futureTs = cts + (stage.subscription_duration)
-                    subEndDate = datetime.fromtimestamp(
-                        futureTs).isoformat()
-    
-                updatedField = {
-                    'subscriptionEndDate': subEndDate
-                }
-                contact.updateHome(mongoId, updatedField)
+                if data.end_date:
+                    updatedField = {
+                        'subscriptionEndDate': data.end_date.isoformat()
+                    }
+                    contact.updateHome(mongoId, updatedField)
                 
                 for user in self.create_users:
                     user.createUser(mongoId)
