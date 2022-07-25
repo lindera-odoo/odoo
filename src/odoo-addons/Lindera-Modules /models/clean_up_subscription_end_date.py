@@ -6,7 +6,7 @@ class linderaConversationsCleaner(models.Model):
     
     @api.model
     def clean_subscription_end_date(self):
-        to_clean = self.env['crm.lead'].search()
+        to_clean = self.env['crm.lead'].search([])
         for lead in to_clean:
             if lead.partner_id.homeID is not None and lead.end_date:
                 lead.partner_id.updateHome(lead.partner_id.homeID,

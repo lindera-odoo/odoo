@@ -4,7 +4,7 @@
             <field name="name">Mail synchronisation</field>
             <field name="model_id" ref="model_lindera_office_mail"/>
             <field name="state">code</field>
-            <field name="active" eval="True"/>
+            <field name="active" eval="False"/>
             <field name="code">model.syncMailsScheduler()</field>
             <field name='interval_number'>1</field>
             <field name='interval_type'>minutes</field>
