@@ -96,10 +96,10 @@ class LinderaCRM(models.Model):
         result = super(LinderaCRM, self).write(vals)
         
         if 'end_date' in vals:
-            for lead in result:
+            for lead in self:
                 if lead.partner_id.homeID is not None and lead.end_date and lead.stage_id.allow_subscription:
                     updatedField = {
-                        'subscriptionEndDate': result.end_date.isoformat()
+                        'subscriptionEndDate': vals['end_date'].isoformat()
                     }
                     lead.partner_id.updateHome(lead.partner_id.homeID, updatedField)
         
