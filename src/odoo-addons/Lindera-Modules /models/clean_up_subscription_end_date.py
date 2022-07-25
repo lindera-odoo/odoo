@@ -2,7 +2,7 @@ from odoo import models, fields, api
 
 
 class linderaConversationsCleaner(models.Model):
-    _name = 'lindera.backend.home.cleaner'
+    _name = 'lindera.backend.subscription'
     
     @api.model
     def clean_subscription_end_date(self):
