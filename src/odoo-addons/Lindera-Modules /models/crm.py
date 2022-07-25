@@ -99,7 +99,7 @@ class LinderaCRM(models.Model):
             for lead in self:
                 if lead.partner_id.homeID is not None and lead.end_date and lead.stage_id.allow_subscription:
                     updatedField = {
-                        'subscriptionEndDate': vals['end_date'].isoformat()
+                        'subscriptionEndDate': vals['end_date']
                     }
                     lead.partner_id.updateHome(lead.partner_id.homeID, updatedField)
         
