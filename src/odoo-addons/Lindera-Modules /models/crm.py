@@ -145,8 +145,8 @@ class LinderaCRM(models.Model):
                     subEndDate = datetime.fromtimestamp(
                         futureTs).isoformat()
                     
-                if data.end_date:
-                    subEndDate = data.end_date.isoformat()
+                if data['end_date']:
+                    subEndDate = data['end_date'].isoformat()
                     
                 updatedField = {
                     'subscriptionEndDate': subEndDate
