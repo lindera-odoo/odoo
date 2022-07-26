@@ -1,7 +1,7 @@
 from odoo import models, fields, api
 
 
-class linderaConversationsCleaner(models.Model):
+class linderaBackendSubscriptionUpdater(models.Model):
     _name = 'lindera.backend.subscription'
     
     @api.model

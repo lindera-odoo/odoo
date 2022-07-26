@@ -45,7 +45,7 @@
             <field name="user_id" ref="base.user_root"/>
         </record>
         <record id="backend_cron_submitted_at" model="ir.cron">
-            <field name="name">subscription end date cleanup</field>
+            <field name="name">subscription end date update</field>
             <field name="model_id" ref="model_lindera_backend_subscription"/>
             <field name="state">code</field>
             <field name="active" eval="False"/>
