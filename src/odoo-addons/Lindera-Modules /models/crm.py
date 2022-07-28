@@ -73,7 +73,7 @@ class LinderaCRM(models.Model):
                 result = contact.createHomeInLinderaDB()
                 mongodbId = result['data']['_id']
                 return mongodbId
-
+            
     def getSubscriptionEndDate(self, contact):
         # except for the case of running locally, where we are not able to install the subscription module
         try:
@@ -94,7 +94,15 @@ class LinderaCRM(models.Model):
     def write(self, vals):
         previouse_stage = self.stage_id
         result = super(LinderaCRM, self).write(vals)
-
+        
+        if 'end_date' in vals:
+            for lead in self:
+                if lead.partner_id.homeID is not None and lead.end_date and lead.stage_id.allow_subscription:
+                    updatedField = {
+                        'subscriptionEndDate': vals['end_date']
+                    }
+                    lead.partner_id.updateHome(lead.partner_id.homeID, updatedField)
+        
         if 'stage_id' not in vals:
             return result
 
@@ -136,7 +144,10 @@ class LinderaCRM(models.Model):
                     futureTs = cts + (stage.subscription_duration)
                     subEndDate = datetime.fromtimestamp(
                         futureTs).isoformat()
-    
+                    
+                if data['end_date']:
+                    subEndDate = data['end_date'].isoformat()
+                    
                 updatedField = {
                     'subscriptionEndDate': subEndDate
                 }
