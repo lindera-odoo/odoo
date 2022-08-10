@@ -156,7 +156,7 @@ class BackendClient():
         result = v.validate(data, schema)
         if(not result):
             raise osv.except_osv(
-                ('Error!'), ('Please assign an address to the contact' + str(result)))
+                ('Error!'), ('Please assign an address to the contact'))
         return result
     
     def getUser(self, email):
