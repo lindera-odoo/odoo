@@ -152,9 +152,18 @@ class Contact(models.Model):
             
             contactId = contact.id
             data = contact.isHomeExistsInLinderaDB(contactId)
+            
+            if not data:
+                backend_ids = self.env['lindera.backend.id'].search([("contact_id", "=", contact.id)])
+                if backend_ids:
+                    backendClient = backend_client.BackendClient.setupBackendClient(self)
+                    data = backendClient.getHomeByID(backend_ids[0].home_id)
+                    homeMongodbId = backend_ids[0].home_id
+            else:
+                homeMongodbId = data['data'][0]['_id']
     
             if data:
-                updatedData = {}
+                updatedData = {"odooID": contactId}
     
                 if "name" in vals:
                     updatedData['name'] = vals['name']
@@ -171,7 +180,6 @@ class Contact(models.Model):
                 if "zip" in vals:
                     updatedData['zip'] = vals['zip']
     
-                homeMongodbId = data['data'][0]['_id']
                 contact.updateHome(homeMongodbId, updatedData)
 
         return super(Contact, self).write(vals)
