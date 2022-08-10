@@ -152,6 +152,7 @@ class Contact(models.Model):
             
             tags = list(map(lambda tag: tag.name.lower(), contact.category_id))
             if 'category_id' in vals.keys():
+                tags = []
                 for id in vals['category_id'][0][2]:
                     cat = self.env['res.partner.category'].browse(id)
                     tags.append(cat.name.lower())
