@@ -120,7 +120,6 @@ class Contact(models.Model):
                     ('Error!'),
                     ('Only companies are allowed to use the tags: "Einrichtung", "Träger" or "Gruppe"'))
         res = super(Contact, self).create(val)
-        res.createHomeInLinderaDB()
         return res
 
     @api.multi
