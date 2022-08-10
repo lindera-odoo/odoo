@@ -150,6 +150,16 @@ class Contact(models.Model):
                             ('Error!'),
                             ('Only companies are allowed to use the tags: "Einrichtung", "Träger" or "Gruppe"'))
             
+            tags = list(map(lambda tag: tag.name.lower(), contact.category_id))
+            if 'category_id' in vals.keys():
+                for id in vals['category_id'][0][2]:
+                    cat = self.env['res.partner.category'].browse(id)
+                    tags.append(cat.name.lower())
+
+            is_company = contact.is_company
+            if 'is_company' in vals.keys():
+                is_company = vals['is_company']
+                
             contactId = contact.id
             data = contact.isHomeExistsInLinderaDB(contactId)
             
@@ -181,6 +191,9 @@ class Contact(models.Model):
                     updatedData['zip'] = vals['zip']
     
                 contact.updateHome(homeMongodbId, updatedData)
+            elif ('einrichtung' in tags or 'träger' in tags or 'gruppe' in tags) and is_company:
+                contact.createHomeInLinderaDB()
+                
 
         return super(Contact, self).write(vals)
 
