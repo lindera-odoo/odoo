@@ -114,6 +114,19 @@ class BackendClient():
             message = 'Something went wrong'
             self.ravenSingleton.Client.captureMessage(err)
             raise osv.except_osv(('Error!'), (message))
+    
+    def getHomeById(self, id):
+        try:
+            self._connect()
+            return rq.get(self.URL+"/homes/{}".format(id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+        except ConnectionError as err:
+            message = 'Unable to establish connection to backend server'
+            self.ravenSingleton.Client.captureMessage(err)
+            raise osv.except_osv(('Error!'), (message))
+        except Exception as err:
+            message = 'Something went wrong'
+            self.ravenSingleton.Client.captureMessage(err)
+            raise osv.except_osv(('Error!'), (message))
 
     def updateHome(self, id, data):
         if(self.validateHomeData(data)):
