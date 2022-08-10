@@ -157,7 +157,7 @@ class Contact(models.Model):
                 backend_ids = self.env['lindera.backend.id'].search([("contact_id", "=", contact.id)])
                 if backend_ids:
                     backendClient = backend_client.BackendClient.setupBackendClient(self)
-                    data = backendClient.getHomeByID(backend_ids[0].home_id)
+                    data = backendClient.getHomeById(backend_ids[0].home_id)
                     homeMongodbId = backend_ids[0].home_id
             else:
                 homeMongodbId = data['data'][0]['_id']
