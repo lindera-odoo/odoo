@@ -31,6 +31,10 @@ class Linderlead(models.Model):
 	
 	create_users = fields.Many2many('res.partner', string='Users', track_visibility='onchange', track_sequence=1, index=True,
         help="Users to automatically create in the backend")
+	
+	carrier = fields.Many2one('res.partner', string='Träger', track_visibility='onchange', track_sequence=1,
+								 index=True,
+								 help="Contact that pays for the contract/chance")
 
 	@api.depends('partner_id', 'partner_id.senior_number', 'partner_id.show_senior_number', 'partner_id.category_id')
 	def _compute_senior_number(self):
