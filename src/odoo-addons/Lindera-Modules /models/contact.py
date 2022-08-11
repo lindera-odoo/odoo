@@ -4,7 +4,6 @@ import requests as rq
 import os
 from . import backend_client
 from datetime import datetime
-from odoo.tools import pycompat
 
 Languages = {
     'de_DE': 'deu',
@@ -192,8 +191,7 @@ class Contact(models.Model):
                     updatedData['zip'] = vals['zip']
     
                 contact.updateHome(homeMongodbId, updatedData)
-            elif ('einrichtung' in tags or 'träger' in tags or 'gruppe' in tags) and is_company and\
-                    isinstance(contactId, pycompat.integer_types):
+            elif ('einrichtung' in tags or 'träger' in tags or 'gruppe' in tags) and is_company:
                 contact.createHomeInLinderaDB()
                 
 
