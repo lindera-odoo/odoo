@@ -5,6 +5,9 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_form_view_oppor"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="carrier" widget="res_partner_many2one" domain="[('customer', '=', True)]" context="{'search_default_customer': 1, 'show_vat': True}"/>
+            </xpath>
             <xpath expr="//field[@name='team_id']" position="after">
                 <field name="show_dates" string="Show Dates" invisible="True"/>
                 <field name="start_date" string="Start" attrs="{'invisible':[('show_dates','!=', True)]}"/>

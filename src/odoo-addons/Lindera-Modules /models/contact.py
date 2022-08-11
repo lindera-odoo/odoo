@@ -119,7 +119,6 @@ class Contact(models.Model):
                     ('Error!'),
                     ('Only companies are allowed to use the tags: "Einrichtung", "Träger" or "Gruppe"'))
         res = super(Contact, self).create(val)
-        res.createHomeInLinderaDB()
         return res
 
     @api.multi
@@ -150,11 +149,31 @@ class Contact(models.Model):
                             ('Error!'),
                             ('Only companies are allowed to use the tags: "Einrichtung", "Träger" or "Gruppe"'))
             
+            tags = list(map(lambda tag: tag.name.lower(), contact.category_id))
+            if 'category_id' in vals.keys():
+                tags = []
+                for id in vals['category_id'][0][2]:
+                    cat = self.env['res.partner.category'].browse(id)
+                    tags.append(cat.name.lower())
+
+            is_company = contact.is_company
+            if 'is_company' in vals.keys():
+                is_company = vals['is_company']
+                
             contactId = contact.id
             data = contact.isHomeExistsInLinderaDB(contactId)
+            
+            if not data:
+                backend_ids = self.env['lindera.backend.id'].search([("contact_id", "=", contact.id)])
+                if backend_ids:
+                    backendClient = backend_client.BackendClient.setupBackendClient(self)
+                    data = backendClient.getHomeById(backend_ids[0].home_id)
+                    homeMongodbId = backend_ids[0].home_id
+            else:
+                homeMongodbId = data['data'][0]['_id']
     
             if data:
-                updatedData = {}
+                updatedData = {"odooID": contactId}
     
                 if "name" in vals:
                     updatedData['name'] = vals['name']
@@ -171,8 +190,10 @@ class Contact(models.Model):
                 if "zip" in vals:
                     updatedData['zip'] = vals['zip']
     
-                homeMongodbId = data['data'][0]['_id']
                 contact.updateHome(homeMongodbId, updatedData)
+            elif ('einrichtung' in tags or 'träger' in tags or 'gruppe' in tags) and is_company:
+                contact.createHomeInLinderaDB()
+                
 
         return super(Contact, self).write(vals)
 
