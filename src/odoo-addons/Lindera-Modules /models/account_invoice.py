@@ -65,7 +65,6 @@ class LinderaInvoice(models.Model):
                 
         return objs
 
-    @api.multi
     def write(self, values):
         status = super(LinderaInvoice, self).write(values)
         for invoice in self:

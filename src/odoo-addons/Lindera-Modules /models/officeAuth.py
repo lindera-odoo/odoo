@@ -16,7 +16,6 @@ class Office365UserSettings(models.Model):
     def view_init(self, *args):
         self.env.user.auth_url = odoo.http.request.httprequest.referrer
 
-    @api.multi
     def authFirstStep(self):
         CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
         CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
@@ -35,7 +34,6 @@ class Office365UserSettings(models.Model):
             'res_id': self.id,
         }
 
-    @api.multi
     def authSecondStep(self):
         CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
         CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')

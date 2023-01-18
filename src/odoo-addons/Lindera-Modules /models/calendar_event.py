@@ -47,7 +47,6 @@ class linderaEvent(models.Model):
 
 	o365ID = fields.Text('o365ID')
 
-	@api.multi
 	def detach_recurring_event(self, values=None):
 		"""
 		Detach an event from the recurring one. Creates an actual event from the virtual instance.
@@ -220,7 +219,6 @@ class linderaEvent(models.Model):
 
 		return event
 
-	@api.multi
 	def write(self, values):
 		"""
 		Is called whenever a field is changed (even during initialization!).
@@ -278,7 +276,6 @@ class linderaEvent(models.Model):
 					raise osv.except_osv('Error While Syncing!', str(err))
 		return writeSuccess
 
-	@api.multi
 	def unlink(self, can_be_deleted=True):
 		"""
 		Removes an Event.

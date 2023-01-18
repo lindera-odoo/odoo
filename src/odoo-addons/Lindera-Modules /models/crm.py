@@ -90,7 +90,6 @@ class LinderaCRM(models.Model):
         else:
             return False
 
-    @api.multi
     def write(self, vals):
         previouse_stage = self.stage_id
         result = super(LinderaCRM, self).write(vals)

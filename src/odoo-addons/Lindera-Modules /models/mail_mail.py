@@ -20,7 +20,6 @@ _logger = logging.getLogger(__name__)
 class linderaMail(models.Model):
     _inherit = 'mail.mail'
 
-    @api.multi
     def send(self, auto_commit=False, raise_exception=False):
         CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
         CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')

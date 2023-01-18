@@ -121,7 +121,6 @@ class Contact(models.Model):
         res = super(Contact, self).create(val)
         return res
 
-    @api.multi
     def write(self, vals):
         for contact in self:
             if 'category_id' in vals.keys() or 'is_company' in vals.keys():
@@ -197,7 +196,6 @@ class Contact(models.Model):
 
         return super(Contact, self).write(vals)
 
-    @api.multi
     def unlink(self):
         for contact in self:
             if contact.is_company:
