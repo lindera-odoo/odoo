@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from openerp.osv import osv
+from odoo.osv import osv
 import requests as rq
 import os
 from . import backend_client

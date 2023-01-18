@@ -1,6 +1,6 @@
 import os
 from odoo import models, fields, api
-from openerp.osv import osv
+from odoo.osv import osv
 from O365 import Account
 from .odooTokenStore import odooTokenStore
 from .ravenSingleton import ravenSingleton

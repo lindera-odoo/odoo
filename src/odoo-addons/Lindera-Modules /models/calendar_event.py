@@ -9,7 +9,7 @@ from .odooTokenStore import odooTokenStore
 from .ravenSingleton import ravenSingleton
 import datetime
 from dateutil.relativedelta import relativedelta
-from openerp.osv import osv
+from odoo.osv import osv
 
 _logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 from odoo import models, api, exceptions, sql_db
 from odoo.http import request
-from openerp.osv import osv
+from odoo.osv import osv
 from O365 import Account
 from .odooTokenStore import odooTokenStore
 from .ravenSingleton import ravenSingleton

@@ -1,7 +1,7 @@
 from odoo import models, fields, api
 from . import backend_client
 from datetime import datetime
-from openerp.osv import osv
+from odoo.osv import osv
 
 
 def getCurrentTimestamp():

@@ -4,7 +4,7 @@ import os
 from cerberus import Validator
 from .ravenSingleton import ravenSingleton
 from dotenv import load_dotenv
-from openerp.osv import osv
+from odoo.osv import osv
 from requests.exceptions import ConnectionError
 import json
 
