@@ -16,13 +16,12 @@
         </field>
     </record>
 	<!-- Action to open authenticator -->
-    <act_window id="action_lindera_mail_sync_all"
-    	name="Mail Synchronization"
-    	res_model="lindera.office.mail"
-    	view_mode="form"
-        view_type="form"
-        target="inline"
-	/>
+    <record model="ir.actions.act_window" id="action_lindera_mail_sync_all">
+    	<field name="name">Mail Synchronization</field>
+    	<field name="res_model">lindera.office.mail</field>
+    	<field name="view_mode">form</field>
+        <field name="target">inline</field>
+	</record>
     <!-- Menu item to open promo code list -->
     <menuitem id="menu_lindera_mails"
     	name="Synchronize Mails"

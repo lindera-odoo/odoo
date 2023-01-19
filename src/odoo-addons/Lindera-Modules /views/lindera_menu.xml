@@ -1,14 +1,14 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
 	<!-- Lindera App Menu -->
     <menuitem id="menu_lindera" name="Lindera" />
 
 	<!-- Action to open promo code list -->
-    <act_window id="action_lindera_promocode"
-    	name="Promo code"
-    	res_model="lindera.promocode"
-    	view_mode="tree,form"
-	/>
+	<record model="ir.actions.act_window" id="action_lindera_promocode">
+		<field name="name">Promo code</field>
+		<field name="res_model">lindera.promocode</field>
+		<field name="view_mode">tree,form</field>
+	</record>
     <!-- Menu item to open promo code list -->
     <menuitem id="menu_lindera_promocode"
     	name="Promo Codes"
