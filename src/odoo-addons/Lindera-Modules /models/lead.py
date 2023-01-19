@@ -9,7 +9,7 @@ class Linderlead(models.Model):
 
 	senior_number_string = fields.Char(compute='_compute_senior_number_string',
 	                            help='string containing senior number or empty string',
-	                            store=True)
+	                            store=False)
 
 	senior_number = fields.Integer(compute='_compute_senior_number',
 	                               help='string containing senior number or empty string',
