@@ -2,7 +2,7 @@ from odoo import models, fields, api
 from odoo.osv import osv
 
 class LinderaInvoice(models.Model):
-    _inherit = "sale.order"
+    _inherit = "account.move"
 
     def setup_lead(self):
         # search for the user used in the webshop
@@ -51,7 +51,7 @@ class LinderaInvoice(models.Model):
     @api.model
     def create(self, values):
         obj = super(LinderaInvoice, self).create(values)
-        if obj.state == 'done':
+        if obj.state == 'paid':
             obj.setup_lead()
         
         return obj
@@ -60,16 +60,16 @@ class LinderaInvoice(models.Model):
     def create(self, vals_list):
         objs = super(LinderaInvoice, self).create(vals_list)
         
-        for order in objs:
-            if order.state == 'done':
-                order.setup_lead()
+        for invoice in objs:
+            if invoice.state == 'paid':
+                invoice.setup_lead()
                 
         return objs
 
     def write(self, values):
         status = super(LinderaInvoice, self).write(values)
-        for order in self:
-            if order.state == 'done':
-                order.setup_lead()
+        for invoice in self:
+            if invoice.state == 'paid':
+                invoice.setup_lead()
         
         return status
