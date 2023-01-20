@@ -69,7 +69,7 @@ class linderaMail(models.Model):
                         # load attachment binary data with a separate read(), as prefetching all
                         # `datas` (binary field) could bloat the browse cache, triggerring
                         # soft/hard mem limits with temporary data.
-                        attachments = [(BytesIO(base64.b64decode(a['datas'])), a['datas_fname']) for a in attachments.sudo().read(['datas_fname', 'datas']) if a['datas'] is not False]
+                        attachments = [(BytesIO(base64.b64decode(a['datas'])), a['display_name']) for a in attachments.sudo().read(['display_name', 'datas']) if a['datas'] is not False]
 
                         mailbox = account.mailbox()
 
