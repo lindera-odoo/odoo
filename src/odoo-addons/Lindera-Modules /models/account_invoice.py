@@ -1,8 +1,8 @@
 from odoo import models, fields, api
-from openerp.osv import osv
+from odoo.osv import osv
 
 class LinderaInvoice(models.Model):
-    _inherit = "account.invoice"
+    _inherit = "account.move"
 
     def setup_lead(self):
         # search for the user used in the webshop
@@ -37,7 +37,8 @@ class LinderaInvoice(models.Model):
             else:
                 lead = lead[0]
             
-            lead.create_users += self.partner_id
+            if self.partner_id not in lead.create_users:
+                lead.create_users += self.partner_id
             live = self.env['crm.stage'].search([('name', '=', 'Live')])
             if live:
                 live = live[0]
@@ -50,8 +51,8 @@ class LinderaInvoice(models.Model):
     @api.model
     def create(self, values):
         obj = super(LinderaInvoice, self).create(values)
-        if obj.state == 'paid':
-            obj.setup_lead()
+        if obj.state == 'posted':
+                obj.setup_lead()
         
         return obj
 
@@ -60,16 +61,15 @@ class LinderaInvoice(models.Model):
         objs = super(LinderaInvoice, self).create(vals_list)
         
         for invoice in objs:
-            if invoice.state == 'paid':
-                invoice.setup_lead()
+            if invoice.state == 'posted':
+                    invoice.setup_lead()
                 
         return objs
 
-    @api.multi
     def write(self, values):
         status = super(LinderaInvoice, self).write(values)
         for invoice in self:
-            if invoice.state == 'paid':
-                invoice.setup_lead()
+            if invoice.state == 'posted':
+                    invoice.setup_lead()
         
         return status

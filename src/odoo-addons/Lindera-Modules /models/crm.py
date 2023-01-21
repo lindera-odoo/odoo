@@ -1,7 +1,7 @@
 from odoo import models, fields, api
 from . import backend_client
 from datetime import datetime
-from openerp.osv import osv
+from odoo.osv import osv
 
 
 def getCurrentTimestamp():
@@ -90,7 +90,6 @@ class LinderaCRM(models.Model):
         else:
             return False
 
-    @api.multi
     def write(self, vals):
         previouse_stage = self.stage_id
         result = super(LinderaCRM, self).write(vals)

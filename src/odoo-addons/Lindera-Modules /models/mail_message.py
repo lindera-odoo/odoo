@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from openerp.osv import osv
+from odoo.osv import osv
 from .ravenSingleton import ravenSingleton
 import json
 import re

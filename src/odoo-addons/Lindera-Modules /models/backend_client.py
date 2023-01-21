@@ -2,9 +2,11 @@ from odoo import models, fields, api
 import requests as rq
 import os
 from cerberus import Validator
+
+from odoo.exceptions import UserError
 from .ravenSingleton import ravenSingleton
 from dotenv import load_dotenv
-from openerp.osv import osv
+from odoo.osv import osv
 from requests.exceptions import ConnectionError
 import json
 
@@ -72,8 +74,7 @@ class BackendClient():
                 cls.instance = client
                 return client
             else:
-                raise osv.except_osv(
-                    ('Error!'), ('Please, setup system parameters for lindera backend'))
+                raise UserError('Please, setup system parameters for lindera backend')
         else:
             return cls.instance
 

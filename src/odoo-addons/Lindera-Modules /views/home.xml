@@ -6,7 +6,7 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='lang']" position="after">
+                <xpath expr="//field[@name='title']" position="after">
                     <field name="show_senior_number" string="Show Senior Number" invisible="True"/>
                     <field name="senior_number" string="Seniorenanzahl" attrs="{'invisible':[('show_senior_number','!=', True)]}"/>
                     <field name="homeID" string="Backend ID"/>

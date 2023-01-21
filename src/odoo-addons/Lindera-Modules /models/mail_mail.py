@@ -20,7 +20,6 @@ _logger = logging.getLogger(__name__)
 class linderaMail(models.Model):
     _inherit = 'mail.mail'
 
-    @api.multi
     def send(self, auto_commit=False, raise_exception=False):
         CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
         CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
@@ -70,7 +69,7 @@ class linderaMail(models.Model):
                         # load attachment binary data with a separate read(), as prefetching all
                         # `datas` (binary field) could bloat the browse cache, triggerring
                         # soft/hard mem limits with temporary data.
-                        attachments = [(BytesIO(base64.b64decode(a['datas'])), a['datas_fname']) for a in attachments.sudo().read(['datas_fname', 'datas']) if a['datas'] is not False]
+                        attachments = [(BytesIO(base64.b64decode(a['datas'])), a['display_name']) for a in attachments.sudo().read(['display_name', 'datas']) if a['datas'] is not False]
 
                         mailbox = account.mailbox()
 

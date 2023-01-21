@@ -31,7 +31,6 @@ class LinderaHome(models.Model):
 
 		return contact
 
-	@api.multi
 	def write(self, values):
 		"""
 		Is called whenever a field is changed (even during initialization!).
