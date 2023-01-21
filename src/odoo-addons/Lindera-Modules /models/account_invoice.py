@@ -51,8 +51,8 @@ class LinderaInvoice(models.Model):
     @api.model
     def create(self, values):
         obj = super(LinderaInvoice, self).create(values)
-        if obj.state == 'paid':
-            obj.setup_lead()
+        if obj.state == 'posted':
+                obj.setup_lead()
         
         return obj
 
@@ -61,15 +61,15 @@ class LinderaInvoice(models.Model):
         objs = super(LinderaInvoice, self).create(vals_list)
         
         for invoice in objs:
-            if invoice.state == 'paid':
-                invoice.setup_lead()
+            if invoice.state == 'posted':
+                    invoice.setup_lead()
                 
         return objs
 
     def write(self, values):
         status = super(LinderaInvoice, self).write(values)
         for invoice in self:
-            if invoice.state == 'paid':
-                invoice.setup_lead()
+            if invoice.state == 'posted':
+                    invoice.setup_lead()
         
         return status
