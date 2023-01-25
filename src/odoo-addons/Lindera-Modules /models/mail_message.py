@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 from odoo.osv import osv
 from .ravenSingleton import ravenSingleton
 import json
@@ -50,7 +51,7 @@ class linderaMail(models.Model):
                         pass
                     except Exception as e:
                         ravenSingle.Client.captureMessage(e)
-                        raise osv.except_osv('Error While Syncing!', str(e))
+                        raise UserError('Error While Syncing!' + str(e))
                     
         res = super(linderaMail, self).create(val)
         return res
