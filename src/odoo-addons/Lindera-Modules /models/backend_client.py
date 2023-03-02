@@ -111,10 +111,10 @@ class BackendClient():
             message = 'Unable to establish connection to backend server'
             self.ravenSingleton.Client.captureMessage(err)
             raise osv.except_osv(('Error!'), (message))
-        # except Exception as err:
-        #     message = 'Something went wrong'
-        #     self.ravenSingleton.Client.captureMessage(err)
-        #     raise osv.except_osv(('Error!'), (message))
+        except Exception as err:
+            message = 'Something went wrong'
+            self.ravenSingleton.Client.captureMessage(err)
+            raise osv.except_osv(('Error!'), (message))
     
     def getHomeById(self, id):
         try:
