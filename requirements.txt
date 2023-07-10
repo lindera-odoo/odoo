@@ -1,6 +1,6 @@
 selenium
 cerberus
-raven
+sentry_sdk
 python-dotenv
 aenum
 git+https://github.com/lindera-gmbh/python-o365

@@ -1,12 +1,14 @@
 import logging
 
+import sentry_sdk
+
 from odoo import models, api, fields
 from requests.exceptions import HTTPError
 from O365 import Account
 from O365.calendar import Attendee, ResponseStatus, EventRecurrence
 from O365.utils.utils import Recipient
 from .odooTokenStore import odooTokenStore
-from .ravenSingleton import ravenSingleton
+from .sentrySingleton import sentrySingleton
 import datetime
 from dateutil.relativedelta import relativedelta
 from odoo.osv import osv
@@ -62,18 +64,20 @@ class linderaEvent(models.Model):
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 
 		# sentry creds
-		ravenClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
-		ravenSingle = ravenSingleton(ravenClient)
+		sentryClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
+		sentrySingle = sentrySingleton(sentryClient)
 		token_backend = odooTokenStore(self.env.user)
 		if token_backend.check_token():
-			try:
-				account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-				if account.is_authenticated:
-					calendar = account.schedule()
-					self.__removeRecurrent(calendar, self.start, self.stop, self.name)
-			except Exception as err:
-				ravenSingle.Client.captureMessage(err)
-				raise osv.except_osv('Error While Syncing!', str(err))
+			with sentry_sdk.push_scope() as scope:
+				scope.set_extra('debug', False)
+				try:
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
+					if account.is_authenticated:
+						calendar = account.schedule()
+						self.__removeRecurrent(calendar, self.start, self.stop, self.name)
+				except Exception as err:
+					sentry_sdk.capture_exception(err)
+					raise osv.except_osv('Error While Syncing!', str(err))
 
 		# clear the office ID which would link back to the recurrring event otherwise.
 		values['o365ID'] = ''
@@ -94,8 +98,8 @@ class linderaEvent(models.Model):
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 
 		# sentry creds
-		ravenClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
-		ravenSingle = ravenSingleton(ravenClient)
+		sentryClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
+		sentrySingle = sentrySingleton(sentryClient)
 
 		# pass to the super method to get everything in place
 		event = super(linderaEvent, self).create(values)
@@ -103,29 +107,31 @@ class linderaEvent(models.Model):
 		# check credentials
 		token_backend = odooTokenStore(self.env.user)
 		if token_backend.check_token():
-			try:
-				# login
-				account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-				if account.is_authenticated:
-					# get calendar
-					calendar = account.schedule()
-
-					if event.o365ID and event.o365ID != '':
-						# update
-						officeEvent = calendar.get_default_calendar().get_event(event.o365ID)
-						if not officeEvent:
-							officeEvent = event.updateOffice(calendar)
-							officeEvent.save()
-					else:
-						# new
-						if event.active:
-							# only create an office instance if it is also visible
-							officeEvent = event.updateOffice(calendar)
-							officeEvent.save()
-							event.o365ID = officeEvent.object_id
-			except Exception as err:
-				ravenSingle.Client.captureMessage(err)
-				raise osv.except_osv('Error While Syncing!', str(err))
+			with sentry_sdk.push_scope() as scope:
+				scope.set_extra('debug', False)
+				try:
+					# login
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
+					if account.is_authenticated:
+						# get calendar
+						calendar = account.schedule()
+	
+						if event.o365ID and event.o365ID != '':
+							# update
+							officeEvent = calendar.get_default_calendar().get_event(event.o365ID)
+							if not officeEvent:
+								officeEvent = event.updateOffice(calendar)
+								officeEvent.save()
+						else:
+							# new
+							if event.active:
+								# only create an office instance if it is also visible
+								officeEvent = event.updateOffice(calendar)
+								officeEvent.save()
+								event.o365ID = officeEvent.object_id
+				except Exception as err:
+					sentry_sdk.capture_exception(err)
+					raise osv.except_osv('Error While Syncing!', str(err))
 
 		return event
 
@@ -230,8 +236,8 @@ class linderaEvent(models.Model):
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 
 		# sentry creds
-		ravenClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
-		ravenSingle = ravenSingleton(ravenClient)
+		sentryClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
+		sentrySingle = sentrySingleton(sentryClient)
 
 		# pass to super to get everything in place
 		writeSuccess = super(linderaEvent, self).write(values)
@@ -248,32 +254,34 @@ class linderaEvent(models.Model):
 			# login
 			token_backend = odooTokenStore(self.env.user)
 			if token_backend.check_token():
-				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-					if account.is_authenticated:
-						# get calendar
-						calendar = account.schedule()
-						if self.o365ID:
-							# already has an ID so probably already exists
-							event = calendar.get_default_calendar().get_event(self.o365ID)
-							if not event:
-								# create office Event if it somehow does not exist yet
-								# (happens even before it gets to that point in create, so most office events are created here)
-								officeEvent = actualInstance.updateOffice(calendar)
-							else:
-								# update office Event with data from here
-								officeEvent = actualInstance.updateOffice(calendar, event)
-							officeEvent.save()
-						else:
-							# completely new
-							if self.active:
-								officeEvent = actualInstance.updateOffice(calendar)
+				with sentry_sdk.push_scope() as scope:
+					scope.set_extra('debug', False)
+					try:
+						account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
+						if account.is_authenticated:
+							# get calendar
+							calendar = account.schedule()
+							if self.o365ID:
+								# already has an ID so probably already exists
+								event = calendar.get_default_calendar().get_event(self.o365ID)
+								if not event:
+									# create office Event if it somehow does not exist yet
+									# (happens even before it gets to that point in create, so most office events are created here)
+									officeEvent = actualInstance.updateOffice(calendar)
+								else:
+									# update office Event with data from here
+									officeEvent = actualInstance.updateOffice(calendar, event)
 								officeEvent.save()
-								self.o365ID = officeEvent.object_id
-							pass
-				except Exception as err:
-					ravenSingle.Client.captureMessage(err)
-					raise osv.except_osv('Error While Syncing!', str(err))
+							else:
+								# completely new
+								if self.active:
+									officeEvent = actualInstance.updateOffice(calendar)
+									officeEvent.save()
+									self.o365ID = officeEvent.object_id
+								pass
+					except Exception as err:
+						sentry_sdk.capture_exception(err)
+						raise osv.except_osv('Error While Syncing!', str(err))
 		return writeSuccess
 
 	def unlink(self, can_be_deleted=True):
@@ -287,35 +295,37 @@ class linderaEvent(models.Model):
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 
 		# sentry credentials
-		ravenClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
-		ravenSingle = ravenSingleton(ravenClient)
+		sentryClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
+		sentrySingle = sentrySingleton(sentryClient)
 
 		if can_be_deleted:
 			# only delete if it is actually fine
 			# login
 			token_backend = odooTokenStore(self.env.user)
 			if token_backend.check_token():
-				try:
-					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-					if account.is_authenticated:
-						calendar = account.schedule()
-						if self.o365ID:
-							if '-' not in str(self.id):
-								event = calendar.get_default_calendar().get_event(self.o365ID)
-								if event:
-									event.delete()
-							else:
-								# find the right one to remove
-								self.__removeRecurrent(calendar, self.start, self.stop, self.name)
-				except HTTPError as err:
-					if err.response.status_code == 404:
-						pass
-					else:
-						ravenSingle.Client.captureMessage(err)
+				with sentry_sdk.push_scope() as scope:
+					scope.set_extra('debug', False)
+					try:
+						account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
+						if account.is_authenticated:
+							calendar = account.schedule()
+							if self.o365ID:
+								if '-' not in str(self.id):
+									event = calendar.get_default_calendar().get_event(self.o365ID)
+									if event:
+										event.delete()
+								else:
+									# find the right one to remove
+									self.__removeRecurrent(calendar, self.start, self.stop, self.name)
+					except HTTPError as err:
+						if err.response.status_code == 404:
+							pass
+						else:
+							sentry_sdk.capture_exception(err)
+							raise osv.except_osv('Error While Syncing!', str(err))
+					except Exception as err:
+						sentry_sdk.capture_exception(err)
 						raise osv.except_osv('Error While Syncing!', str(err))
-				except Exception as err:
-					ravenSingle.Client.captureMessage(err)
-					raise osv.except_osv('Error While Syncing!', str(err))
 
 		return super(linderaEvent, self).unlink(can_be_deleted)
 
