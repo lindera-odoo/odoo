@@ -1,10 +1,12 @@
+import sentry_sdk
+
 from odoo import models, fields, api
 import requests as rq
 import os
 from cerberus import Validator
 
 from odoo.exceptions import UserError
-from .ravenSingleton import ravenSingleton
+from .sentrySingleton import sentrySingleton
 from dotenv import load_dotenv
 from odoo.osv import osv
 from requests.exceptions import ConnectionError
@@ -15,10 +17,10 @@ SLEEP_BETWEEN_ATTEMPS = 1
 
 class BackendClient():
     instance = None
-    def __init__(self, url, ravenClient, user, pw):
+    def __init__(self, url, sentryClient, user, pw):
         self.URL = url
         self.INTERNAL_AUTHENTICATION_TOKEN = ''
-        self.ravenSingleton = ravenSingleton(ravenClient)
+        self.sentrySingleton = sentrySingleton(sentryClient)
         self.user = user
         self.pw = pw
 
@@ -62,15 +64,15 @@ class BackendClient():
         if cls.instance is None:
             url = context.env['ir.config_parameter'].get_param('lindera.backend')
     
-            ravenClient = context.env['ir.config_parameter'].get_param(
+            sentryClient = context.env['ir.config_parameter'].get_param(
                 'lindera.raven_client')
             user = context.env['ir.config_parameter'].get_param(
                 'lindera.internal_user_email')
             pw = context.env['ir.config_parameter'].get_param(
                 'lindera.internal_user_pw')
     
-            if (url and ravenClient and user and pw):
-                client = cls(url, ravenClient, user, pw)
+            if (url and sentryClient and user and pw):
+                client = cls(url, sentryClient, user, pw)
                 cls.instance = client
                 return client
             else:
@@ -79,69 +81,79 @@ class BackendClient():
             return cls.instance
 
     def notifyBackendToCreateReport(self, data):
-        try:
-            self._connect()
-            return rq.post("{}/internal/create_report".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
-        except ConnectionError as err:
-            message = 'Unable to establish connection to backend server'
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
-        except Exception as err:
-            self.ravenSingleton.Client.captureMessage(err) 
-            raise osv.except_osv(('Error!'), (self.URL, err))
+        with sentry_sdk.push_scope() as scope:
+            scope.set_extra('debug', False)
+            try:
+                self._connect()
+                return rq.post("{}/internal/create_report".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+            except ConnectionError as err:
+                message = 'Unable to establish connection to backend server'
+                sentry_sdk.capture_exception(err)
+                raise osv.except_osv(('Error!'), (message))
+            except Exception as err:
+                sentry_sdk.capture_exception(err)
+                raise osv.except_osv(('Error!'), (self.URL, err))
 
     def postHome(self, data):
         if(self.validateHomeData(data)):
-            try:
-                self._connect()
-                return rq.post("{}/homes".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
-            except ConnectionError as err:
-                message = 'Unable to establish connection to backend server'
-                self.ravenSingleton.Client.captureMessage(err)
-                raise osv.except_osv(('Error!'), (message))
-            except Exception as err:
-                self.ravenSingleton.Client.captureMessage(err)
-                raise osv.except_osv(('Error!'), (self.URL, err))
+            with sentry_sdk.push_scope() as scope:
+                scope.set_extra('debug', False)
+                try:
+                    self._connect()
+                    return rq.post("{}/homes".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+                except ConnectionError as err:
+                    message = 'Unable to establish connection to backend server'
+                    sentry_sdk.capture_exception(err)
+                    raise osv.except_osv(('Error!'), (message))
+                except Exception as err:
+                    sentry_sdk.capture_exception(err)
+                    raise osv.except_osv(('Error!'), (self.URL, err))
 
     def getHome(self, id):
-        try:
-            self._connect()
-            return rq.get(self.URL+"/homes?filter={}={}".format('odooID', id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
-        except ConnectionError as err:
-            message = 'Unable to establish connection to backend server'
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
-        except Exception as err:
-            message = 'Something went wrong'
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
-    
-    def getHomeById(self, id):
-        try:
-            self._connect()
-            return rq.get(self.URL+"/homes/{}".format(id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
-        except ConnectionError as err:
-            message = 'Unable to establish connection to backend server'
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
-        except Exception as err:
-            message = 'Something went wrong'
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
-
-    def updateHome(self, id, data):
-        if(self.validateHomeData(data)):
+        with sentry_sdk.push_scope() as scope:
+            scope.set_extra('debug', False)
             try:
                 self._connect()
-                return rq.put("{}/homes/{}".format(self.URL, id), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+                return rq.get(self.URL+"/homes?filter={}={}".format('odooID', id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
             except ConnectionError as err:
                 message = 'Unable to establish connection to backend server'
-                self.ravenSingleton.Client.captureMessage(err)
+                sentry_sdk.capture_exception(err)
                 raise osv.except_osv(('Error!'), (message))
             except Exception as err:
                 message = 'Something went wrong'
-                self.ravenSingleton.Client.captureMessage(err)
+                sentry_sdk.capture_exception(err)
                 raise osv.except_osv(('Error!'), (message))
+    
+    def getHomeById(self, id):
+        with sentry_sdk.push_scope() as scope:
+            scope.set_extra('debug', False)
+            try:
+                self._connect()
+                return rq.get(self.URL+"/homes/{}".format(id), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+            except ConnectionError as err:
+                message = 'Unable to establish connection to backend server'
+                sentry_sdk.capture_exception(err)
+                raise osv.except_osv(('Error!'), (message))
+            except Exception as err:
+                message = 'Something went wrong'
+                sentry_sdk.capture_exception(err)
+                raise osv.except_osv(('Error!'), (message))
+
+    def updateHome(self, id, data):
+        if(self.validateHomeData(data)):
+            with sentry_sdk.push_scope() as scope:
+                scope.set_extra('debug', False)
+                try:
+                    self._connect()
+                    return rq.put("{}/homes/{}".format(self.URL, id), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+                except ConnectionError as err:
+                    message = 'Unable to establish connection to backend server'
+                    sentry_sdk.capture_exception(err)
+                    raise osv.except_osv(('Error!'), (message))
+                except Exception as err:
+                    message = 'Something went wrong'
+                    sentry_sdk.capture_exception(err)
+                    raise osv.except_osv(('Error!'), (message))
 
     def validateHomeData(self, data):
         v = Validator()
@@ -161,17 +173,19 @@ class BackendClient():
         return result
     
     def getUser(self, email):
-        try:
-            self._connect()
-            return rq.get(self.URL+"/users?filter={}={}".format('email', email), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
-        except ConnectionError as err:
-            message = 'Unable to establish connection to backend server'
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
-        except Exception as err:
-            message = 'Something went wrong'
-            self.ravenSingleton.Client.captureMessage(err)
-            raise osv.except_osv(('Error!'), (message))
+        with sentry_sdk.push_scope() as scope:
+            scope.set_extra('debug', False)
+            try:
+                self._connect()
+                return rq.get(self.URL+"/users?filter={}={}".format('email', email), headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+            except ConnectionError as err:
+                message = 'Unable to establish connection to backend server'
+                sentry_sdk.capture_exception(err)
+                raise osv.except_osv(('Error!'), (message))
+            except Exception as err:
+                message = 'Something went wrong'
+                sentry_sdk.capture_exception(err)
+                raise osv.except_osv(('Error!'), (message))
     
     def validateUserData(self, data):
         v = Validator()
@@ -190,20 +204,22 @@ class BackendClient():
     
     def postUser(self, data):
         if self.validateUserData(data):
-            try:
-                self._connect()
-                data = {
-                    'homeID': data['homeID'],
-                    'email': [data],
-                    'firstname': data['firstname'],
-                    'lastname': data['lastname'],
-                    'language': data['language'],
-                }
-                return rq.post("{}/users/invite".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
-            except ConnectionError as err:
-                message = 'Unable to establish connection to backend server'
-                self.ravenSingleton.Client.captureMessage(err)
-                raise osv.except_osv(('Error!'), (message))
-            except Exception as err:
-                self.ravenSingleton.Client.captureMessage(err)
-                raise osv.except_osv(('Error!'), (self.URL, err))
+            with sentry_sdk.push_scope() as scope:
+                scope.set_extra('debug', False)
+                try:
+                    self._connect()
+                    data = {
+                        'homeID': data['homeID'],
+                        'email': [data],
+                        'firstname': data['firstname'],
+                        'lastname': data['lastname'],
+                        'language': data['language'],
+                    }
+                    return rq.post("{}/users/invite".format(self.URL), json=data, headers={'token': self.INTERNAL_AUTHENTICATION_TOKEN})
+                except ConnectionError as err:
+                    message = 'Unable to establish connection to backend server'
+                    sentry_sdk.capture_exception(err)
+                    raise osv.except_osv(('Error!'), (message))
+                except Exception as err:
+                    sentry_sdk.capture_exception(err)
+                    raise osv.except_osv(('Error!'), (self.URL, err))
