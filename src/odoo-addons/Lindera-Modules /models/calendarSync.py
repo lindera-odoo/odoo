@@ -1,9 +1,11 @@
+import sentry_sdk
+
 from odoo import models, api, exceptions, sql_db
 from odoo.http import request
 from odoo.osv import osv
 from O365 import Account
 from .odooTokenStore import odooTokenStore
-from .ravenSingleton import ravenSingleton
+from .sentrySingleton import sentrySingleton
 import threading
 import datetime
 from dateutil.relativedelta import relativedelta
@@ -237,67 +239,69 @@ class linderaCalendarSyncer(models.Model):
 		self.env.cr.commit()
 
 	def forUser(self, syncUser):
-		ravenClient = self.env['ir.config_parameter'].get_param(
+		sentryClient = self.env['ir.config_parameter'].get_param(
 			'lindera.raven_client')
-		ravenSingle = ravenSingleton(ravenClient)
+		sentrySingle = sentrySingleton(sentryClient)
 		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 		token_backend = odooTokenStore(syncUser)
 		if token_backend.check_token():
-			try:
-				account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-				if account.is_authenticated:
-					calendar = account.schedule()
-					##################################NORMAL EVENTS#################################################
-					events = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=False))
-					for event in events:
-						if event.organizer.address != syncUser.email:
-							continue
-						try:
-							if event.event_type.value == 'single_instance':
-								self.handleNormalEvent(event, syncUser)
-								pass
-						except exceptions.except_orm as err:
-							print('Concurrent Update')
-							print(err)
-						except Exception as err:
-							ravenSingle.Client.captureMessage(err)
-							self.env.cr.rollback()
-							raise osv.except_osv('Error While Syncing!', str(err))
-					########################################RECURRENT EVENTS########################################
-					start = datetime.datetime.utcnow()
-					stop = start + datetime.timedelta(days=7)
-
-					query = calendar.new_query('start').equals(start)
-					query.chain('and').on_attribute('end').equals(stop)
-
-					recevents = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=True, query=query))
-					for event in recevents:
-						if event.event_type.value != 'single_instance':
+			with sentry_sdk.push_scope() as scope:
+				scope.set_extra('debug', False)
+				try:
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
+					if account.is_authenticated:
+						calendar = account.schedule()
+						##################################NORMAL EVENTS#################################################
+						events = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=False))
+						for event in events:
 							if event.organizer.address != syncUser.email:
 								continue
 							try:
-								if event.event_type.value == 'exception':
+								if event.event_type.value == 'single_instance':
 									self.handleNormalEvent(event, syncUser)
-									pass
-								else:
-									master = calendar.get_default_calendar().get_event(event.series_master_id)
-									self.handleRecurringEvent(master, syncUser)
 									pass
 							except exceptions.except_orm as err:
 								print('Concurrent Update')
 								print(err)
 							except Exception as err:
-								ravenSingle.Client.captureMessage(err)
+								sentry_sdk.capture_exception(err)
 								self.env.cr.rollback()
 								raise osv.except_osv('Error While Syncing!', str(err))
-					pass
-			except exceptions.except_orm as err:
-				print('Concurrent Update')
-				print(err)
-			except Exception as err:
-				ravenSingle.Client.captureMessage(err)
-				raise osv.except_osv('Error While Syncing!', str(err))
+						########################################RECURRENT EVENTS########################################
+						start = datetime.datetime.utcnow()
+						stop = start + datetime.timedelta(days=7)
+	
+						query = calendar.new_query('start').equals(start)
+						query.chain('and').on_attribute('end').equals(stop)
+	
+						recevents = list(calendar.get_events(limit=EVENT_NUM, batch=EVENT_BATCH, include_recurring=True, query=query))
+						for event in recevents:
+							if event.event_type.value != 'single_instance':
+								if event.organizer.address != syncUser.email:
+									continue
+								try:
+									if event.event_type.value == 'exception':
+										self.handleNormalEvent(event, syncUser)
+										pass
+									else:
+										master = calendar.get_default_calendar().get_event(event.series_master_id)
+										self.handleRecurringEvent(master, syncUser)
+										pass
+								except exceptions.except_orm as err:
+									print('Concurrent Update')
+									print(err)
+								except Exception as err:
+									sentry_sdk.capture_exception(err)
+									self.env.cr.rollback()
+									raise osv.except_osv('Error While Syncing!', str(err))
+						pass
+				except exceptions.except_orm as err:
+					print('Concurrent Update')
+					print(err)
+				except Exception as err:
+					sentry_sdk.capture_exception(err)
+					raise osv.except_osv('Error While Syncing!', str(err))
 
 	def syncCalendar(self):
 		for syncUser in self.env['res.users'].search([('share', '=', False)]):
