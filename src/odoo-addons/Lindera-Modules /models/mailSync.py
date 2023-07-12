@@ -90,7 +90,7 @@ class linderaMailSyncer(models.Model):
 														attachment = self.env['ir.attachment'].create({
 															'datas': attachment.content.encode(),
 															'name': attachment.name,
-															'datas_fname': attachment.name})
+															'store_fname': attachment.name})
 														self.env.cr.commit()
 														attachments.append(attachment.id)
 													self.env['mail.message'].create({
@@ -168,7 +168,7 @@ class linderaMailSyncer(models.Model):
 															attachment = self.env['ir.attachment'].create({
 																'datas': attachment.content.encode(),
 																'name': attachment.name,
-																'datas_fname': attachment.name})
+																'store_fname': attachment.name})
 															self.env.cr.commit()
 															attachments.append(attachment.id)
 														if author:
