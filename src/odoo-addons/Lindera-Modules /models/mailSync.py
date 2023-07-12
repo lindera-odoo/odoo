@@ -67,7 +67,7 @@ class linderaMailSyncer(models.Model):
 												if not mail:
 													mail = self.env['mail.message'].search(
 														[('subject', '=', message.subject),
-														 ('date', '=', message.sent),
+														 ('date', '=', message.sent.replace(tzinfo=None)),
 														 ('email_from', '=',
 														  contact[0].email)])
 												if not mail:
@@ -90,12 +90,12 @@ class linderaMailSyncer(models.Model):
 														attachment = self.env['ir.attachment'].create({
 															'datas': attachment.content.encode(),
 															'name': attachment.name,
-															'datas_fname': attachment.name})
+															'store_fname': attachment.name})
 														self.env.cr.commit()
 														attachments.append(attachment.id)
 													self.env['mail.message'].create({
 														'subject': message.subject,
-														'date': message.sent,
+														'date': message.sent.replace(tzinfo=None),
 														'body': message.body_preview,
 														'email_from': contact[0].email,
 														'attachment_ids': [[6, 0, attachments]],
@@ -168,13 +168,13 @@ class linderaMailSyncer(models.Model):
 															attachment = self.env['ir.attachment'].create({
 																'datas': attachment.content.encode(),
 																'name': attachment.name,
-																'datas_fname': attachment.name})
+																'store_fname': attachment.name})
 															self.env.cr.commit()
 															attachments.append(attachment.id)
 														if author:
 															self.env['mail.message'].create({
 																'subject': message.subject,
-																'date': message.sent,
+																'date': message.sent.replace(tzinfo=None),
 																'body': message.body_preview,
 																'email_from': message.sender.address,
 																'attachment_ids': [[6, 0, attachments]],
@@ -189,7 +189,7 @@ class linderaMailSyncer(models.Model):
 														else:
 															self.env['mail.message'].create({
 																'subject': message.subject,
-																'date': message.sent,
+																'date': message.sent.replace(tzinfo=None),
 																'body': message.body_preview,
 																'email_from': message.sender.address,
 																'attachment_ids': [[6, 0, attachments]],
