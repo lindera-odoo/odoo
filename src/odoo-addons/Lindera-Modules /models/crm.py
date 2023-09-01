@@ -83,9 +83,20 @@ class LinderaCRM(models.Model):
             return False
         if subscriptions:
             subscription = subscriptions[0]
+            if subscription.date:
+                last_date = subscription.date
+            else:
+                last_date = subscription.recurring_next_date
+                
             for sub in subscriptions:
-                if sub.date > subscription.date:
-                    subscription = sub
+                if sub.date:
+                    if sub.date > last_date:
+                        subscription = sub
+                        last_date = sub.date
+                else:
+                    if sub.recurring_next_date > last_date:
+                        subscription = sub
+                        last_date = sub.recurring_next_date
             return subscription
         else:
             return False
