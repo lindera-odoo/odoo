@@ -55,8 +55,23 @@ class linderaMail(models.Model):
             if user:
                 user = user[0]
             else:
-                return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
+                # try looking for an alternative user specified by the from field instead of from the author
+                user = self.env['res.users'].search([("login", "=", mail.email_from), ('share', '=', False)])
+                if user:
+                    user = user[0]
+                else:
+                    return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
+            
             token_backend = odooTokenStore(user)
+            if not token_backend.check_token():
+                # try looking for an alternative user specified by the from field instead of from the author
+                user = self.env['res.users'].search([("login", "=", mail.email_from), ('share', '=', False)])
+                if user:
+                    user = user[0]
+                    token_backend = odooTokenStore(user)
+                else:
+                    return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
+            
             if token_backend.check_token() and allowtosend:
                 with sentry_sdk.push_scope() as scope:
                     scope.set_extra('debug', False)
