@@ -190,12 +190,12 @@ class linderaMail(models.Model):
                                 if not is_external:
                                     message.to.clear()
                                 message.to.add(email.get('email_to'))
-                                message.sender.address = mail.author_id.email
+                                message.sender.address = user.login
                                 message.body = email.get('body')
                                 # Sadly no alternative body for viewing impaired...
                                 message.subject = mail.subject
                                 message.cc.add(tools.email_split(mail.email_cc))
-                                message.reply_to.add(mail.author_id.email)
+                                message.reply_to.add(user.login)
                                 message.attachments.add(attachments)
                                 if mail.parent_id and mail.subtype_id.name != 'Note':
                                     if mail.parent_id.o365ConversationID:
