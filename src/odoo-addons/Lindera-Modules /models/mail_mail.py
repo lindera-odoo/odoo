@@ -59,6 +59,7 @@ class linderaMail(models.Model):
             else:
                 _logger.info('Did not find user')
                 # try looking for an alternative user specified by the from field instead of from the author
+                _logger.info('Looking for new user via email from', mail.email_from)
                 user = self.env['res.users'].search([("login", "=", mail.email_from), ('share', '=', False)])
                 if user:
                     user = user[0]
