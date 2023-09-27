@@ -59,8 +59,8 @@ class linderaMail(models.Model):
             else:
                 _logger.info('Did not find user')
                 # try looking for an alternative user specified by the from field instead of from the author
-                _logger.info('Looking for new user via email from ' + str(mail.email_from))
-                user = self.env['res.users'].search([("login", "=", mail.email_from), ('share', '=', False)])
+                _logger.info('Looking for new user via email from ' + str(tools.email_normalize(mail.email_from)))
+                user = self.env['res.users'].search([("login", "=", tools.email_normalize(mail.email_from)), ('share', '=', False)])
                 if user:
                     _logger.info('Found new user')
                     user = user[0]
@@ -73,8 +73,8 @@ class linderaMail(models.Model):
             if not token_backend.check_token():
                 _logger.info('No token')
                 # try looking for an alternative user specified by the from field instead of from the author
-                _logger.info('Looking for new user via email from' + str(mail.email_from))
-                user = self.env['res.users'].search([("login", "=", mail.email_from), ('share', '=', False)])
+                _logger.info('Looking for new user via email from' + str(tools.email_normalize(mail.email_from)))
+                user = self.env['res.users'].search([("login", "=", tools.email_normalize(mail.email_from)), ('share', '=', False)])
                 if user:
                     _logger.info('Found new user')
                     user = user[0]
