@@ -52,18 +52,20 @@ class linderaMail(models.Model):
                     break
 
             user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id), ('share', '=', False)])
-            _logger.info('Sending mail for user', mail.author_id.id)
+            _logger.info('Sending mail for user' + str(mail.author_id.id))
             if user:
                 user = user[0]
-                _logger.info('Found user', user.id)
+                _logger.info('Found user' + str(user.id))
             else:
                 _logger.info('Did not find user')
                 # try looking for an alternative user specified by the from field instead of from the author
-                _logger.info('Looking for new user via email from', mail.email_from)
+                _logger.info('Looking for new user via email from ' + str(mail.email_from))
                 user = self.env['res.users'].search([("login", "=", mail.email_from), ('share', '=', False)])
                 if user:
+                    _logger.info('Found new user')
                     user = user[0]
                 else:
+                    _logger.info('Did not find new user')
                     return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
             
             token_backend = odooTokenStore(user)
@@ -71,7 +73,7 @@ class linderaMail(models.Model):
             if not token_backend.check_token():
                 _logger.info('No token')
                 # try looking for an alternative user specified by the from field instead of from the author
-                _logger.info('Looking for new user via email from', mail.email_from)
+                _logger.info('Looking for new user via email from' + str(mail.email_from))
                 user = self.env['res.users'].search([("login", "=", mail.email_from), ('share', '=', False)])
                 if user:
                     _logger.info('Found new user')
