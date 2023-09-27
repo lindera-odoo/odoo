@@ -52,11 +52,37 @@ class linderaMail(models.Model):
                     break
 
             user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id), ('share', '=', False)])
+            _logger.info('Sending mail for user' + str(mail.author_id.id))
             if user:
                 user = user[0]
+                _logger.info('Found user' + str(user.id))
             else:
-                return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
+                _logger.info('Did not find user')
+                # try looking for an alternative user specified by the from field instead of from the author
+                _logger.info('Looking for new user via email from ' + str(tools.email_normalize(mail.email_from)))
+                user = self.env['res.users'].search([("login", "=", tools.email_normalize(mail.email_from)), ('share', '=', False)])
+                if user:
+                    _logger.info('Found new user')
+                    user = user[0]
+                else:
+                    _logger.info('Did not find new user')
+                    return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
+            
             token_backend = odooTokenStore(user)
+            _logger.info('Checking token')
+            if not token_backend.check_token():
+                _logger.info('No token')
+                # try looking for an alternative user specified by the from field instead of from the author
+                _logger.info('Looking for new user via email from' + str(tools.email_normalize(mail.email_from)))
+                user = self.env['res.users'].search([("login", "=", tools.email_normalize(mail.email_from)), ('share', '=', False)])
+                if user:
+                    _logger.info('Found new user')
+                    user = user[0]
+                    token_backend = odooTokenStore(user)
+                else:
+                    _logger.info('Did not find new user')
+                    return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
+            
             if token_backend.check_token() and allowtosend:
                 with sentry_sdk.push_scope() as scope:
                     scope.set_extra('debug', False)
@@ -164,12 +190,12 @@ class linderaMail(models.Model):
                                 if not is_external:
                                     message.to.clear()
                                 message.to.add(email.get('email_to'))
-                                message.sender.address = mail.author_id.email
+                                message.sender.address = user.login
                                 message.body = email.get('body')
                                 # Sadly no alternative body for viewing impaired...
                                 message.subject = mail.subject
                                 message.cc.add(tools.email_split(mail.email_cc))
-                                message.reply_to.add(mail.author_id.email)
+                                message.reply_to.add(user.login)
                                 message.attachments.add(attachments)
                                 if mail.parent_id and mail.subtype_id.name != 'Note':
                                     if mail.parent_id.o365ConversationID:
