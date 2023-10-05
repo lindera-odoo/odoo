@@ -52,12 +52,12 @@ class linderaMail(models.Model):
                     break
 
             user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id), ('share', '=', False)])
-            _logger.info('Sending mail for user' + str(mail.author_id.id))
+            _logger.info('Sending mail for user' + str(mail.author_id.id) + ' for email ' + mail.author_id.email)
             if user:
                 user = user[0]
-                _logger.info('Found user' + str(user.id))
+                _logger.info('Found user ' + str(user.id) + ' for email ' + mail.author_id.email)
             else:
-                _logger.info('Did not find user')
+                _logger.info('Did not find user ' + mail.author_id.email)
                 # try looking for an alternative user specified by the from field instead of from the author
                 _logger.info('Looking for new user via email from ' + str(tools.email_normalize(mail.email_from)))
                 user = self.env['res.users'].search([("login", "=", tools.email_normalize(mail.email_from)), ('share', '=', False)])
@@ -83,6 +83,9 @@ class linderaMail(models.Model):
                     _logger.info('Did not find new user')
                     return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
             
+            _logger.info('Start sending Mail with ID %r', mail.id)
+            if not allowtosend:
+                _logger.info('Mail not allowed to be sent via O365!')
             if token_backend.check_token() and allowtosend:
                 with sentry_sdk.push_scope() as scope:
                     scope.set_extra('debug', False)
