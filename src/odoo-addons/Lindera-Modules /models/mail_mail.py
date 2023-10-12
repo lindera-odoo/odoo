@@ -150,14 +150,21 @@ class linderaMail(models.Model):
                                 is_reply = False
                                 if mail.subtype_id.name != 'Note':
                                     # find the most likely candidate for the parent
-                                    prev_mail = self.env['mail.message'].search(
-                                        [('o365ConversationID', '!=', None),
-                                         ('model', '=', mail.model),
-                                         ('res_id', '=', mail.res_id),
-                                         ('message_type', '=', mail.message_type),
-                                         ('subtype_id', '=', mail.subtype_id.id),
-                                         ('id', '!=', mail.mail_message_id.id),
-                                         ('partner_ids', '=', mail.recipient_ids.id)])
+                                    prev_mail = None
+                                    for recipient in mail.recipient_ids:
+                                        result = self.env['mail.message'].search(
+                                            [('o365ConversationID', '!=', None),
+                                             ('model', '=', mail.model),
+                                             ('res_id', '=', mail.res_id),
+                                             ('message_type', '=', mail.message_type),
+                                             ('subtype_id', '=', mail.subtype_id.id),
+                                             ('id', '!=', mail.mail_message_id.id),
+                                             ('partner_ids', '=', recipient.id)])
+                                        
+                                        if prev_mail is None:
+                                            prev_mail = result
+                                        else:
+                                            prev_mail += result
                                     
                                     for pid in process_pid:
                                         prev_mail += self.env['mail.message'].search(
