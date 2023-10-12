@@ -173,18 +173,14 @@ class linderaMail(models.Model):
                                              ('res_id', '=', mail.res_id),
                                              ('id', '!=', mail.mail_message_id.id),
                                              ('author_id', '=', pid.id)])
-                                    prev_mail = prev_mail.sorted(key=lambda element: element.date)
-                                    _logger.info('%i previous mails pre filter' % len(prev_mail))
-                                    prev_mail = list(filter(lambda element:
-                                                            mailbox.get_message(
-                                                                query=mailbox.new_query('conversationId')
-                                                                .equals(element.o365ConversationID))
-                                                            is not None, prev_mail)
-                                                     )
-                                    _logger.info('%i previous mails post filter' % len(prev_mail))
-                                    
-                                    if prev_mail:
-                                        mail.parent_id = prev_mail[-1]
+                                    prev_mail = list(map(lambda element: element, prev_mail))
+                                    prev_mail.sort(key=lambda element: element.date, reverse=True)
+
+                                    for element in prev_mail:
+                                        if mailbox.get_message(query=mailbox.new_query('conversationId')
+                                                .equals(element.o365ConversationID)) is not None:
+                                            mail.parent_id = element
+                                            break
     
                                     if mail.parent_id.o365ConversationID:
                                         # find the most recent entry of this conversation (might be the reply, which does not fit the most likely)
