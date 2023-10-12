@@ -177,7 +177,8 @@ class linderaMail(models.Model):
                                     _logger.info('%i previous mails pre filter' % len(prev_mail))
                                     prev_mail = list(filter(lambda element:
                                                             mailbox.get_message(
-                                                                query='conversationId=%s' % element.o365ConversationID)
+                                                                query=mailbox.new_query('conversationId')
+                                                                .equals(element.o365ConversationID))
                                                             is not None, prev_mail)
                                                      )
                                     _logger.info('%i previous mails post filter' % len(prev_mail))
