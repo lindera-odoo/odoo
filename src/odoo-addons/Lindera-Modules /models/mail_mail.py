@@ -174,6 +174,13 @@ class linderaMail(models.Model):
                                              ('id', '!=', mail.mail_message_id.id),
                                              ('author_id', '=', pid.id)])
                                     prev_mail = prev_mail.sorted(key=lambda element: element.date)
+                                    _logger.info('%i previous mails pre filter' % len(prev_mail))
+                                    prev_mail = list(filter(lambda element:
+                                                            mailbox.get_message(
+                                                                query='conversationId=%s' % element.o365ConversationID)
+                                                            is not None, prev_mail)
+                                                     )
+                                    _logger.info('%i previous mails post filter' % len(prev_mail))
                                     
                                     if prev_mail:
                                         mail.parent_id = prev_mail[-1]
