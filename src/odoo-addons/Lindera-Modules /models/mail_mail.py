@@ -52,12 +52,12 @@ class linderaMail(models.Model):
                     break
 
             user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id), ('share', '=', False)])
-            _logger.info('Sending mail for user' + str(mail.author_id.id))
+            _logger.info('Sending mail for user' + str(mail.author_id.id) + ' for email ' + mail.author_id.email)
             if user:
                 user = user[0]
-                _logger.info('Found user' + str(user.id))
+                _logger.info('Found user ' + str(user.id) + ' for email ' + mail.author_id.email)
             else:
-                _logger.info('Did not find user')
+                _logger.info('Did not find user ' + mail.author_id.email)
                 # try looking for an alternative user specified by the from field instead of from the author
                 _logger.info('Looking for new user via email from ' + str(tools.email_normalize(mail.email_from)))
                 user = self.env['res.users'].search([("login", "=", tools.email_normalize(mail.email_from)), ('share', '=', False)])
@@ -83,6 +83,9 @@ class linderaMail(models.Model):
                     _logger.info('Did not find new user')
                     return super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
             
+            _logger.info('Start sending Mail with ID %r', mail.id)
+            if not allowtosend:
+                _logger.info('Mail not allowed to be sent via O365!')
             if token_backend.check_token() and allowtosend:
                 with sentry_sdk.push_scope() as scope:
                     scope.set_extra('debug', False)
@@ -147,14 +150,21 @@ class linderaMail(models.Model):
                                 is_reply = False
                                 if mail.subtype_id.name != 'Note':
                                     # find the most likely candidate for the parent
-                                    prev_mail = self.env['mail.message'].search(
-                                        [('o365ConversationID', '!=', None),
-                                         ('model', '=', mail.model),
-                                         ('res_id', '=', mail.res_id),
-                                         ('message_type', '=', mail.message_type),
-                                         ('subtype_id', '=', mail.subtype_id.id),
-                                         ('id', '!=', mail.mail_message_id.id),
-                                         ('partner_ids', '=', mail.recipient_ids.id)])
+                                    prev_mail = None
+                                    for recipient in mail.recipient_ids:
+                                        result = self.env['mail.message'].search(
+                                            [('o365ConversationID', '!=', None),
+                                             ('model', '=', mail.model),
+                                             ('res_id', '=', mail.res_id),
+                                             ('message_type', '=', mail.message_type),
+                                             ('subtype_id', '=', mail.subtype_id.id),
+                                             ('id', '!=', mail.mail_message_id.id),
+                                             ('partner_ids', '=', recipient.id)])
+                                        
+                                        if prev_mail is None:
+                                            prev_mail = result
+                                        else:
+                                            prev_mail += result
                                     
                                     for pid in process_pid:
                                         prev_mail += self.env['mail.message'].search(
@@ -163,10 +173,14 @@ class linderaMail(models.Model):
                                              ('res_id', '=', mail.res_id),
                                              ('id', '!=', mail.mail_message_id.id),
                                              ('author_id', '=', pid.id)])
-                                    prev_mail = prev_mail.sorted(key=lambda element: element.date)
-                                    
-                                    if prev_mail:
-                                        mail.parent_id = prev_mail[-1]
+                                    prev_mail = list(map(lambda element: element, prev_mail))
+                                    prev_mail.sort(key=lambda element: element.date, reverse=True)
+
+                                    for element in prev_mail:
+                                        if mailbox.get_message(query=mailbox.new_query('conversationId')
+                                                .equals(element.o365ConversationID)) is not None:
+                                            mail.parent_id = element
+                                            break
     
                                     if mail.parent_id.o365ConversationID:
                                         # find the most recent entry of this conversation (might be the reply, which does not fit the most likely)
