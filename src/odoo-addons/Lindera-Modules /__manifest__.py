@@ -20,7 +20,7 @@
     'version': '1.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'mail', 'crm', 'sale'],
+    'depends': ['base', 'mail', 'crm', 'sale', 'sale_subscription'],
 
     # always loaded
     'data': [
@@ -33,6 +33,7 @@
         'views/home.xml',
         'views/lead.xml',
         'views/stage.xml',
+        'views/subscription.xml',
         'data/scheduler.xml',
     ],
     # only loaded in demonstration mode
