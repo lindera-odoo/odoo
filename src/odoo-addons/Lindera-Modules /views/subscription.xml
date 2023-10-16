@@ -6,7 +6,7 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="sale_subscription.sale_subscription_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='recurring_next_date']" position="after">
+                <xpath expr="//field[@name='partner_id']" position="after">
                     <field name="invoice_adress" string="Rechnungsaddresse"/>
                 </xpath>
             </field>
