@@ -1,6 +1,6 @@
 import logging
 
-from odoo import models, fields, api
+from odoo import models, fields, api, SUPERUSER_ID
 from odoo.osv import osv
 
 _logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ class LinderaInvoice(models.Model):
                 len(list(filter(lambda i: not i.is_move_sent and
                                           i.state == 'posted' and
                                           i._is_ready_to_be_sent(),
-                                self))) == len(self):
+                                self))) == len(self) and self.env.user.id == SUPERUSER_ID:
             kwargs['composition_mode'] = 'mass_mail'
             _logger.info('Composition Mode set to mass_mail.')
         
