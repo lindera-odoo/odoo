@@ -1,5 +1,9 @@
+import logging
+
 from odoo import models, fields, api
 from odoo.osv import osv
+
+_logger = logging.getLogger(__name__)
 
 class LinderaInvoice(models.Model):
     _inherit = "account.move"
@@ -73,3 +77,12 @@ class LinderaInvoice(models.Model):
                     invoice.setup_lead()
         
         return status
+    
+    def message_post_with_template(self, template_id, email_layout_xmlid=None, auto_commit=False, **kwargs):
+        # if not kwargs.get('composition_mode'):
+        #
+        #     kwargs['composition_mode'] == 'mass_mail'
+        
+        _logger.info('Sending with Template intercepted! Composition mode: ' + str(kwargs.get('composition_mode')))
+        
+        return super(LinderaInvoice, self).message_post_with_template(template_id, email_layout_xmlid, auto_commit, **kwargs)
