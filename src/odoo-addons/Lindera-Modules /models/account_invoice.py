@@ -79,10 +79,14 @@ class LinderaInvoice(models.Model):
         return status
     
     def message_post_with_template(self, template_id, email_layout_xmlid=None, auto_commit=False, **kwargs):
-        if not kwargs.get('composition_mode'):
-            kwargs['composition_mode'] = 'mass_mail'
-        
         _logger.info('Sending with Template intercepted! Composition mode: ' + str(kwargs.get('composition_mode')))
+        if not kwargs.get('composition_mode') and \
+                len(list(filter(lambda i: not i.is_move_sent and
+                                          i.state == 'posted' and
+                                          i._is_ready_to_be_sent(),
+                                self))) == len(self):
+            kwargs['composition_mode'] = 'mass_mail'
+            _logger.info('Composition Mode set to mass_mail.')
         
         return super(LinderaInvoice, self).message_post_with_template(template_id,
                                                                       email_layout_xmlid=email_layout_xmlid,
