@@ -85,4 +85,6 @@ class LinderaInvoice(models.Model):
         
         _logger.info('Sending with Template intercepted! Composition mode: ' + str(kwargs.get('composition_mode')))
         
-        return super(LinderaInvoice, self).message_post_with_template(template_id, email_layout_xmlid, auto_commit, **kwargs)
+        return super(LinderaInvoice, self).message_post_with_template(template_id,
+                                                                      email_layout_xmlid=email_layout_xmlid,
+                                                                      auto_commit=auto_commit, **kwargs)
