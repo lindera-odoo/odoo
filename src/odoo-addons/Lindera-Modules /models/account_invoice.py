@@ -79,9 +79,8 @@ class LinderaInvoice(models.Model):
         return status
     
     def message_post_with_template(self, template_id, email_layout_xmlid=None, auto_commit=False, **kwargs):
-        # if not kwargs.get('composition_mode'):
-        #
-        #     kwargs['composition_mode'] == 'mass_mail'
+        if not kwargs.get('composition_mode'):
+            kwargs['composition_mode'] = 'mass_mail'
         
         _logger.info('Sending with Template intercepted! Composition mode: ' + str(kwargs.get('composition_mode')))
         
