@@ -32,25 +32,42 @@ class linderaMail(models.Model):
 
         for id in ids:
             mail = self.browse(id)
+            
             email_list = []
+            email_list_internal = []
             if mail.email_to:
                 email_list.append(tools.email_split(mail.email_to))
             for partner in mail.recipient_ids:
-                email_list.append(partner.email)
-
+                # mo mixing of internal and external recipients!
+                if hasattr(partner, 'user_ids') and not partner.user_ids.share:
+                    email_list_internal.append(partner.email)
+                else:
+                    email_list.append(partner.email)
+                    
+            internal = list(filter(lambda element: hasattr(element, 'user_ids') and not element.user_ids.share,
+                        mail.notified_partner_ids))
+            all_same = len(internal) == len(mail.notified_partner_ids) or len(internal) == 0
+            
             allowtosend = True
+            if len(email_list) == 0 and all_same:
+                email_list = email_list_internal
+            
+            if len(email_list) == 0:
+                mail.write({'state': 'cancel', 'failure_reason': 'Mixed (Internal & External) Recipients!'})
+                continue
+            
             blacklistMails = ['service@lindera.de', 'support@lindera.odoo.com', 'vendor-bills@lindera.odoo.com', 'invoices@lindera.de']
             channels = self.env['crm.team'].search([])
-
+            
             for channel in channels:
                 if len(channel.alias_id.name_get()) > 0:
                     blacklistMails.append(channel.alias_id.name_get()[0][1])
-
+            
             for email in email_list:
                 if email in blacklistMails:
                     allowtosend = False
                     break
-
+            
             user = self.env['res.users'].search([("partner_id", "=", mail.author_id.id), ('share', '=', False)])
             _logger.info('Sending mail for user' + str(mail.author_id.id) + ' for email ' + mail.author_id.email)
             if user:
@@ -98,14 +115,14 @@ class linderaMail(models.Model):
                             attachments = mail.attachment_ids
                             for link in re.findall(r'/web/(?:content|image)/([0-9]+)', body):
                                 attachments = attachments - IrAttachment.browse(int(link))
-    
+                            
                             # load attachment binary data with a separate read(), as prefetching all
                             # `datas` (binary field) could bloat the browse cache, triggerring
                             # soft/hard mem limits with temporary data.
                             attachments = [(BytesIO(base64.b64decode(a['datas'])), a['display_name']) for a in attachments.sudo().read(['display_name', 'datas']) if a['datas'] is not False]
-    
+                            
                             mailbox = account.mailbox()
-    
+                            
                             # specific behavior to customize the send email for notified partners
                             email_list = []
                             if mail.email_to:
@@ -118,7 +135,7 @@ class linderaMail(models.Model):
                                 values['partner_id'] = partner
                                 values['email_to'] = partner.email
                                 email_list.append(values)
-    
+                            
                             same = True
                             body = email_list[0]['body']
                             mails = []
@@ -132,7 +149,7 @@ class linderaMail(models.Model):
                                 value['email_to'] = mails
                                 value['partner_id'] = partners
                                 email_list = [value]
-    
+                            
                             process_pids = []
                             for email in email_list:
                                 process_pid = email.pop("partner_id", None)
@@ -175,13 +192,13 @@ class linderaMail(models.Model):
                                              ('author_id', '=', pid.id)])
                                     prev_mail = list(map(lambda element: element, prev_mail))
                                     prev_mail.sort(key=lambda element: element.date, reverse=True)
-
+                                    
                                     for element in prev_mail:
                                         if mailbox.get_message(query=mailbox.new_query('conversationId')
                                                 .equals(element.o365ConversationID)) is not None:
                                             mail.parent_id = element
                                             break
-    
+                                    
                                     if mail.parent_id.o365ConversationID:
                                         # find the most recent entry of this conversation (might be the reply, which does not fit the most likely)
                                         prev_mail = self.env['mail.message'].search(
@@ -215,7 +232,7 @@ class linderaMail(models.Model):
                                     if mail.parent_id.o365ConversationID:
                                         mail.mail_message_id.o365ConversationID = mail.parent_id.o365ConversationID
                                         message.conversation_id = mail.parent_id.o365ConversationID
-    
+                                
                                 message.send()
                                 if not mail.mail_message_id.o365ID and is_external:
                                     try:
@@ -232,7 +249,7 @@ class linderaMail(models.Model):
                                         time.sleep(1)
                                     except Exception as e:
                                         sentry_sdk.capture_exception(e)
-    
+                                
                                 if isinstance(process_pid, list):
                                     for pid in process_pid:
                                         process_pids.append(pid)
