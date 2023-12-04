@@ -284,50 +284,42 @@ class linderaEvent(models.Model):
 						raise osv.except_osv('Error While Syncing!', str(err))
 		return writeSuccess
 
-	def unlink(self, can_be_deleted=True):
+	def unlink(self):
 		"""
 		Removes an Event.
-		:param can_be_deleted:
 		:return:
 		"""
 		# office credentials
 		CLIENT_ID = self.env['ir.config_parameter'].get_param('lindera.client_id')
 		CLIENT_SECRET = self.env['ir.config_parameter'].get_param('lindera.client_secret')
 
-		# sentry credentials
-		sentryClient = self.env['ir.config_parameter'].get_param('lindera.raven_client')
-		sentrySingle = sentrySingleton(sentryClient)
-
-		if can_be_deleted:
-			# only delete if it is actually fine
-			# login
-			token_backend = odooTokenStore(self.env.user)
-			if token_backend.check_token():
-				with sentry_sdk.push_scope() as scope:
-					scope.set_extra('debug', False)
-					try:
-						account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
-						if account.is_authenticated:
-							calendar = account.schedule()
-							if self.o365ID:
-								if '-' not in str(self.id):
-									event = calendar.get_default_calendar().get_event(self.o365ID)
-									if event:
-										event.delete()
-								else:
-									# find the right one to remove
-									self.__removeRecurrent(calendar, self.start, self.stop, self.name)
-					except HTTPError as err:
-						if err.response.status_code == 404:
-							pass
-						else:
-							sentry_sdk.capture_exception(err)
-							raise osv.except_osv('Error While Syncing!', str(err))
-					except Exception as err:
+		token_backend = odooTokenStore(self.env.user)
+		if token_backend.check_token():
+			with sentry_sdk.push_scope() as scope:
+				scope.set_extra('debug', False)
+				try:
+					account = Account((CLIENT_ID, CLIENT_SECRET), token_backend=token_backend)
+					if account.is_authenticated:
+						calendar = account.schedule()
+						if self.o365ID:
+							if '-' not in str(self.id):
+								event = calendar.get_default_calendar().get_event(self.o365ID)
+								if event:
+									event.delete()
+							else:
+								# find the right one to remove
+								self.__removeRecurrent(calendar, self.start, self.stop, self.name)
+				except HTTPError as err:
+					if err.response.status_code == 404:
+						pass
+					else:
 						sentry_sdk.capture_exception(err)
 						raise osv.except_osv('Error While Syncing!', str(err))
+				except Exception as err:
+					sentry_sdk.capture_exception(err)
+					raise osv.except_osv('Error While Syncing!', str(err))
 
-		return super(linderaEvent, self).unlink(can_be_deleted)
+		return super(linderaEvent, self).unlink()
 
 	@classmethod
 	def __removeRecurrent(cls, calendar, start, stop, name):
