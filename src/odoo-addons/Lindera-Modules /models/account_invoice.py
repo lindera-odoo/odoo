@@ -67,11 +67,11 @@ class LinderaInvoice(models.Model):
     def create(self, vals_list):
         objs = super(LinderaInvoice, self).create(vals_list)
         
-        for invoice in objs:
+        for index, invoice in enumerate(objs):
             if invoice.state == 'posted':
                     invoice.setup_lead()
             
-            if not invoice.invoice_adress:
+            if not invoice.invoice_adress and 'invoice_adress' not in vals_list[index].keys():
                 subscription = self.env['sale.subscription'].search([('code', '=', self.invoice_origin)])
                 if subscription:
                     invoice.invoice_adress = subscription.invoice_adress
@@ -84,7 +84,7 @@ class LinderaInvoice(models.Model):
             if invoice.state == 'posted':
                     invoice.setup_lead()
             
-            if not invoice.invoice_adress:
+            if not invoice.invoice_adress and 'invoice_adress' not in values.keys():
                 subscription = self.env['sale.subscription'].search([('code', '=', self.invoice_origin)])
                 if subscription:
                     invoice.invoice_adress = subscription.invoice_adress
