@@ -3,7 +3,9 @@ from odoo.osv import osv
 
 class LinderaInvoice(models.Model):
     _inherit = "account.move"
-
+    
+    invoice_adress = fields.Many2one('res.partner', string='Rechnungsaddresse', index=True,
+                                     help="Kontakt an den die Rechnung verschickt werden soll")
     def setup_lead(self):
         # search for the user used in the webshop
         user = self.env['res.users'].search([('partner_id', '=', self.partner_id.id), ('share', '=', True)])
@@ -54,6 +56,11 @@ class LinderaInvoice(models.Model):
         if obj.state == 'posted':
                 obj.setup_lead()
         
+        if not self.invoice_adress:
+            subscription = self.env['sale.subscription'].search(['code', '=', self.invoice_origin])
+            if subscription:
+                self.invoice_adress = subscription.invoice_adress
+        
         return obj
 
     @api.model_create_multi
@@ -63,6 +70,11 @@ class LinderaInvoice(models.Model):
         for invoice in objs:
             if invoice.state == 'posted':
                     invoice.setup_lead()
+            
+            if not invoice.invoice_adress:
+                invoice = self.env['sale.subscription'].search(['code', '=', self.invoice_origin])
+                if invoice:
+                    self.invoice_adress = invoice.invoice_adress
                 
         return objs
 
@@ -71,5 +83,10 @@ class LinderaInvoice(models.Model):
         for invoice in self:
             if invoice.state == 'posted':
                     invoice.setup_lead()
+            
+            if not invoice.invoice_adress:
+                invoice = self.env['sale.subscription'].search(['code', '=', self.invoice_origin])
+                if invoice:
+                    self.invoice_adress = invoice.invoice_adress
         
         return status
