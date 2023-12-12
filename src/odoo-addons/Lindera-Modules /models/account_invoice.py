@@ -72,9 +72,9 @@ class LinderaInvoice(models.Model):
                     invoice.setup_lead()
             
             if not invoice.invoice_adress:
-                invoice = self.env['sale.subscription'].search([('code', '=', self.invoice_origin)])
+                subscription = self.env['sale.subscription'].search([('code', '=', self.invoice_origin)])
                 if invoice:
-                    self.invoice_adress = invoice.invoice_adress
+                    self.invoice_adress = subscription.invoice_adress
                 
         return objs
 
@@ -85,8 +85,8 @@ class LinderaInvoice(models.Model):
                     invoice.setup_lead()
             
             if not invoice.invoice_adress:
-                invoice = self.env['sale.subscription'].search([('code', '=', self.invoice_origin)])
+                subscription = self.env['sale.subscription'].search([('code', '=', self.invoice_origin)])
                 if invoice:
-                    self.invoice_adress = invoice.invoice_adress
+                    self.invoice_adress = subscription.invoice_adress
         
         return status
