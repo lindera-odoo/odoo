@@ -7,5 +7,5 @@ class LinderaSubscription(models.Model):
     """
     _inherit = 'sale.subscription'
     
-    invoice_adress = fields.Many2one('res.partner', string='Rechnungsaddresse',  index=True,
+    invoice_adress = fields.Many2one('res.partner', string='Rechnungs E-mail',  index=True,
                                     help="Kontakt an den die Rechnung verschickt werden soll")
