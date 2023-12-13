@@ -90,8 +90,8 @@ class LinderaInvoice(models.Model):
             
             _logger.info('checking if invoice adress shall be updated')
             if not invoice.invoice_adress and 'invoice_adress' not in values.keys():
-                _logger.info('looking for subscription')
-                subscription = self.env['sale.subscription'].search([('code', '=', self.invoice_origin)])
+                _logger.info('looking for subscription via ' + invoice.invoice_origin)
+                subscription = self.env['sale.subscription'].search([('code', '=', invoice.invoice_origin)])
                 if subscription:
                     _logger.info('found subscription')
                     invoice.invoice_adress = subscription.invoice_adress
