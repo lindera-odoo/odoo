@@ -4,7 +4,7 @@ from odoo.osv import osv
 class LinderaInvoice(models.Model):
     _inherit = "account.move"
     
-    invoice_adress = fields.Many2one('res.partner', string='Rechnungsaddresse', index=True,
+    invoice_adress = fields.Many2one('res.partner', string='Rechnungs E-mail', index=True,
                                      help="Kontakt an den die Rechnung verschickt werden soll")
     def setup_lead(self):
         # search for the user used in the webshop
