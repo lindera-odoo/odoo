@@ -9,8 +9,8 @@ class LinderaHome(models.Model):
 	senior_number = fields.Integer('senior_number')
 	show_senior_number = fields.Boolean('show_senior_number')
 	
-	first_name = fields.Char(store=True, compute='_compute_first_name')
-	last_name = fields.Char(store=True, compute='_compute_last_name')
+	first_name = fields.Char(compute='_compute_first_name')
+	last_name = fields.Char(compute='_compute_last_name')
 
 	@api.model
 	def create(self, values):
