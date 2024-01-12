@@ -8,6 +8,9 @@ class LinderaHome(models.Model):
 
 	senior_number = fields.Integer('senior_number')
 	show_senior_number = fields.Boolean('show_senior_number')
+	
+	first_name = fields.Char(index=True, store=True, compute='_compute_first_name')
+	last_name = fields.Char(index=True, store=True, compute='_compute_last_name')
 
 	@api.model
 	def create(self, values):
@@ -49,3 +52,25 @@ class LinderaHome(models.Model):
 					home.senior_number = 0
 
 		super(LinderaHome, self).write(values)
+		
+	@api.depends('name', 'is_company')
+	def _compute_first_name(self):
+		for partner in self:
+			if not partner.is_company:
+				if ' ' in partner.name:
+					partner.first_name = partner.name.split(' ')[0]
+				else:
+					partner.first_name = ''
+			else:
+				partner.first_name = ''
+	
+	@api.depends('name', 'is_company')
+	def _compute_last_name(self):
+		for partner in self:
+			if not partner.is_company:
+				if ' ' in partner.name:
+					partner.last_name = partner.name.split(' ')[0]
+				else:
+					partner.last_name = ''
+			else:
+				partner.last_name = ''
