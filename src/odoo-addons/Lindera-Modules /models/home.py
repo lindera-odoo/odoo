@@ -9,8 +9,9 @@ class LinderaHome(models.Model):
 	senior_number = fields.Integer('senior_number')
 	show_senior_number = fields.Boolean('show_senior_number')
 	
-	first_name = fields.Char(compute='_compute_first_name', readonly=False)
-	last_name = fields.Char(compute='_compute_last_name', readonly=False)
+	first_name = fields.Char(compute='_compute_form_of_address', readonly=False)
+	last_name = fields.Char(compute='_compute_form_of_address', readonly=False)
+	form_of_address = fields.Char(compute='_compute_form_of_address', readonly=False)
 
 	@api.model
 	def create(self, values):
@@ -54,23 +55,33 @@ class LinderaHome(models.Model):
 		super(LinderaHome, self).write(values)
 		
 	@api.depends('name', 'is_company')
-	def _compute_first_name(self):
+	def _compute_form_of_address(self):
 		for partner in self:
 			if not partner.is_company:
-				if ' ' in partner.name:
-					partner.first_name = partner.name.split(' ')[0]
+				form_of_address = self.env['lindera.address'].search([("contact_id", "=", partner.id)])
+				if form_of_address:
+					partner.first_name = form_of_address.first_name
+					partner.last_name = form_of_address.last_name
+					partner.form_of_address = form_of_address.form_of_address
 				else:
-					partner.first_name = ''
+					if ' ' in partner.name:
+						first_name = partner.name.split(' ')[0]
+						last_name = partner.name.split(' ')[1]
+					else:
+						first_name = ''
+						last_name = ''
+					
+					partner.first_name = first_name
+					partner.last_name = last_name
+					partner.form_of_address = ''
+					
+					self.env['lindera.address'].create({
+						'contact_id': partner.id,
+						'first_name': first_name,
+						'last_name': last_name,
+						'form_of_address': ''
+					})
 			else:
 				partner.first_name = ''
-	
-	@api.depends('name', 'is_company')
-	def _compute_last_name(self):
-		for partner in self:
-			if not partner.is_company:
-				if ' ' in partner.name:
-					partner.last_name = partner.name.split(' ')[1]
-				else:
-					partner.last_name = ''
-			else:
 				partner.last_name = ''
+				partner.form_of_address = ''
