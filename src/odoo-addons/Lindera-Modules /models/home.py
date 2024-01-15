@@ -61,7 +61,6 @@ class LinderaHome(models.Model):
 
 		super(LinderaHome, self).write(values)
 		
-	@api.depends('name', 'is_company')
 	def _compute_form_of_address(self):
 		for partner in self:
 			if partner.id:
