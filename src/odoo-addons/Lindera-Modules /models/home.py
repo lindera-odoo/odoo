@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from form_of_address import form_of_address_selection_options
+from .form_of_address import form_of_address_selection_options
 
 class LinderaHome(models.Model):
 	"""
