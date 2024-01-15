@@ -12,6 +12,7 @@
                     <field name="homeID" string="Backend ID"/>
                     <field name="first_name" string="Vorname"/>
                     <field name="last_name" string="Nachname"/>
+                    <field name="form_of_address" string="Anrede"/>
                 </xpath>
             </field>
         </record>
