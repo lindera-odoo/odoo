@@ -11,7 +11,13 @@ class LinderaHome(models.Model):
 	
 	first_name = fields.Char(compute='_compute_form_of_address', readonly=False)
 	last_name = fields.Char(compute='_compute_form_of_address', readonly=False)
-	form_of_address = fields.Char(compute='_compute_form_of_address', readonly=False)
+	form_of_address = fields.Selection(selstion=[
+		('woman', 'Sehr geehrte Frau'),
+		('man', 'Sehr geehrter Herr'),
+		('mixed', 'Sehr geehrte Damen und Herren')
+	], compute='_compute_form_of_address', readonly=False)
+	
+	full_address  = fields.Char(compute='_compute_full_form_of_address')
 
 	@api.model
 	def create(self, values):
@@ -91,4 +97,13 @@ class LinderaHome(models.Model):
 				else:
 					partner.first_name = ''
 					partner.last_name = ''
-					partner.form_of_address = 'Sehr geehrte Damen und Herren'
+					partner.form_of_address = 'mixed'
+	
+	@api.depends('form_of_address', 'last_name')
+	def _compute_full_form_of_address(self):
+		for partner in self:
+			if partner.form_of_address == 'mixed':
+				partner.full_address = dict(partner.form_of_address.selection)['mixed']
+			elif partner.form_of_address in ['woman', 'man']:
+				partner.full_address = dict(partner.form_of_address.selection)[partner.form_of_address] + ' ' + partner.last_name
+				
