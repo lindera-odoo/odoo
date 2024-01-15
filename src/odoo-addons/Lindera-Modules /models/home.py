@@ -64,31 +64,32 @@ class LinderaHome(models.Model):
 	@api.depends('name', 'is_company')
 	def _compute_form_of_address(self):
 		for partner in self:
-			if not partner.is_company:
-				form_of_address = self.env['lindera.address'].search([("contact_id", "=", partner.id)])
-				if form_of_address:
-					partner.first_name = form_of_address.first_name
-					partner.last_name = form_of_address.last_name
-					partner.form_of_address = form_of_address.form_of_address
-				else:
-					if ' ' in partner.name:
-						first_name = partner.name.split(' ')[0]
-						last_name = partner.name.split(' ')[1]
+			if partner.id:
+				if not partner.is_company:
+					form_of_address = self.env['lindera.address'].search([("contact_id", "=", partner.id)])
+					if form_of_address:
+						partner.first_name = form_of_address.first_name
+						partner.last_name = form_of_address.last_name
+						partner.form_of_address = form_of_address.form_of_address
 					else:
-						first_name = ''
-						last_name = ''
-					
-					partner.first_name = first_name
-					partner.last_name = last_name
+						if ' ' in partner.name:
+							first_name = partner.name.split(' ')[0]
+							last_name = partner.name.split(' ')[1]
+						else:
+							first_name = ''
+							last_name = ''
+						
+						partner.first_name = first_name
+						partner.last_name = last_name
+						partner.form_of_address = ''
+						
+						self.env['lindera.address'].create({
+							'contact_id': partner.id,
+							'first_name': first_name,
+							'last_name': last_name,
+							'form_of_address': ''
+						})
+				else:
+					partner.first_name = ''
+					partner.last_name = ''
 					partner.form_of_address = ''
-					
-					self.env['lindera.address'].create({
-						'contact_id': partner.id,
-						'first_name': first_name,
-						'last_name': last_name,
-						'form_of_address': ''
-					})
-			else:
-				partner.first_name = ''
-				partner.last_name = ''
-				partner.form_of_address = ''
