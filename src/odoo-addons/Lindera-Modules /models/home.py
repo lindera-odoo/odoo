@@ -11,7 +11,7 @@ class LinderaHome(models.Model):
 	
 	first_name = fields.Char(compute='_compute_form_of_address', readonly=False)
 	last_name = fields.Char(compute='_compute_form_of_address', readonly=False)
-	form_of_address = fields.Selection(selstion=[
+	form_of_address = fields.Selection(selection=[
 		('woman', 'Sehr geehrte Frau'),
 		('man', 'Sehr geehrter Herr'),
 		('mixed', 'Sehr geehrte Damen und Herren')
