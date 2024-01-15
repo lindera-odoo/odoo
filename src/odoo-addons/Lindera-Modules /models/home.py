@@ -51,6 +51,13 @@ class LinderaHome(models.Model):
 				home.show_senior_number = isEinrichtung
 				if not isEinrichtung:
 					home.senior_number = 0
+			
+			form_of_address_keys = {'first_name', 'last_name', 'form_of_address'}.intersection(values.keys())
+			if len(form_of_address_keys) != 0:
+				form_of_address = self.env['lindera.address'].search([("contact_id", "=", home.id)])
+				if form_of_address:
+					filtered_values = {key: values[key] for key in form_of_address_keys}
+					form_of_address.write(filtered_values)
 
 		super(LinderaHome, self).write(values)
 		
