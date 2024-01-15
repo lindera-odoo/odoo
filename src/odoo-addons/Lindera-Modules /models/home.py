@@ -91,4 +91,4 @@ class LinderaHome(models.Model):
 				else:
 					partner.first_name = ''
 					partner.last_name = ''
-					partner.form_of_address = ''
+					partner.form_of_address = 'Sehr geehrte Damen und Herren'
