@@ -74,7 +74,7 @@ class LinderaHome(models.Model):
 						partner.last_name = form_of_address.last_name
 						partner.form_of_address = form_of_address.form_of_address
 					else:
-						if ' ' in partner.name:
+						if isinstance(partner.name, str) and ' ' in partner.name:
 							first_name = partner.name.split(' ')[0]
 							last_name = partner.name.split(' ')[1]
 						else:
