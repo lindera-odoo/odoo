@@ -6,6 +6,6 @@ class linderaConversationsCleaner(models.Model):
     
     @api.model
     def cleanInvoices(self):
-        to_send = self.env['account.move'].search([('state', '==', 'posted'), ('is_move_sent', '==', False)])
+        to_send = self.env['account.move'].search([('state', '=', 'posted'), ('is_move_sent', '=', False)])
         to_send.is_move_sent = True
         self.env.cr.commit()
