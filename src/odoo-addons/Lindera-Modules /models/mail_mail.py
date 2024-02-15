@@ -275,5 +275,7 @@ class linderaMail(models.Model):
                                     value = '. '.join(e.args)
                                 raise MailDeliveryException(("Mail Delivery Failed"), value)
                             raise
+                if auto_commit is True:
+                    self._cr.commit()
             else:
                 super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
