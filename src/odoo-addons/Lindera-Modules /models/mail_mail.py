@@ -258,6 +258,8 @@ class linderaMail(models.Model):
                             # do not try to send via the normal way
                             mail.write({'state': 'sent', 'failure_reason': False})
                             _logger.info('Mail with ID %r successfully sent', mail.id)
+                            if auto_commit is True:
+                                self.env.cr.commit()
                             mail._postprocess_sent_message(success_pids=process_pids)
                     except Exception as e:
                         sentry_sdk.capture_exception(e)
@@ -282,7 +284,7 @@ class linderaMail(models.Model):
                             raise
                 if auto_commit is True:
                     try:
-                        self._cr.commit()
+                        self.env.cr.commit()
                     except Exception as e:
                         pass
             else:
