@@ -281,6 +281,9 @@ class linderaMail(models.Model):
                         if raise_exception:
                             raise
                 if auto_commit is True:
-                    self._cr.commit()
+                    try:
+                        self._cr.commit()
+                    except Exception as e:
+                        pass
             else:
                 super(linderaMail, mail).send(auto_commit=auto_commit, raise_exception=raise_exception)
