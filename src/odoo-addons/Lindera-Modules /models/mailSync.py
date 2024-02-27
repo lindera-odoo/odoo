@@ -1,5 +1,6 @@
 import os
 
+from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 import sentry_sdk
 
 from odoo import models, fields, api
@@ -209,6 +210,9 @@ class linderaMailSyncer(models.Model):
 							except Exception as err:
 								# error handler for single message
 								sentry_sdk.capture_exception(err)
+				except InvalidGrantError as err:
+					syncUser.auth_token = ''
+					sentry_sdk.capture_exception(err)
 				except Exception as err:
 					# error handling for authentication
 					sentry_sdk.capture_exception(err)
