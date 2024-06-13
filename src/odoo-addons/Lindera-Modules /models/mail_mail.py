@@ -48,7 +48,7 @@ class linderaMail(models.Model):
                         mail.notified_partner_ids))
             all_same = len(internal) == len(mail.notified_partner_ids) or len(internal) == 0
             
-            allowtosend = True and mail.message_type != 'comment'
+            allowtosend = True
             if len(email_list) == 0 and all_same:
                 email_list = email_list_internal
             
