@@ -14,7 +14,7 @@ class LinderaHome(models.Model):
 	last_name = fields.Char(compute='_compute_form_of_address', readonly=False)
 	form_of_address = fields.Selection(selection=form_of_address.form_of_address_selection_options, compute='_compute_form_of_address', readonly=False)
 	
-	full_address  = fields.Char(compute='_compute_full_form_of_address')
+	full_address  = fields.Char(compute='_compute_full_form_of_address', readonly=False)
 
 	@api.model
 	def create(self, values):
@@ -104,9 +104,14 @@ class LinderaHome(models.Model):
 	def _compute_full_form_of_address(self):
 		try:
 			for partner in self:
-				if partner.form_of_address == 'mixed':
+				try:
+					if partner.form_of_address == 'mixed':
+						partner.full_address = dict(form_of_address.form_of_address_selection_options)['mixed']
+					elif partner.form_of_address in ['woman', 'man']:
+						partner.full_address = dict(form_of_address.form_of_address_selection_options)[partner.form_of_address] + ' ' + partner.last_name
+				except:
 					partner.full_address = dict(form_of_address.form_of_address_selection_options)['mixed']
-				elif partner.form_of_address in ['woman', 'man']:
-					partner.full_address = dict(form_of_address.form_of_address_selection_options)[partner.form_of_address] + ' ' + partner.last_name
 		except:
-			pass
+			for partner in self:
+				partner.full_address = dict(form_of_address.form_of_address_selection_options)['mixed']
+				
