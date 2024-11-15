@@ -68,7 +68,11 @@ class LinderaHome(models.Model):
 		for partner in self:
 			if partner.id:
 				if not partner.is_company:
-					form_of_address = self.env['lindera.address'].search([("contact_id", "=", partner.id)])
+					form_of_address = False
+					try:
+						form_of_address = self.env['lindera.address'].search([("contact_id", "=", partner.id)])
+					except:
+						pass
 					if form_of_address:
 						partner.first_name = form_of_address.first_name
 						partner.last_name = form_of_address.last_name
