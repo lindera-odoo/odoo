@@ -102,9 +102,11 @@ class LinderaHome(models.Model):
 	
 	@api.depends('form_of_address', 'last_name')
 	def _compute_full_form_of_address(self):
-		for partner in self:
-			if partner.form_of_address == 'mixed':
-				partner.full_address = dict(form_of_address.form_of_address_selection_options)['mixed']
-			elif partner.form_of_address in ['woman', 'man']:
-				partner.full_address = dict(form_of_address.form_of_address_selection_options)[partner.form_of_address] + ' ' + partner.last_name
-				
+		try:
+			for partner in self:
+				if partner.form_of_address == 'mixed':
+					partner.full_address = dict(form_of_address.form_of_address_selection_options)['mixed']
+				elif partner.form_of_address in ['woman', 'man']:
+					partner.full_address = dict(form_of_address.form_of_address_selection_options)[partner.form_of_address] + ' ' + partner.last_name
+		except:
+			pass
