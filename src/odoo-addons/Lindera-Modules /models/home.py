@@ -59,6 +59,7 @@ class LinderaHome(models.Model):
 			if len(form_of_address_keys) != 0:
 				form_of_address = self.env['lindera.address'].search([("contact_id", "=", home.id)])
 				if form_of_address:
+					form_of_address = form_of_address[0]
 					filtered_values = {key: values[key] for key in form_of_address_keys}
 					form_of_address.write(filtered_values)
 
@@ -74,6 +75,7 @@ class LinderaHome(models.Model):
 					except:
 						pass
 					if form_of_address:
+						form_of_address = form_of_address[0]
 						partner.first_name = form_of_address.first_name
 						partner.last_name = form_of_address.last_name
 						partner.form_of_address = form_of_address.form_of_address
