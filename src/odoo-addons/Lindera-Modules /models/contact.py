@@ -19,6 +19,7 @@ class Contact(models.Model):
     homeID = fields.Text('homeID', store=False, compute='_add_empty_homeID')
 
     def _add_empty_homeID(self):
+        n = len(self)
         for contact in self:
             contact.homeID = ''
             if contact.is_company:
@@ -26,25 +27,26 @@ class Contact(models.Model):
                 if backend_id:
                     contact.homeID = backend_id[0].home_id
                 else:
-                    backendClient = backend_client.BackendClient.setupBackendClient(self)
-                    home = backendClient.getHome(contact.id).json()
-                    if home and home['total'] != 0:
-                        if len(home['data']) > 1:
-                            # take the one that was created the latest.
-                            data = home['data'][-1]
-                            # clear the odooID of the others, since their odoo contact was deleted at some point
-                            for to_clear in home['data']:
-                                if to_clear['_id'] != data['_id']:
-                                    backendClient.updateHome(to_clear['_id'], {'odooID': None})
-
-                        else:
-                            data = home['data'][0]
-                        contact.homeID = data['_id']
-                        
-                        self.env['lindera.backend.id'].create({
-                            'contact_id': contact.id,
-                            'home_id': contact.homeID
-                        })
+                    if 1000 > n:
+                        backendClient = backend_client.BackendClient.setupBackendClient(self)
+                        home = backendClient.getHome(contact.id).json()
+                        if home and home['total'] != 0:
+                            if len(home['data']) > 1:
+                                # take the one that was created the latest.
+                                data = home['data'][-1]
+                                # clear the odooID of the others, since their odoo contact was deleted at some point
+                                for to_clear in home['data']:
+                                    if to_clear['_id'] != data['_id']:
+                                        backendClient.updateHome(to_clear['_id'], {'odooID': None})
+    
+                            else:
+                                data = home['data'][0]
+                            contact.homeID = data['_id']
+                            
+                            self.env['lindera.backend.id'].create({
+                                'contact_id': contact.id,
+                                'home_id': contact.homeID
+                            })
     
     def createHomeInLinderaDB(self):
         isCompany = self.is_company
