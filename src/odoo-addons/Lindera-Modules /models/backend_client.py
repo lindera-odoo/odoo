@@ -36,8 +36,8 @@ class BackendClient():
                     resp = rq.post(url=self.URL + '/session',
                                          json={'email': self.user, 'password': self.pw},
                                          headers=headers)
-                    data1 = json.loads(resp.text)
                     assert resp.status_code == 200, 'not logged in'
+                    data1 = json.loads(resp.text)
 
                     self.INTERNAL_AUTHENTICATION_TOKEN = data1['token']
                     return self.INTERNAL_AUTHENTICATION_TOKEN
